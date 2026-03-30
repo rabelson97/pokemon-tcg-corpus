@@ -1,1 +1,16 @@
-/.venv
+/.venv/
+/.detector-venv/
+
+# OS/editor noise
+.DS_Store
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Training outputs and local model assets
+/runs/
+/yolov8*.pt
+/training/checkpoints/
+/training/exports/
+/training/data/
