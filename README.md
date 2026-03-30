@@ -6,7 +6,7 @@ Precomputed ORB feature descriptors for all English Pokemon TCG cards (~20,000 c
 
 Each release contains `pokemon_tcg_corpus_v{version}.zip` with three files:
 
-- **`index.json`** — Card metadata (id, name, set, rarity) plus descriptor byte offsets
+- **`index.json`** — Card metadata (id, name, set, rarity, searchable OCR text) plus descriptor byte offsets
 - **`descriptors.bin`** — Concatenated raw ORB descriptor bytes (200 features × 32 bytes per card)
 - **`coarse_index.bin`** — One compact fixed-length coarse signature per card for fast full-corpus shortlist retrieval
 
@@ -17,3 +17,4 @@ Each release contains `pokemon_tcg_corpus_v{version}.zip` with three files:
 - Image size at descriptor extraction: 480×680 grayscale
 - Descriptor format: `uint8`, shape `(descriptorCount, 32)`, stored at `descriptorOffset` bytes into `descriptors.bin`
 - Coarse index format: `uint8`, one 32-byte signature per card, aligned to card order in `index.json`
+- Search text includes the card name plus lightweight textual metadata such as set name, attacks, rules, and flavor text for OCR-assisted reranking
