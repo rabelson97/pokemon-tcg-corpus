@@ -1,0 +1,6 @@
+{
+  "best_val_recall_at_1": 0.0,
+  "num_cards": 20185,
+  "num_classes": 20185,
+  "training_mode": "contrastive"
+}

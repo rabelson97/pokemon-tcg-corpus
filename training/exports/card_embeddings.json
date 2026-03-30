@@ -1,0 +1,6 @@
+{
+  "checkpoint": "/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/checkpoints/card_retrieval.pt",
+  "manifest": "/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/data/full/manifest.jsonl",
+  "card_count": 20185,
+  "embedding_dim": 256
+}
