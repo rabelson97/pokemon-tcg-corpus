@@ -23,7 +23,7 @@ Relevant entry points:
 Workflow prerequisites:
 
 - GitHub Actions secret: `POKEMONTCG_API_KEY`
-- No custom embedding checkpoint is required. The embeddings workflow uses `open_clip` with a public pretrained model and downloads those weights automatically at runtime.
+- The embeddings workflow uses the exact CardHawk runtime ONNX embedder from [card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx) and mirrors the app preprocessing contract.
 - The embeddings workflow is incremental by default: it downloads the current `embeddings-latest` asset when available and only computes vectors for missing `card_id` rows unless `force_rebuild` is set.
 
 ## Format

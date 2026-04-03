@@ -35,14 +35,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Cache model downloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/huggingface
-            ~/.cache/open_clip
-          key: embeddings-model-cache-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
       - name: Resolve release version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -90,6 +82,7 @@ jobs:
           cmd=(
             python scripts/build_embeddings_db.py
             --output-db embeddings.db
+            --model-path models/card_embedder.onnx
             --image-cache-dir "$RUNNER_TEMP/card-images"
             --summary-json embeddings-build-summary.json
             --min-row-count 10000
@@ -110,8 +103,12 @@ jobs:
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
           test "$cards_count" -ge 10000
           test "$cards_count" = "$embeddings_count"
-          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE dim <= 0;')" = "0"
-          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE length(vector_blob) != dim * 4;')" = "0"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(DISTINCT dim) FROM embeddings;')" = "1"
+          test "$(sqlite3 embeddings.db 'SELECT MIN(dim) FROM embeddings;')" = "256"
+          test "$(sqlite3 embeddings.db 'SELECT MAX(dim) FROM embeddings;')" = "256"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE length(vector_blob) != 1024;')" = "0"
+          sqlite3 embeddings.db "SELECT model_name, dim, COUNT(*) FROM embeddings GROUP BY model_name, dim;"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM (SELECT model_name, dim FROM embeddings GROUP BY model_name, dim);')" = "1"
           echo "cards_count=$cards_count"
           echo "embeddings_count=$embeddings_count"
 

@@ -15,77 +15,26 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import open_clip
+import onnxruntime as ort
 from PIL import Image
-import torch
-from torch.utils.data import DataLoader, Dataset
 
 from pokemontcg_api import download_binary, fetch_all_cards, sanitize_card_id
 
 
-DEFAULT_MODEL_NAME = "ViT-B-32"
-DEFAULT_PRETRAINED = "laion2b_s34b_b79k"
 DB_USER_VERSION = 1
+EXPECTED_DIM = 256
+EMBED_IMAGE_SIZE = 224
+EMBED_CROP_INSET_RATIO = 0.08
+EMBED_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+EMBED_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
+MODEL_NAME = "cardhawk:card_embedder.onnx"
 
 
 @dataclass(frozen=True)
 class DownloadedCard:
     card: dict[str, Any]
     image_path: Path
-
-
-class LetterboxSquare:
-    def __init__(self, image_size: int, fill: tuple[int, int, int] = (255, 255, 255)) -> None:
-        self.image_size = image_size
-        self.fill = fill
-
-    def __call__(self, image: Image.Image) -> Image.Image:
-        image = image.convert("RGB")
-        width, height = image.size
-        scale = min(self.image_size / width, self.image_size / height)
-        resized = image.resize(
-            (max(1, int(round(width * scale))), max(1, int(round(height * scale)))),
-            resample=Image.Resampling.BICUBIC,
-        )
-        canvas = Image.new("RGB", (self.image_size, self.image_size), color=self.fill)
-        offset_x = (self.image_size - resized.size[0]) // 2
-        offset_y = (self.image_size - resized.size[1]) // 2
-        canvas.paste(resized, (offset_x, offset_y))
-        return canvas
-
-
-class CardImageDataset(Dataset):
-    def __init__(self, records: list[DownloadedCard], image_size: int, preprocess: Any) -> None:
-        self.records = records
-        self.preprocess = preprocess
-        self.letterbox = LetterboxSquare(image_size)
-
-    def __len__(self) -> int:
-        return len(self.records)
-
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
-        image = Image.open(self.records[index].image_path).convert("RGB")
-        image = self.letterbox(image)
-        return self.preprocess(image), index
-
-
-def resolve_device(device_name: str) -> torch.device:
-    if device_name != "auto":
-        return torch.device(device_name)
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    return torch.device("cpu")
-
-
-def get_model_image_size(model: torch.nn.Module) -> int:
-    image_size = getattr(model.visual, "image_size", None)
-    if isinstance(image_size, tuple):
-        return int(image_size[0])
-    if isinstance(image_size, int):
-        return image_size
-    raise RuntimeError("Could not determine image size from open_clip model")
 
 
 def card_row(card: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
@@ -110,6 +59,27 @@ def image_url_for_card(card: dict[str, Any]) -> str:
     if not image_url:
         raise RuntimeError(f"Card {card['id']} is missing both images.large and images.small")
     return image_url
+
+
+def crop_inset_for_embedder(image: Image.Image) -> Image.Image:
+    width, height = image.size
+    inset_x = int(width * EMBED_CROP_INSET_RATIO)
+    inset_y = int(height * EMBED_CROP_INSET_RATIO)
+    left = min(inset_x, max(0, width - 1))
+    top = min(inset_y, max(0, height - 1))
+    right = max(left + 1, width - inset_x)
+    bottom = max(top + 1, height - inset_y)
+    return image.crop((left, top, right, bottom))
+
+
+def preprocess_for_embedder(image_path: Path) -> np.ndarray:
+    image = Image.open(image_path).convert("RGB")
+    image = crop_inset_for_embedder(image)
+    image = image.resize((EMBED_IMAGE_SIZE, EMBED_IMAGE_SIZE), resample=Image.Resampling.BILINEAR)
+    array = np.asarray(image, dtype=np.float32) / 255.0
+    normalized = (array - EMBED_MEAN) / EMBED_STD
+    chw = np.transpose(normalized, (2, 0, 1))
+    return np.expand_dims(chw.astype(np.float32, copy=False), axis=0)
 
 
 def init_db(connection: sqlite3.Connection) -> None:
@@ -260,9 +230,7 @@ def validate_embeddings_db(
                 f"Sampled vector has invalid blob_len for {row['card_id']}: {row['blob_len']} vs {row['dim']}*4"
             )
 
-    suspicious_cosines = [
-        sample for sample in diagnostics["cosine_samples"] if abs(float(sample["cosine"])) > 0.9999
-    ]
+    suspicious_cosines = [sample for sample in diagnostics["cosine_samples"] if abs(float(sample["cosine"])) > 0.9999]
     if len(suspicious_cosines) >= max(2, sample_count // 2):
         raise RuntimeError(f"Too many suspiciously identical sampled cosine similarities: {suspicious_cosines}")
 
@@ -338,115 +306,106 @@ def ensure_images(
     return ready, failures, time.perf_counter() - started
 
 
-def load_model(model_name: str, pretrained: str, device: torch.device) -> tuple[torch.nn.Module, Any, int, float]:
+def inspect_model_contract(connection: sqlite3.Connection) -> list[tuple[str, int, int]]:
+    rows = connection.execute(
+        "SELECT model_name, dim, COUNT(*) FROM embeddings GROUP BY model_name, dim ORDER BY model_name, dim;"
+    ).fetchall()
+    return [(str(model_name), int(dim), int(count)) for model_name, dim, count in rows]
+
+
+def base_db_is_compatible(base_db: Path) -> bool:
+    with sqlite3.connect(base_db) as connection:
+        init_db(connection)
+        model_groups = inspect_model_contract(connection)
+    return model_groups == [(MODEL_NAME, EXPECTED_DIM, model_groups[0][2])] if model_groups else True
+
+
+def load_onnx_session(model_path: Path) -> tuple[ort.InferenceSession, str, int, float]:
     started = time.perf_counter()
-    model, _, preprocess = open_clip.create_model_and_transforms(
-        model_name,
-        pretrained=pretrained,
-        device=device,
+    session = ort.InferenceSession(
+        str(model_path),
+        providers=["CPUExecutionProvider"],
     )
-    model.eval()
-    return model, preprocess, get_model_image_size(model), time.perf_counter() - started
+    input_name = session.get_inputs()[0].name
+    output_shape = session.get_outputs()[0].shape
+    if len(output_shape) < 2 or int(output_shape[-1]) != EXPECTED_DIM:
+        raise RuntimeError(f"Unexpected ONNX output shape: {output_shape}")
+    return session, input_name, EXPECTED_DIM, time.perf_counter() - started
 
 
 def insert_new_embeddings(
     output_db: Path,
     records: list[DownloadedCard],
     *,
-    model_name: str,
-    pretrained: str,
-    batch_size: int,
-    num_workers: int,
-    device_name: str,
+    model_path: Path,
 ) -> tuple[int, float, float]:
     if not records:
         return 0, 0.0, 0.0
 
-    device = resolve_device(device_name)
-    print(f"using device={device}")
-    model, preprocess, image_size, model_load_seconds = load_model(model_name, pretrained, device)
-
-    dataset = CardImageDataset(records, image_size, preprocess)
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=device.type == "cuda",
-    )
-
+    session, input_name, output_dim, model_load_seconds = load_onnx_session(model_path)
     started = time.perf_counter()
     inserted = 0
-    db_model_name = f"open_clip:{model_name}:{pretrained}"
 
     with sqlite3.connect(output_db) as connection:
         init_db(connection)
-        with torch.no_grad():
-            for images, indexes in dataloader:
-                images = images.to(device)
-                vectors = model.encode_image(images)
-                vectors = vectors.detach().float().cpu().numpy().astype(np.float32, copy=False)
-                norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-                vectors = vectors / np.clip(norms, 1e-12, None)
-                dim = int(vectors.shape[1])
-
-                rows = []
-                for vector, record_index in zip(vectors, indexes.tolist(), strict=True):
-                    record = records[record_index]
-                    rows.append(
-                        (
-                            *card_row(record.card),
-                            db_model_name,
-                            dim,
-                            vector.astype("<f4", copy=False).tobytes(),
-                        )
-                    )
-
-                connection.executemany(
-                    """
-                    INSERT INTO cards (id, name, set_code, set_name, card_number, rarity)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(id) DO NOTHING;
-                    """,
-                    [row[:6] for row in rows],
+        rows = []
+        for record in records:
+            input_tensor = preprocess_for_embedder(record.image_path)
+            outputs = session.run(None, {input_name: input_tensor})
+            vector = np.asarray(outputs[0][0], dtype=np.float32)
+            if vector.ndim != 1 or vector.shape[0] != output_dim:
+                raise RuntimeError(f"Unexpected embedding vector shape for {record.card['id']}: {vector.shape}")
+            if not np.isfinite(vector).all():
+                raise RuntimeError(f"Non-finite embedding values for {record.card['id']}")
+            vector = vector / max(float(np.linalg.norm(vector)), 1e-12)
+            rows.append(
+                (
+                    *card_row(record.card),
+                    MODEL_NAME,
+                    output_dim,
+                    np.asarray(vector, dtype="<f4").tobytes(),
                 )
-                connection.executemany(
-                    """
-                    INSERT INTO embeddings (card_id, model_name, dim, vector_blob)
-                    VALUES (?, ?, ?, ?)
-                    ON CONFLICT(card_id) DO NOTHING;
-                    """,
-                    [(row[0], row[6], row[7], row[8]) for row in rows],
-                )
-                inserted += len(rows)
-                if inserted % 1000 == 0 or inserted == len(records):
-                    print(f"embedded {inserted}/{len(records)} new cards")
+            )
+
+        connection.executemany(
+            """
+            INSERT INTO cards (id, name, set_code, set_name, card_number, rarity)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO NOTHING;
+            """,
+            [row[:6] for row in rows],
+        )
+        connection.executemany(
+            """
+            INSERT INTO embeddings (card_id, model_name, dim, vector_blob)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(card_id) DO NOTHING;
+            """,
+            [(row[0], row[6], row[7], row[8]) for row in rows],
+        )
         connection.commit()
-
+        inserted = len(rows)
+    print(f"embedded {inserted}/{len(records)} new cards")
     return inserted, model_load_seconds, time.perf_counter() - started
 
 
 def build_embeddings_db(
     output_db: Path,
     *,
-    model_name: str,
-    pretrained: str,
+    model_path: Path,
     api_key: str | None,
     base_db: Path | None,
     force_rebuild: bool,
     image_cache_dir: Path | None,
-    batch_size: int,
-    num_workers: int,
     download_workers: int,
-    device_name: str,
     limit: int | None,
     min_row_count: int,
     summary_json: Path | None,
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
         "force_rebuild": force_rebuild,
-        "model_name": model_name,
-        "pretrained": pretrained,
+        "model_name": MODEL_NAME,
+        "model_path": str(model_path),
     }
     started = time.perf_counter()
 
@@ -466,12 +425,21 @@ def build_embeddings_db(
     if use_base:
         assert base_db is not None
         validate_embeddings_db(base_db, min_row_count=0, require_user_version=False)
-        copy_base_db(base_db, output_db)
-        with sqlite3.connect(output_db) as connection:
-            init_db(connection)
-            connection.commit()
-        existing_ids = load_existing_card_ids(output_db)
-        print(f"loaded base db {base_db} with existing_cards={len(existing_ids)}")
+        if base_db_is_compatible(base_db):
+            copy_base_db(base_db, output_db)
+            with sqlite3.connect(output_db) as connection:
+                init_db(connection)
+                connection.commit()
+            existing_ids = load_existing_card_ids(output_db)
+            print(f"loaded compatible base db {base_db} with existing_cards={len(existing_ids)}")
+        else:
+            print(f"base db {base_db} is incompatible with {MODEL_NAME}; rebuilding from scratch")
+            use_base = False
+            if output_db.exists():
+                output_db.unlink()
+            with sqlite3.connect(output_db) as connection:
+                init_db(connection)
+                connection.commit()
     else:
         if output_db.exists():
             output_db.unlink()
@@ -506,16 +474,16 @@ def build_embeddings_db(
             inserted_count, model_load_seconds, inference_seconds = insert_new_embeddings(
                 output_db,
                 ready_records,
-                model_name=model_name,
-                pretrained=pretrained,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                device_name=device_name,
+                model_path=model_path,
             )
         else:
             print("no new card ids found; skipping embedding generation")
 
         counts = validate_embeddings_db(output_db, min_row_count=min_row_count)
+        with sqlite3.connect(output_db) as connection:
+            model_groups = inspect_model_contract(connection)
+        if model_groups != [(MODEL_NAME, EXPECTED_DIM, counts[1])]:
+            raise RuntimeError(f"Unexpected model groups in embeddings db: {model_groups}")
         summary.update(
             {
                 "download_seconds": round(download_seconds, 3),
@@ -525,6 +493,7 @@ def build_embeddings_db(
                 "cards_count": counts[0],
                 "embeddings_count": counts[1],
                 "user_version": DB_USER_VERSION,
+                "expected_dim": EXPECTED_DIM,
                 "processed_cards": len(ready_records),
                 "inserted_embeddings": inserted_count,
                 "skipped_cards": len(failures),
@@ -532,6 +501,7 @@ def build_embeddings_db(
                 "used_base_db": use_base,
                 "base_db": str(base_db) if base_db else None,
                 "output_db": str(output_db),
+                "model_groups": model_groups,
                 "embedding_diagnostics": counts[2],
             }
         )
@@ -552,30 +522,26 @@ def main() -> int:
     parser.add_argument("--base-db", help="Optional existing embeddings.db used as the incremental starting point")
     parser.add_argument("--output-db", "--output", dest="output_db", default="embeddings.db")
     parser.add_argument("--force-rebuild", action="store_true", help="Ignore --base-db and rebuild from scratch")
-    parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME, help="open_clip model name")
-    parser.add_argument("--pretrained", default=DEFAULT_PRETRAINED, help="open_clip pretrained weights tag")
+    parser.add_argument("--model-path", default=str(DEFAULT_MODEL_PATH), help="Path to CardHawk card_embedder.onnx")
     parser.add_argument("--image-cache-dir", help="Persistent cache directory for downloaded card art")
     parser.add_argument("--summary-json", help="Optional JSON build summary output path")
-    parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--download-workers", type=int, default=16)
-    parser.add_argument("--device", default="auto", help="auto, cpu, cuda, or mps")
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
     parser.add_argument("--min-row-count", type=int, default=1000)
     args = parser.parse_args()
 
+    model_path = Path(args.model_path).resolve()
+    if not model_path.exists():
+        raise SystemExit(f"Model not found: {model_path}")
+
     build_embeddings_db(
         Path(args.output_db).resolve(),
-        model_name=args.model_name,
-        pretrained=args.pretrained,
+        model_path=model_path,
         api_key=os.environ.get("POKEMONTCG_API_KEY"),
         base_db=Path(args.base_db).resolve() if args.base_db else None,
         force_rebuild=args.force_rebuild,
         image_cache_dir=Path(args.image_cache_dir).resolve() if args.image_cache_dir else None,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
         download_workers=args.download_workers,
-        device_name=args.device,
         limit=args.limit,
         min_row_count=args.min_row_count,
         summary_json=Path(args.summary_json).resolve() if args.summary_json else None,
