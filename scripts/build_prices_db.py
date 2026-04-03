@@ -10,6 +10,9 @@ from typing import Any
 from pokemontcg_api import fetch_all_cards
 
 
+DB_USER_VERSION = 1
+
+
 PRICE_VARIANT_PRIORITY = [
     "normal",
     "holofoil",
@@ -48,6 +51,10 @@ def validate_prices_db(db_path: Path, *, min_row_count: int) -> int:
         if integrity is None or integrity[0] != "ok":
             raise RuntimeError(f"PRAGMA integrity_check failed: {integrity}")
 
+        user_version = int(connection.execute("PRAGMA user_version;").fetchone()[0])
+        if user_version != DB_USER_VERSION:
+            raise RuntimeError(f"PRAGMA user_version expected {DB_USER_VERSION}, got {user_version}")
+
         row_count = int(connection.execute("SELECT COUNT(*) FROM prices;").fetchone()[0])
         if row_count < min_row_count:
             raise RuntimeError(f"prices row count {row_count} is below minimum {min_row_count}")
@@ -69,6 +76,7 @@ def build_prices_db(output_path: Path, *, api_key: str, limit: int | None, min_r
     with sqlite3.connect(temp_path) as connection:
         connection.execute("PRAGMA journal_mode=DELETE;")
         connection.execute("PRAGMA synchronous=NORMAL;")
+        connection.execute(f"PRAGMA user_version={DB_USER_VERSION};")
         connection.execute("DROP TABLE IF EXISTS prices;")
         connection.execute(
             """

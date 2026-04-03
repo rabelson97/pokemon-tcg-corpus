@@ -31,6 +31,7 @@ jobs:
       - name: Validate prices database
         run: |
           test "$(sqlite3 prices.db 'PRAGMA integrity_check;')" = "ok"
+          test "$(sqlite3 prices.db 'PRAGMA user_version;')" = "1"
           prices_count="$(sqlite3 prices.db 'SELECT COUNT(*) FROM prices;')"
           test "$prices_count" -ge 10000
           echo "prices_count=$prices_count"
