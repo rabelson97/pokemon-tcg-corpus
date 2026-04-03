@@ -1,4 +1,5 @@
 name: Build Embeddings DB
+run-name: Build Embeddings DB
 
 on:
   workflow_dispatch:
