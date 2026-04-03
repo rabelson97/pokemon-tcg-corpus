@@ -1,0 +1,151 @@
+name: Build Embeddings DB
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Version suffix such as v1.3. The workflow publishes embeddings-<value>."
+        required: true
+        type: string
+      force_rebuild:
+        description: "Ignore embeddings-latest and rebuild from scratch"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "23 10 1 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build-embeddings:
+    runs-on: ubuntu-latest
+    env:
+      POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Cache model downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/open_clip
+          key: embeddings-model-cache-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Resolve release version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version_input="${{ inputs.release_version }}"
+            if [ -z "$version_input" ]; then
+              echo "workflow_dispatch requires release_version"
+              exit 1
+            fi
+            echo "EMBEDDINGS_VERSION=embeddings-$version_input" >> "$GITHUB_ENV"
+          else
+            echo "EMBEDDINGS_VERSION=embeddings-v$(date -u +%Y.%m.%d)" >> "$GITHUB_ENV"
+          fi
+
+      - name: Resolve build mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_rebuild }}" = "true" ]; then
+            echo "FORCE_REBUILD=true" >> "$GITHUB_ENV"
+          else
+            echo "FORCE_REBUILD=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download base embeddings database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/base-db"
+          if [ "${FORCE_REBUILD}" = "true" ]; then
+            echo "Force rebuild requested; skipping base DB download"
+            exit 0
+          fi
+          if gh release download embeddings-latest -p embeddings.db.zip -D "$RUNNER_TEMP/base-db" >/dev/null 2>&1; then
+            unzip -o "$RUNNER_TEMP/base-db/embeddings.db.zip" -d "$RUNNER_TEMP/base-db"
+            test -f "$RUNNER_TEMP/base-db/embeddings.db"
+            echo "BASE_DB=$RUNNER_TEMP/base-db/embeddings.db" >> "$GITHUB_ENV"
+          else
+            echo "No prior embeddings-latest release found; bootstrapping from scratch"
+          fi
+
+      - name: Build embeddings database
+        run: |
+          cmd=(
+            python scripts/build_embeddings_db.py
+            --output-db embeddings.db
+            --image-cache-dir "$RUNNER_TEMP/card-images"
+            --summary-json embeddings-build-summary.json
+            --min-row-count 10000
+          )
+          if [ -n "${BASE_DB:-}" ]; then
+            cmd+=(--base-db "$BASE_DB")
+          fi
+          if [ "${FORCE_REBUILD}" = "true" ]; then
+            cmd+=(--force-rebuild)
+          fi
+          "${cmd[@]}"
+
+      - name: Validate embeddings database
+        run: |
+          test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
+          cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
+          embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
+          test "$cards_count" -ge 10000
+          test "$cards_count" = "$embeddings_count"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE dim <= 0;')" = "0"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE length(vector_blob) != dim * 4;')" = "0"
+          echo "cards_count=$cards_count"
+          echo "embeddings_count=$embeddings_count"
+
+      - name: Zip embeddings database
+        run: zip -j embeddings.db.zip embeddings.db
+
+      - name: Upload build summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: embeddings-build-summary
+          path: embeddings-build-summary.json
+
+      - name: Create versioned embeddings release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$EMBEDDINGS_VERSION" >/dev/null 2>&1 && {
+            echo "Release already exists: $EMBEDDINGS_VERSION"
+            exit 1
+          }
+          gh release create "$EMBEDDINGS_VERSION" embeddings.db.zip \
+            --title "$EMBEDDINGS_VERSION" \
+            --notes "Versioned CardHawk embeddings database release."
+
+      - name: Ensure embeddings alias release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view embeddings-latest >/dev/null 2>&1 || \
+            gh release create embeddings-latest \
+              --title "embeddings-latest" \
+              --notes "Rolling alias release for the latest CardHawk embeddings database."
+
+      - name: Upload embeddings alias asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload embeddings-latest embeddings.db.zip --clobber
+
+      - name: Prune old versioned embeddings releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/prune_embeddings_releases.py --keep 3

@@ -1,0 +1,53 @@
+name: Build Prices DB
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build-prices:
+    runs-on: ubuntu-latest
+    env:
+      POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build prices database
+        run: python scripts/build_prices_db.py --output prices.db --min-row-count 10000
+
+      - name: Validate prices database
+        run: |
+          test "$(sqlite3 prices.db 'PRAGMA integrity_check;')" = "ok"
+          prices_count="$(sqlite3 prices.db 'SELECT COUNT(*) FROM prices;')"
+          test "$prices_count" -ge 10000
+          echo "prices_count=$prices_count"
+
+      - name: Zip prices database
+        run: zip -j prices.db.zip prices.db
+
+      - name: Ensure prices alias release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view prices-latest >/dev/null 2>&1 || \
+            gh release create prices-latest \
+              --title "prices-latest" \
+              --notes "Rolling alias release for the latest CardHawk prices database."
+
+      - name: Upload prices alias asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload prices-latest prices.db.zip --clobber

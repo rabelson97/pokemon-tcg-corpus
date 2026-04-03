@@ -2,7 +2,29 @@
 
 Precomputed ORB feature descriptors for all English Pokemon TCG cards (~20,000 cards), used for local image-based card identification.
 
-This repo now also includes a first-pass model training scaffold in [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md) for building a learned visual embedding from the published corpus images.
+This repo also includes detector tooling in [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md) for preparing and training a card-localization model.
+
+## SQLite Assets For CardHawk
+
+The repo now includes GitHub Actions workflows that publish the SQLite assets consumed by CardHawk:
+
+- `prices-latest` publishes `prices.db.zip`
+- `embeddings-latest` publishes `embeddings.db.zip`
+- versioned `embeddings-v*` releases preserve rollback history for embeddings builds
+
+Relevant entry points:
+
+- [scripts/build_prices_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_prices_db.py)
+- [scripts/build_embeddings_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_embeddings_db.py)
+- [scripts/prune_embeddings_releases.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/prune_embeddings_releases.py)
+- [.github/workflows/prices.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/prices.yml)
+- [.github/workflows/embeddings.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/embeddings.yml)
+
+Workflow prerequisites:
+
+- GitHub Actions secret: `POKEMONTCG_API_KEY`
+- No custom embedding checkpoint is required. The embeddings workflow uses `open_clip` with a public pretrained model and downloads those weights automatically at runtime.
+- The embeddings workflow is incremental by default: it downloads the current `embeddings-latest` asset when available and only computes vectors for missing `card_id` rows unless `force_rebuild` is set.
 
 ## Format
 
@@ -25,9 +47,9 @@ Each release contains `pokemon_tcg_corpus_v{version}.zip` with three files:
 
 See [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md) for:
 
-- preparing image data from a published corpus zip
-- training a MobileNetV3-based embedding model
-- exporting corpus embeddings for ANN lookup
+- detector frame preparation
+- YOLO detector training
+- detector ONNX export
 
 ## License
 
