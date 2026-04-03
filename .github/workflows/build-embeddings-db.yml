@@ -44,23 +44,21 @@ jobs:
           if [ -n "$version_input" ]; then
             resolved_version="embeddings-$version_input"
           else
-            next_version="$(
-              gh release list --repo "${{ github.repository }}" --limit 100 --json tagName |
-              python3 -c '
-import json, re, sys
-tags = [item["tagName"] for item in json.load(sys.stdin)]
-versions = []
-for tag in tags:
-    match = re.fullmatch(r"embeddings-v(\\d+)\\.(\\d+)", tag)
-    if match:
-        versions.append((int(match.group(1)), int(match.group(2))))
-if not versions:
-    print("v1.0")
-else:
-    major, minor = max(versions)
-    print(f"v{major}.{minor + 1}")
-'
+            latest_tag="$(
+              gh release list --repo "${{ github.repository }}" --limit 100 |
+              awk '$3 ~ /^embeddings-v[0-9]+\.[0-9]+$/ { print $3 }' |
+              sed 's/^embeddings-//' |
+              sort -V |
+              tail -n 1
             )"
+            if [ -z "$latest_tag" ]; then
+              next_version="v1.0"
+            else
+              major="${latest_tag#v}"
+              major="${major%%.*}"
+              minor="${latest_tag##*.}"
+              next_version="v${major}.$((minor + 1))"
+            fi
             resolved_version="embeddings-$next_version"
           fi
           echo "EMBEDDINGS_VERSION=$resolved_version" >> "$GITHUB_ENV"
