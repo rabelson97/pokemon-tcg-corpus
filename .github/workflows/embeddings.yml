@@ -53,7 +53,7 @@ jobs:
             fi
             echo "EMBEDDINGS_VERSION=embeddings-$version_input" >> "$GITHUB_ENV"
           else
-            echo "EMBEDDINGS_VERSION=embeddings-v$(date -u +%Y.%m.%d)" >> "$GITHUB_ENV"
+            echo "EMBEDDINGS_VERSION=embeddings-v$(date -u +%Y.%m.%d.%H%M)" >> "$GITHUB_ENV"
           fi
 
       - name: Resolve build mode
@@ -69,16 +69,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$RUNNER_TEMP/base-db"
+          echo "force_rebuild=${FORCE_REBUILD}"
           if [ "${FORCE_REBUILD}" = "true" ]; then
             echo "Force rebuild requested; skipping base DB download"
             exit 0
           fi
-          if gh release download embeddings-latest -p embeddings.db.zip -D "$RUNNER_TEMP/base-db" >/dev/null 2>&1; then
+          if gh release download embeddings-latest -p embeddings.db.zip -D "$RUNNER_TEMP/base-db"; then
             unzip -o "$RUNNER_TEMP/base-db/embeddings.db.zip" -d "$RUNNER_TEMP/base-db"
             test -f "$RUNNER_TEMP/base-db/embeddings.db"
+            ls -lh "$RUNNER_TEMP/base-db"
             echo "BASE_DB=$RUNNER_TEMP/base-db/embeddings.db" >> "$GITHUB_ENV"
+            echo "Base DB ready at $RUNNER_TEMP/base-db/embeddings.db"
           else
             echo "No prior embeddings-latest release found; bootstrapping from scratch"
+            ls -lah "$RUNNER_TEMP/base-db"
           fi
 
       - name: Build embeddings database
