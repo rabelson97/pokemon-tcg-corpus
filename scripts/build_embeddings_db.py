@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import os
 import shutil
@@ -24,6 +25,7 @@ from pokemontcg_api import download_binary, fetch_all_cards, sanitize_card_id
 
 DEFAULT_MODEL_NAME = "ViT-B-32"
 DEFAULT_PRETRAINED = "laion2b_s34b_b79k"
+DB_USER_VERSION = 1
 
 
 @dataclass(frozen=True)
@@ -114,6 +116,7 @@ def init_db(connection: sqlite3.Connection) -> None:
     connection.execute("PRAGMA journal_mode=DELETE;")
     connection.execute("PRAGMA synchronous=NORMAL;")
     connection.execute("PRAGMA foreign_keys=ON;")
+    connection.execute(f"PRAGMA user_version={DB_USER_VERSION};")
     connection.executescript(
         """
         CREATE TABLE IF NOT EXISTS cards (
@@ -135,11 +138,89 @@ def init_db(connection: sqlite3.Connection) -> None:
     )
 
 
-def validate_embeddings_db(db_path: Path, *, min_row_count: int) -> tuple[int, int]:
+def sample_embedding_diagnostics(
+    db_path: Path,
+    *,
+    sample_size: int = 16,
+    print_rows: int = 5,
+) -> dict[str, Any]:
+    with sqlite3.connect(db_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT e.card_id, c.name, e.dim, e.vector_blob
+            FROM embeddings e
+            JOIN cards c ON c.id = e.card_id
+            ORDER BY e.card_id
+            LIMIT ?;
+            """,
+            (sample_size,),
+        ).fetchall()
+
+    diagnostics: list[dict[str, Any]] = []
+    hashes: list[str] = []
+    cosine_samples: list[dict[str, Any]] = []
+    decoded_vectors: list[tuple[str, str, np.ndarray]] = []
+
+    for card_id, name, dim, blob in rows:
+        vector = np.frombuffer(blob, dtype="<f4")
+        vector_hash = hashlib.sha256(blob).hexdigest()
+        decoded_vectors.append((str(card_id), str(name), vector))
+        hashes.append(vector_hash)
+        diagnostics.append(
+            {
+                "card_id": str(card_id),
+                "name": str(name),
+                "dim": int(dim),
+                "blob_len": len(blob),
+                "first8": vector[:8].astype(float).tolist(),
+                "norm": float(np.linalg.norm(vector)),
+                "min": float(np.min(vector)),
+                "max": float(np.max(vector)),
+                "has_nan": bool(np.isnan(vector).any()),
+                "has_inf": bool(np.isinf(vector).any()),
+                "sha256_16": vector_hash[:16],
+            }
+        )
+
+    for left in range(min(4, len(decoded_vectors))):
+        for right in range(left + 1, min(6, len(decoded_vectors))):
+            left_card_id, left_name, left_vector = decoded_vectors[left]
+            right_card_id, right_name, right_vector = decoded_vectors[right]
+            cosine = float(np.dot(left_vector, right_vector))
+            cosine_samples.append(
+                {
+                    "left_card_id": left_card_id,
+                    "left_name": left_name,
+                    "right_card_id": right_card_id,
+                    "right_name": right_name,
+                    "cosine": cosine,
+                }
+            )
+
+    summary = {
+        "sample_count": len(rows),
+        "distinct_hashes": len(set(hashes)),
+        "rows": diagnostics[:print_rows],
+        "cosine_samples": cosine_samples[:8],
+    }
+    print(json.dumps({"embedding_diagnostics": summary}, indent=2))
+    return summary
+
+
+def validate_embeddings_db(
+    db_path: Path,
+    *,
+    min_row_count: int,
+    require_user_version: bool = True,
+) -> tuple[int, int, dict[str, Any]]:
     with sqlite3.connect(db_path) as connection:
         integrity = connection.execute("PRAGMA integrity_check;").fetchone()
         if integrity is None or integrity[0] != "ok":
             raise RuntimeError(f"PRAGMA integrity_check failed: {integrity}")
+
+        user_version = int(connection.execute("PRAGMA user_version;").fetchone()[0])
+        if require_user_version and user_version != DB_USER_VERSION:
+            raise RuntimeError(f"PRAGMA user_version expected {DB_USER_VERSION}, got {user_version}")
 
         card_count = int(connection.execute("SELECT COUNT(*) FROM cards;").fetchone()[0])
         embedding_count = int(connection.execute("SELECT COUNT(*) FROM embeddings;").fetchone()[0])
@@ -160,7 +241,32 @@ def validate_embeddings_db(db_path: Path, *, min_row_count: int) -> tuple[int, i
         if bad_blob > 0:
             raise RuntimeError("Found embeddings rows with invalid vector_blob lengths")
 
-        return card_count, embedding_count
+    diagnostics = sample_embedding_diagnostics(db_path)
+    sample_count = int(diagnostics["sample_count"])
+    distinct_hashes = int(diagnostics["distinct_hashes"])
+    if sample_count > 1 and distinct_hashes < max(2, sample_count // 2):
+        raise RuntimeError(
+            f"Too few distinct sampled vectors: distinct_hashes={distinct_hashes} sample_count={sample_count}"
+        )
+
+    for row in diagnostics["rows"]:
+        norm = float(row["norm"])
+        if not np.isfinite(norm) or norm < 0.5:
+            raise RuntimeError(f"Sampled vector has suspicious norm for {row['card_id']}: {norm}")
+        if row["has_nan"] or row["has_inf"]:
+            raise RuntimeError(f"Sampled vector has NaN/Inf for {row['card_id']}")
+        if int(row["blob_len"]) != int(row["dim"]) * 4:
+            raise RuntimeError(
+                f"Sampled vector has invalid blob_len for {row['card_id']}: {row['blob_len']} vs {row['dim']}*4"
+            )
+
+    suspicious_cosines = [
+        sample for sample in diagnostics["cosine_samples"] if abs(float(sample["cosine"])) > 0.9999
+    ]
+    if len(suspicious_cosines) >= max(2, sample_count // 2):
+        raise RuntimeError(f"Too many suspiciously identical sampled cosine similarities: {suspicious_cosines}")
+
+    return card_count, embedding_count, diagnostics
 
 
 def load_existing_card_ids(db_path: Path) -> set[str]:
@@ -359,8 +465,11 @@ def build_embeddings_db(
 
     if use_base:
         assert base_db is not None
-        validate_embeddings_db(base_db, min_row_count=0)
+        validate_embeddings_db(base_db, min_row_count=0, require_user_version=False)
         copy_base_db(base_db, output_db)
+        with sqlite3.connect(output_db) as connection:
+            init_db(connection)
+            connection.commit()
         existing_ids = load_existing_card_ids(output_db)
         print(f"loaded base db {base_db} with existing_cards={len(existing_ids)}")
     else:
@@ -415,6 +524,7 @@ def build_embeddings_db(
                 "duration_seconds": round(time.perf_counter() - started, 3),
                 "cards_count": counts[0],
                 "embeddings_count": counts[1],
+                "user_version": DB_USER_VERSION,
                 "processed_cards": len(ready_records),
                 "inserted_embeddings": inserted_count,
                 "skipped_cards": len(failures),
@@ -422,6 +532,7 @@ def build_embeddings_db(
                 "used_base_db": use_base,
                 "base_db": str(base_db) if base_db else None,
                 "output_db": str(output_db),
+                "embedding_diagnostics": counts[2],
             }
         )
     finally:
