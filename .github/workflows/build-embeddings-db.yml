@@ -36,6 +36,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Validate promoted embedder
+        run: |
+          python training/validate_production_embedder.py \
+            --model models/card_embedder.onnx \
+            --manifest models/card_embedder.manifest.json
+
       - name: Resolve release version
         env:
           GH_TOKEN: ${{ github.token }}
