@@ -157,7 +157,7 @@ def retrieve_metrics(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Evaluate a candidate CardHawk embedder against the app contract.")
+    parser = argparse.ArgumentParser(description="Evaluate a candidate embedder against the repository contract.")
     parser.add_argument("--manifest", default="training/data/full/manifest.jsonl")
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", required=True)

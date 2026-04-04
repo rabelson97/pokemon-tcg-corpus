@@ -7,7 +7,7 @@ This directory contains two distinct tracks:
 
 The retrieval embedder is the production-critical asset used by both:
 
-- CardHawk runtime inference
+- repository inference and downstream consumers of the exported ONNX model
 - the `embeddings.db` release pipeline
 
 Because of that, a candidate model must never be copied directly into `models/` without evaluation and promotion.
@@ -30,7 +30,7 @@ python3 training/export_card_embedder_onnx.py \
   --output training/exports/card_embedder_candidate.onnx
 ```
 
-Evaluate the candidate against the app contract:
+Evaluate the candidate against the repository contract:
 
 ```bash
 python3 training/evaluate_card_embedder.py \
@@ -66,7 +66,7 @@ This `training/` directory also includes detector work:
 
 2. `train_detector.py`
 - Fine-tunes a YOLO detector on a Roboflow-style YOLO export
-- Intended for the "where is the card?" stage of the app pipeline
+- Intended for the "where is the card?" stage of a card-recognition pipeline
 - Produces `best.pt` / `last.pt` weights in `training/detector_runs/...`
 
 3. `export_detector_onnx.py`
@@ -146,7 +146,7 @@ python3 training/export_detector_onnx.py \
 ## Notes
 
 - This is intentionally a first-pass detector stack, not a finished production recognizer.
-- The app side should eventually use:
+- A complete consumer pipeline would typically use:
   - detector/tracker
   - embedding lookup against the published SQLite corpus
   - ANN lookup against exported embeddings

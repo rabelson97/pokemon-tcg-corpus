@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate that the production CardHawk embedder is explicitly promoted and hash-locked.")
+    parser = argparse.ArgumentParser(description="Validate that the production embedder is explicitly promoted and hash-locked.")
     parser.add_argument("--model", default="models/card_embedder.onnx")
     parser.add_argument("--manifest", default="models/card_embedder.manifest.json")
     args = parser.parse_args()

@@ -4,9 +4,9 @@ Precomputed ORB feature descriptors for all English Pokemon TCG cards (~20,000 c
 
 This repo also includes detector tooling in [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md) for preparing and training a card-localization model.
 
-## SQLite Assets For CardHawk
+## SQLite Assets
 
-The repo now includes GitHub Actions workflows that publish the SQLite assets consumed by CardHawk:
+The repo includes GitHub Actions workflows that publish standalone SQLite assets built from this corpus:
 
 - `prices-latest` publishes `prices.db.zip`
 - `embeddings-latest` publishes `embeddings.db.zip`
@@ -23,7 +23,7 @@ Relevant entry points:
 Workflow prerequisites:
 
 - GitHub Actions secret: `POKEMONTCG_API_KEY`
-- The embeddings workflow uses the exact CardHawk runtime ONNX embedder from [card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx) and mirrors the app preprocessing contract.
+- The embeddings workflow uses the promoted ONNX embedder at [models/card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx) and the same preprocessing used by the repository's evaluation pipeline.
 - The embeddings workflow is incremental by default: it downloads the current `embeddings-latest` asset when available and only computes vectors for missing `card_id` rows unless `force_rebuild` is set.
 - The embeddings workflow now requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
 

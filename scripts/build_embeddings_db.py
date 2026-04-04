@@ -522,7 +522,7 @@ def main() -> int:
     parser.add_argument("--base-db", help="Optional existing embeddings.db used as the incremental starting point")
     parser.add_argument("--output-db", "--output", dest="output_db", default="embeddings.db")
     parser.add_argument("--force-rebuild", action="store_true", help="Ignore --base-db and rebuild from scratch")
-    parser.add_argument("--model-path", default=str(DEFAULT_MODEL_PATH), help="Path to CardHawk card_embedder.onnx")
+    parser.add_argument("--model-path", default=str(DEFAULT_MODEL_PATH), help="Path to the ONNX card embedder model")
     parser.add_argument("--image-cache-dir", help="Persistent cache directory for downloaded card art")
     parser.add_argument("--summary-json", help="Optional JSON build summary output path")
     parser.add_argument("--download-workers", type=int, default=16)
