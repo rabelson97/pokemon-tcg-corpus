@@ -1,8 +1,62 @@
-# Detector Pipeline
+# Training Pipelines
 
-The custom embedding training pipeline has been removed. Card embeddings are now built directly from a public pretrained `open_clip` model in [build_embeddings_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_embeddings_db.py).
+This directory contains two distinct tracks:
 
-This `training/` directory is now only for detector work:
+1. Retrieval embedder training and promotion for `models/card_embedder.onnx`
+2. Detector training and ONNX export for card localization
+
+The retrieval embedder is the production-critical asset used by both:
+
+- CardHawk runtime inference
+- the `embeddings.db` release pipeline
+
+Because of that, a candidate model must never be copied directly into `models/` without evaluation and promotion.
+
+## Retrieval embedder workflow
+
+Train a retrieval checkpoint:
+
+```bash
+python3 training/train_retrieval.py \
+  --manifest training/data/full/manifest.jsonl \
+  --output training/checkpoints/card_retrieval_candidate.pt
+```
+
+Export a candidate ONNX model:
+
+```bash
+python3 training/export_card_embedder_onnx.py \
+  --checkpoint training/checkpoints/card_retrieval_candidate.pt \
+  --output training/exports/card_embedder_candidate.onnx
+```
+
+Evaluate the candidate against the app contract:
+
+```bash
+python3 training/evaluate_card_embedder.py \
+  --manifest training/data/full/manifest.jsonl \
+  --model training/exports/card_embedder_candidate.onnx \
+  --output training/exports/card_embedder_candidate.eval.json
+```
+
+Promote only if evaluation passes:
+
+```bash
+python3 training/promote_card_embedder.py \
+  --candidate-model training/exports/card_embedder_candidate.onnx \
+  --evaluation-json training/exports/card_embedder_candidate.eval.json
+```
+
+Promotion writes:
+
+- `models/card_embedder.onnx`
+- `models/card_embedder.manifest.json`
+
+The release workflow validates that manifest before building `embeddings.db.zip`.
+
+## Detector workflow
+
+This `training/` directory also includes detector work:
 
 1. `prepare_detector_frames.py`
 - Extracts frames from a local stream recording with `ffmpeg`
