@@ -1,0 +1,36 @@
+{
+  "model_name": "cardhawk:card_embedder.onnx",
+  "status": "production-ready",
+  "promoted_at": "2026-04-04T01:16:58.669807+00:00",
+  "model_sha256": "d60d833be986720dc2e6be0f5759481635d4dd9667dc774e0e66f36fde58c7c9",
+  "candidate_source": "/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/exports/card_embedder_candidate.onnx",
+  "evaluation_source": "/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/exports/card_embedder_candidate.eval.json",
+  "embedding_dim": 256,
+  "image_size": 224,
+  "crop_inset_ratio": 0.08,
+  "normalization": {
+    "mean": [
+      0.48500001430511475,
+      0.4560000002384186,
+      0.4059999883174896
+    ],
+    "std": [
+      0.2290000021457672,
+      0.2240000069141388,
+      0.22499999403953552
+    ]
+  },
+  "metrics": {
+    "exact_recall_at_1": 0.9995044598612488,
+    "exact_recall_at_5": 1.0,
+    "stream_recall_at_1": 0.9975222993062438,
+    "stream_recall_at_5": 1.0,
+    "stream_mean_top1_score": 0.9295440316200256,
+    "stream_median_top1_score": 0.9344688653945923
+  },
+  "thresholds": {
+    "min_exact_recall_at_1": 0.99,
+    "min_stream_recall_at_1": 0.2,
+    "min_stream_recall_at_5": 0.6
+  }
+}
