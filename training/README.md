@@ -148,6 +148,8 @@ python3 training/export_detector_onnx.py \
 - This is intentionally a first-pass detector stack, not a finished production recognizer.
 - A complete consumer pipeline would typically use:
   - detector/tracker
-  - embedding lookup against the published SQLite corpus
-  - ANN lookup against exported embeddings
-  - OCR as reranking/disambiguation
+  - ONNX embedder inference on the detected crop
+  - nearest-neighbor retrieval against the published SQLite embeddings corpus
+  - temporal stabilization
+  - local price lookup
+- CardHawk's current shipped path is embedding-first. Treat OCR as an optional experiment, not the primary runtime identifier.

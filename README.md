@@ -1,8 +1,26 @@
 # Pokemon TCG Corpus
 
-Precomputed ORB feature descriptors for all English Pokemon TCG cards (~20,000 cards), used for local image-based card identification.
+Release source for CardHawk's Pokemon card retrieval corpus and local price database.
 
-This repo also includes detector tooling in [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md) for preparing and training a card-localization model.
+The current repository outputs are:
+
+- `embeddings.db.zip`: card metadata plus normalized embedding vectors built with the promoted ONNX embedder
+- `prices.db.zip`: local card market-price snapshot keyed by Pokemon card id
+- training tooling for the retrieval embedder and a detector-localization model
+
+This repo is upstream data/model infrastructure. Code is the source of truth for the live app runtime, but the current CardHawk consumer path is:
+
+`detect -> embed -> retrieve -> stabilize -> price -> publish`
+
+In practice that means the app:
+
+- bundles `card_detector.onnx` and `card_embedder.onnx`
+- downloads or syncs `embeddings.db` and `prices.db`
+- computes a card embedding from the detected crop
+- retrieves nearest-neighbor candidates from the local embeddings database
+- applies temporal stabilization before showing price data from the local prices database
+
+This repo also includes detector tooling in [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md).
 
 ## SQLite Assets
 
@@ -18,31 +36,59 @@ Relevant entry points:
 - [scripts/build_embeddings_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_embeddings_db.py)
 - [scripts/prune_embeddings_releases.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/prune_embeddings_releases.py)
 - [.github/workflows/prices.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/prices.yml)
-- [.github/workflows/embeddings.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/embeddings.yml)
+- [.github/workflows/build-embeddings-db.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/build-embeddings-db.yml)
 
 Workflow prerequisites:
 
 - GitHub Actions secret: `POKEMONTCG_API_KEY`
-- The embeddings workflow uses the promoted ONNX embedder at [models/card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx) and the same preprocessing used by the repository's evaluation pipeline.
+- The embeddings workflow uses the promoted ONNX embedder at [models/card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx).
+- The embeddings build applies the same crop inset, resize, and normalization contract that downstream CardHawk runtime code expects from this embedder family.
 - The embeddings workflow is incremental by default: it downloads the current `embeddings-latest` asset when available and only computes vectors for missing `card_id` rows unless `force_rebuild` is set.
 - The embeddings workflow now requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
 
-## Format
+## Release Format
 
-Each release contains `pokemon_tcg_corpus_v{version}.zip` with three files:
+### `embeddings.db.zip`
 
-- **`index.json`** — Card metadata (id, name, set, rarity, searchable OCR text) plus descriptor byte offsets
-- **`descriptors.bin`** — Concatenated raw ORB descriptor bytes (200 features × 32 bytes per card)
-- **`coarse_index.bin`** — One compact fixed-length coarse signature per card for fast full-corpus shortlist retrieval
+SQLite database with:
+
+- `cards`
+  - `id`
+  - `name`
+  - `set_code`
+  - `set_name`
+  - `card_number`
+  - `rarity`
+- `embeddings`
+  - `card_id`
+  - `model_name`
+  - `dim`
+  - `vector_blob`
+
+Current build contract:
+
+- one normalized float32 embedding vector per card
+- embedding dimension: `256`
+- model name written by the builder: `cardhawk:card_embedder.onnx`
+- incremental rebuild support from an existing compatible `embeddings.db`
+
+### `prices.db.zip`
+
+SQLite database with:
+
+- `prices`
+  - `card_id`
+  - `market_price`
+  - `updated_at`
 
 ## Details
 
 - Source: [pokemontcg.io](https://pokemontcg.io) (English cards only)
-- ORB features: 200 per card, HARRIS_SCORE, 8-level pyramid
-- Image size at descriptor extraction: 480×680 grayscale
-- Descriptor format: `uint8`, shape `(descriptorCount, 32)`, stored at `descriptorOffset` bytes into `descriptors.bin`
-- Coarse index format: `uint8`, one 32-byte signature per card, aligned to card order in `index.json`
-- Search text includes the card name plus lightweight textual metadata such as set name, attacks, rules, and flavor text for OCR-assisted reranking
+- Retrieval source image: canonical Pokemon card art from `images.large` with fallback to `images.small`
+- Embedder preprocessing: crop inset ratio `0.08`, resize to `224x224`, ImageNet-style mean/std normalization
+- Embedding storage: little-endian float32 blob, one row per `card_id`
+- Prices source: `tcgplayer.prices` market data from pokemontcg.io, reduced to one local `market_price` per card
+- The app currently uses local retrieval and local price lookup after a stable match. This repo is not the place to document app-only thresholds or UI behavior.
 
 ## Training
 
@@ -52,6 +98,12 @@ See [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/tra
 - detector frame preparation
 - YOLO detector training
 - detector ONNX export
+
+## Consumer Notes
+
+- CardHawk currently uses embedding retrieval as the primary identification path.
+- OCR may still be useful for offline experiments or future disambiguation work, but it is not the current primary runtime identifier.
+- If the app runtime contract changes, update this README in the same change so this repo does not drift into planning-doc fiction.
 
 ## License
 
