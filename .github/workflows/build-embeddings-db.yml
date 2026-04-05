@@ -14,7 +14,7 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "23 10 1 * *"
+    - cron: "23 10 * * *"
 
 permissions:
   contents: write
@@ -134,16 +134,42 @@ jobs:
           echo "cards_count=$cards_count"
           echo "embeddings_count=$embeddings_count"
 
-      - name: Zip embeddings database
-        run: zip -j embeddings.db.zip embeddings.db
-
       - name: Upload build summary artifact
         uses: actions/upload-artifact@v4
         with:
           name: embeddings-build-summary
           path: embeddings-build-summary.json
 
+      - name: Resolve publish mode
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          with open("embeddings-build-summary.json", encoding="utf-8") as handle:
+              summary = json.load(handle)
+
+          inserted = int(summary.get("inserted_embeddings", 0))
+          force_rebuild = os.environ.get("FORCE_REBUILD") == "true"
+          publish_release = force_rebuild or inserted > 0
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"INSERTED_EMBEDDINGS={inserted}\n")
+              env_file.write(f"PUBLISH_RELEASE={'true' if publish_release else 'false'}\n")
+
+          print(
+              f"inserted_embeddings={inserted} "
+              f"force_rebuild={str(force_rebuild).lower()} "
+              f"publish_release={str(publish_release).lower()}"
+          )
+          PY
+
+      - name: Zip embeddings database
+        if: env.PUBLISH_RELEASE == 'true'
+        run: zip -j embeddings.db.zip embeddings.db
+
       - name: Create versioned embeddings release
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -156,6 +182,7 @@ jobs:
             --notes "Versioned CardHawk embeddings database release."
 
       - name: Ensure embeddings alias release exists
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -165,11 +192,13 @@ jobs:
               --notes "Rolling alias release for the latest CardHawk embeddings database."
 
       - name: Upload embeddings alias asset
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload embeddings-latest embeddings.db.zip --clobber
 
       - name: Prune old versioned embeddings releases
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/prune_embeddings_releases.py --keep 3
