@@ -50,7 +50,8 @@ Workflow notes:
 - The embeddings workflow requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
 - TCGdex card payloads expose an asset base URL in `image`; the builders normalize that to the final localized binary art path at `.../high.webp`.
 - Some upstream cards still have no localized art URL. Manifest and embeddings builds skip those rows explicitly and report the skipped counts and reasons by locale.
-- The prices workflow writes `prices-build-summary.json` with a per-locale source coverage audit and a deterministic content hash, then skips release upload when that hash matches the current `prices-latest` asset.
+- The prices workflow writes `prices-build-summary.json` with a per-locale source coverage audit, provider transport diagnostics, and a deterministic content hash, then skips release upload when that hash matches the current `prices-latest` asset.
+- The prices workflow can use the existing `POKEMONTCG_API_KEY` secret for higher-rate US price fetches while keeping the published SQLite contract unchanged.
 
 ## Release Format
 
@@ -111,9 +112,10 @@ SQLite database with:
 - Retrieval source image: canonical localized Pokemon card art from normalized TCGdex asset URLs ending in `/high.webp`
 - Embedder preprocessing: crop inset ratio `0.08`, resize to `224x224`, ImageNet-style mean/std normalization
 - Embedding storage: little-endian float32 blob, one row per `card_id`
-- Prices source: `pricing.tcgplayer` uses the current TCGdex variant shape (`normal` / `reverse` / `holo`) and `lowPrice` / `midPrice` / `highPrice` / `marketPrice` fields when present, with backward-compatible fallbacks for older payload variants; `pricing.cardmarket` remains the EU fallback/reference row
+- Prices source: US `tcgplayer` rows are selected from PokemonTCG.io's English card feed when the matched card's `tcgplayer.updatedAt` is present and within the builder freshness window; `pricing.cardmarket` from TCGdex remains the EU fallback/reference row
 - Price row contract: exactly one `is_primary = 1` row for each `card_id` present in `prices`, with `cardmarket` promoted to primary when `tcgplayer` is missing
 - Prices build audit: per locale, the builder reports cards with `tcgplayer`, cards with `cardmarket`, cards with both, cards with neither, and which source ended up primary
+- Prices build metadata: `prices-build-summary.json` also records provider transport counts plus PokemonTCG.io fetch/match/staleness diagnostics so release audits can distinguish source selection from database shape
 - The app currently uses local retrieval and local price lookup after a stable match. This repo is not the place to document app-only thresholds or UI behavior.
 
 ## Training

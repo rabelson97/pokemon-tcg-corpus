@@ -24,6 +24,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build prices database
+        env:
+          POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
         run: |
           python scripts/build_prices_db.py \
             --output prices.db \
