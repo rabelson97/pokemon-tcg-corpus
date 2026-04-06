@@ -11,8 +11,6 @@ permissions:
 jobs:
   build-prices:
     runs-on: ubuntu-latest
-    env:
-      POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -26,14 +24,15 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build prices database
-        run: python scripts/build_prices_db.py --output prices.db --min-row-count 10000
+        run: python scripts/build_prices_db.py --output prices.db --locales en,ja,fr --min-row-count 10000
 
       - name: Validate prices database
         run: |
           test "$(sqlite3 prices.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 prices.db 'PRAGMA user_version;')" = "1"
+          test "$(sqlite3 prices.db 'PRAGMA user_version;')" = "2"
           prices_count="$(sqlite3 prices.db 'SELECT COUNT(*) FROM prices;')"
           test "$prices_count" -ge 10000
+          test "$(sqlite3 prices.db 'SELECT COUNT(*) FROM (SELECT card_id, SUM(is_primary) AS primary_rows FROM prices GROUP BY card_id) WHERE primary_rows != 1;')" = "0"
           echo "prices_count=$prices_count"
 
       - name: Zip prices database

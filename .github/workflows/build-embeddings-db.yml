@@ -8,13 +8,12 @@ on:
         description: "Optional override such as v2.0. Leave blank to auto-bump the next embeddings-vX.Y release."
         required: false
         type: string
-      force_rebuild:
-        description: "Ignore embeddings-latest and rebuild from scratch"
-        required: false
-        default: false
-        type: boolean
   schedule:
-    - cron: "23 10 * * *"
+    - cron: "23 10 1 * *"
+
+concurrency:
+  group: build-embeddings-db
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -22,8 +21,6 @@ permissions:
 jobs:
   build-embeddings:
     runs-on: ubuntu-latest
-    env:
-      POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +29,16 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements.txt
+
+      - name: Restore embeddings image cache
+        id: embeddings-image-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/card-images
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja-fr
+          restore-keys: |
+            embeddings-card-images-${{ runner.os }}-en-ja-fr-
+            embeddings-card-images-${{ runner.os }}-
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -70,35 +77,6 @@ jobs:
           echo "EMBEDDINGS_VERSION=$resolved_version" >> "$GITHUB_ENV"
           echo "Resolved embeddings release: $resolved_version"
 
-      - name: Resolve build mode
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_rebuild }}" = "true" ]; then
-            echo "FORCE_REBUILD=true" >> "$GITHUB_ENV"
-          else
-            echo "FORCE_REBUILD=false" >> "$GITHUB_ENV"
-          fi
-
-      - name: Download base embeddings database
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p "$RUNNER_TEMP/base-db"
-          echo "force_rebuild=${FORCE_REBUILD}"
-          if [ "${FORCE_REBUILD}" = "true" ]; then
-            echo "Force rebuild requested; skipping base DB download"
-            exit 0
-          fi
-          if gh release download embeddings-latest -p embeddings.db.zip -D "$RUNNER_TEMP/base-db"; then
-            unzip -o "$RUNNER_TEMP/base-db/embeddings.db.zip" -d "$RUNNER_TEMP/base-db"
-            test -f "$RUNNER_TEMP/base-db/embeddings.db"
-            ls -lh "$RUNNER_TEMP/base-db"
-            echo "BASE_DB=$RUNNER_TEMP/base-db/embeddings.db" >> "$GITHUB_ENV"
-            echo "Base DB ready at $RUNNER_TEMP/base-db/embeddings.db"
-          else
-            echo "No prior embeddings-latest release found; bootstrapping from scratch"
-            ls -lah "$RUNNER_TEMP/base-db"
-          fi
-
       - name: Build embeddings database
         run: |
           cmd=(
@@ -107,24 +85,20 @@ jobs:
             --model-path models/card_embedder.onnx
             --image-cache-dir "$RUNNER_TEMP/card-images"
             --summary-json embeddings-build-summary.json
+            --locales en,ja,fr
             --min-row-count 10000
           )
-          if [ -n "${BASE_DB:-}" ]; then
-            cmd+=(--base-db "$BASE_DB")
-          fi
-          if [ "${FORCE_REBUILD}" = "true" ]; then
-            cmd+=(--force-rebuild)
-          fi
           "${cmd[@]}"
 
       - name: Validate embeddings database
         run: |
           test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "1"
+          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "2"
           cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
           test "$cards_count" -ge 10000
           test "$cards_count" = "$embeddings_count"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM card_equivalents;')" = "$cards_count"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(DISTINCT dim) FROM embeddings;')" = "1"
           test "$(sqlite3 embeddings.db 'SELECT MIN(dim) FROM embeddings;')" = "256"
           test "$(sqlite3 embeddings.db 'SELECT MAX(dim) FROM embeddings;')" = "256"
@@ -133,6 +107,13 @@ jobs:
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM (SELECT model_name, dim FROM embeddings GROUP BY model_name, dim);')" = "1"
           echo "cards_count=$cards_count"
           echo "embeddings_count=$embeddings_count"
+
+      - name: Save embeddings image cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/card-images
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja-fr-${{ github.run_id }}
 
       - name: Upload build summary artifact
         uses: actions/upload-artifact@v4
@@ -150,8 +131,7 @@ jobs:
               summary = json.load(handle)
 
           inserted = int(summary.get("inserted_embeddings", 0))
-          force_rebuild = os.environ.get("FORCE_REBUILD") == "true"
-          publish_release = force_rebuild or inserted > 0
+          publish_release = inserted > 0
 
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
               env_file.write(f"INSERTED_EMBEDDINGS={inserted}\n")
@@ -159,7 +139,6 @@ jobs:
 
           print(
               f"inserted_embeddings={inserted} "
-              f"force_rebuild={str(force_rebuild).lower()} "
               f"publish_release={str(publish_release).lower()}"
           )
           PY
