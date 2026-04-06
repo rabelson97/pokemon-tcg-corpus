@@ -24,7 +24,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build prices database
-        run: python scripts/build_prices_db.py --output prices.db --locales en,ja,fr --min-row-count 10000
+        run: |
+          python scripts/build_prices_db.py \
+            --output prices.db \
+            --summary-json prices-build-summary.json \
+            --locales en,ja,fr \
+            --min-row-count 10000
 
       - name: Validate prices database
         run: |
@@ -35,10 +40,75 @@ jobs:
           test "$(sqlite3 prices.db 'SELECT COUNT(*) FROM (SELECT card_id, SUM(is_primary) AS primary_rows FROM prices GROUP BY card_id) WHERE primary_rows != 1;')" = "0"
           echo "prices_count=$prices_count"
 
+      - name: Upload build summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prices-build-summary
+          path: prices-build-summary.json
+
+      - name: Download current published prices database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p existing-release
+          gh release view prices-latest >/dev/null 2>&1 || exit 0
+          gh release download prices-latest --pattern prices.db.zip --dir existing-release || exit 0
+          [ -f existing-release/prices.db.zip ] || exit 0
+          unzip -jo existing-release/prices.db.zip -d existing-release
+
+      - name: Resolve publish mode
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          with open("prices-build-summary.json", encoding="utf-8") as handle:
+              built_summary = json.load(handle)
+
+          built_hash = str(built_summary["prices_content_sha256"])
+          existing_summary_path = Path("existing-release/prices-current-summary.json")
+          existing_db_path = Path("existing-release/prices.db")
+          existing_hash = ""
+          if existing_db_path.exists():
+              import subprocess
+              subprocess.run(
+                  [
+                      "python",
+                      "scripts/build_prices_db.py",
+                      "--inspect-db",
+                      str(existing_db_path),
+                      "--summary-json",
+                      str(existing_summary_path),
+                      "--min-row-count",
+                      "1",
+                  ],
+                  check=True,
+              )
+              with existing_summary_path.open(encoding="utf-8") as handle:
+                  existing_summary = json.load(handle)
+              existing_hash = str(existing_summary["prices_content_sha256"])
+
+          publish_release = built_hash != existing_hash
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"PRICES_CONTENT_SHA256={built_hash}\n")
+              env_file.write(f"EXISTING_PRICES_CONTENT_SHA256={existing_hash}\n")
+              env_file.write(f"PUBLISH_RELEASE={'true' if publish_release else 'false'}\n")
+
+          print(
+              f"built_prices_hash={built_hash} "
+              f"existing_prices_hash={existing_hash or 'missing'} "
+              f"publish_release={str(publish_release).lower()}"
+          )
+          PY
+
       - name: Zip prices database
+        if: env.PUBLISH_RELEASE == 'true'
         run: zip -j prices.db.zip prices.db
 
       - name: Ensure prices alias release exists
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -48,6 +118,7 @@ jobs:
               --notes "Rolling alias release for the latest CardHawk prices database."
 
       - name: Upload prices alias asset
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload prices-latest prices.db.zip --clobber

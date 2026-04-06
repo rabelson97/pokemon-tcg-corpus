@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -14,6 +15,12 @@ from torch.utils.data import Dataset
 from torchvision import models, transforms
 from torchvision.transforms import InterpolationMode
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from embedder_contract import CropInset
+
 
 @dataclass(frozen=True)
 class ManifestRecord:
@@ -23,6 +30,10 @@ class ManifestRecord:
     number: str | None
     image_path: str
     image_url: str
+    locale: str | None = None
+    upstream_id: str | None = None
+    set_id: str | None = None
+    equivalence_key: str | None = None
 
 
 def load_manifest(path: str | Path) -> list[ManifestRecord]:
@@ -40,6 +51,10 @@ def load_manifest(path: str | Path) -> list[ManifestRecord]:
                     number=row.get("number"),
                     image_path=row["image_path"],
                     image_url=row["image_url"],
+                    locale=row.get("locale"),
+                    upstream_id=row.get("upstream_id"),
+                    set_id=row.get("set_id"),
+                    equivalence_key=row.get("equivalence_key"),
                 )
             )
     return records
@@ -50,28 +65,24 @@ def split_records(
     val_fraction: float,
     seed: int,
 ) -> tuple[list[ManifestRecord], list[ManifestRecord]]:
-    shuffled = list(records)
-    random.Random(seed).shuffle(shuffled)
-    val_count = max(1, int(len(shuffled) * val_fraction))
-    return shuffled[val_count:], shuffled[:val_count]
+    by_locale: dict[str, list[ManifestRecord]] = {}
+    for record in records:
+        locale = (record.locale or "unknown").strip() or "unknown"
+        by_locale.setdefault(locale, []).append(record)
 
+    rng = random.Random(seed)
+    train_records: list[ManifestRecord] = []
+    val_records: list[ManifestRecord] = []
+    for locale in sorted(by_locale):
+        locale_records = list(by_locale[locale])
+        rng.shuffle(locale_records)
+        val_count = max(1, int(len(locale_records) * val_fraction))
+        val_records.extend(locale_records[:val_count])
+        train_records.extend(locale_records[val_count:])
 
-def build_train_transform(image_size: int) -> transforms.Compose:
-    return transforms.Compose(
-        [
-            transforms.Resize((image_size, image_size)),
-            transforms.ColorJitter(brightness=0.25, contrast=0.2, saturation=0.2, hue=0.04),
-            transforms.RandomAffine(
-                degrees=4,
-                translate=(0.04, 0.04),
-                scale=(0.95, 1.05),
-                shear=2,
-            ),
-            transforms.RandomPerspective(distortion_scale=0.08, p=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-        ]
-    )
+    rng.shuffle(train_records)
+    rng.shuffle(val_records)
+    return train_records, val_records
 
 
 class RandomStreamOverlay:
@@ -99,6 +110,7 @@ class RandomStreamOverlay:
 def build_stream_train_transform(image_size: int) -> transforms.Compose:
     return transforms.Compose(
         [
+            CropInset(),
             transforms.Resize((image_size, image_size), interpolation=InterpolationMode.BICUBIC),
             transforms.RandomApply([RandomStreamOverlay()], p=0.75),
             transforms.ColorJitter(brightness=0.35, contrast=0.3, saturation=0.25, hue=0.06),
@@ -121,7 +133,8 @@ def build_stream_train_transform(image_size: int) -> transforms.Compose:
 def build_eval_transform(image_size: int) -> transforms.Compose:
     return transforms.Compose(
         [
-            transforms.Resize((image_size, image_size)),
+            CropInset(),
+            transforms.Resize((image_size, image_size), interpolation=InterpolationMode.BILINEAR),
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         ]
@@ -196,3 +209,11 @@ class CardEmbeddingModel(nn.Module):
 def create_label_map(records: Iterable[ManifestRecord]) -> dict[str, int]:
     ids = sorted({record.card_id for record in records})
     return {card_id: index for index, card_id in enumerate(ids)}
+
+
+def count_records_by_locale(records: Iterable[ManifestRecord]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        locale = (record.locale or "unknown").strip() or "unknown"
+        counts[locale] = counts.get(locale, 0) + 1
+    return counts

@@ -15,6 +15,7 @@ from common import (
     TwoViewCardDataset,
     build_eval_transform,
     build_stream_train_transform,
+    count_records_by_locale,
     create_label_map,
     load_manifest,
     split_records,
@@ -88,6 +89,19 @@ def main() -> int:
     records = load_manifest(args.manifest)
     train_records, val_records = split_records(records, val_fraction=args.val_fraction, seed=args.seed)
     label_map = create_label_map(records)
+    print(
+        json.dumps(
+            {
+                "manifest_counts": count_records_by_locale(records),
+                "train_counts": count_records_by_locale(train_records),
+                "validation_counts": count_records_by_locale(val_records),
+                "num_cards": len(records),
+                "num_train": len(train_records),
+                "num_validation": len(val_records),
+            },
+            indent=2,
+        )
+    )
 
     train_loader = DataLoader(
         TwoViewCardDataset(train_records, build_stream_train_transform(args.image_size)),
@@ -170,6 +184,9 @@ def main() -> int:
                 "num_cards": len(records),
                 "num_classes": len(label_map),
                 "training_mode": "contrastive",
+                "manifest_counts": count_records_by_locale(records),
+                "train_counts": count_records_by_locale(train_records),
+                "validation_counts": count_records_by_locale(val_records),
             },
             indent=2,
         ),

@@ -5,23 +5,20 @@ import argparse
 import hashlib
 import json
 import random
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
-from common import ManifestRecord, load_manifest, split_records
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-
-EXPECTED_DIM = 256
-IMAGE_SIZE = 224
-CROP_INSET_RATIO = 0.08
-MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-
+from embedder_contract import CROP_INSET_RATIO, EXPECTED_DIM, IMAGE_SIZE, MEAN, STD, preprocess_image
+from common import ManifestRecord, count_records_by_locale, load_manifest, split_records
 
 @dataclass
 class RetrievalMetrics:
@@ -33,24 +30,8 @@ class RetrievalMetrics:
     failure_examples: list[dict[str, object]]
 
 
-def crop_inset(image: Image.Image) -> Image.Image:
-    width, height = image.size
-    inset_x = int(width * CROP_INSET_RATIO)
-    inset_y = int(height * CROP_INSET_RATIO)
-    left = min(inset_x, max(0, width - 1))
-    top = min(inset_y, max(0, height - 1))
-    right = max(left + 1, width - inset_x)
-    bottom = max(top + 1, height - inset_y)
-    return image.crop((left, top, right, bottom))
-
-
 def preprocess(image: Image.Image) -> np.ndarray:
-    image = crop_inset(image.convert("RGB"))
-    image = image.resize((IMAGE_SIZE, IMAGE_SIZE), resample=Image.Resampling.BILINEAR)
-    array = np.asarray(image, dtype=np.float32) / 255.0
-    normalized = (array - MEAN) / STD
-    chw = np.transpose(normalized, (2, 0, 1))
-    return np.expand_dims(chw.astype(np.float32, copy=False), axis=0)
+    return preprocess_image(image, image_size=IMAGE_SIZE)
 
 
 def make_stream_like(image: Image.Image, rng: random.Random) -> Image.Image:
@@ -156,6 +137,37 @@ def retrieve_metrics(
     )
 
 
+def metrics_by_locale(
+    query_vectors: np.ndarray,
+    query_records: list[ManifestRecord],
+    reference_vectors: np.ndarray,
+    reference_records: list[ManifestRecord],
+    *,
+    top_k: int = 5,
+) -> dict[str, dict[str, float | int]]:
+    result: dict[str, dict[str, float | int]] = {}
+    locales = sorted({(record.locale or "unknown").strip() or "unknown" for record in query_records})
+    for locale in locales:
+        indices = [index for index, record in enumerate(query_records) if (record.locale or "unknown").strip() == locale]
+        locale_query_vectors = query_vectors[indices]
+        locale_query_records = [query_records[index] for index in indices]
+        metrics = retrieve_metrics(
+            locale_query_vectors,
+            locale_query_records,
+            reference_vectors,
+            reference_records,
+            top_k=top_k,
+        )
+        result[locale] = {
+            "sample_count": metrics.sample_count,
+            "recall_at_1": metrics.recall_at_1,
+            "recall_at_5": metrics.recall_at_5,
+            "mean_top1_score": metrics.mean_top1_score,
+            "median_top1_score": metrics.median_top1_score,
+        }
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate a candidate embedder against the repository contract.")
     parser.add_argument("--manifest", default="training/data/full/manifest.jsonl")
@@ -204,10 +216,14 @@ def main() -> int:
         },
         "val_fraction": args.val_fraction,
         "seed": args.seed,
+        "manifest_counts": count_records_by_locale(records),
+        "validation_counts": count_records_by_locale(val_records),
         "reference_count": len(val_records),
         "stream_query_count": max(1, args.stream_query_count),
         "exact_metrics": asdict(exact_metrics),
         "stream_metrics": asdict(stream_metrics),
+        "exact_metrics_by_locale": metrics_by_locale(exact_vectors, val_records, reference_vectors, val_records),
+        "stream_metrics_by_locale": metrics_by_locale(stream_vectors, stream_records, reference_vectors, val_records),
     }
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

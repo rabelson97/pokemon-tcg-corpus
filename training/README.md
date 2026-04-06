@@ -14,6 +14,26 @@ Because of that, a candidate model must never be copied directly into `models/` 
 
 ## Retrieval embedder workflow
 
+Build the multilingual TCGdex manifest first:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r training/requirements.txt
+
+python3 scripts/build_training_manifest.py \
+  --output training/data/full/manifest.jsonl \
+  --image-dir training/data/full/images \
+  --locales en,ja,fr,de,it,es \
+  --summary-json training/data/full/manifest.summary.json
+```
+
+Manifest notes:
+
+- The builder resolves TCGdex asset-base URLs to localized `high.webp` image URLs before download.
+- Some upstream cards have no localized art URL. Those rows are skipped and counted in `manifest.summary.json`.
+- Validation and train/val splitting are locale-aware, so the multilingual sample stays represented during training and evaluation.
+
 Train a retrieval checkpoint:
 
 ```bash
@@ -39,6 +59,8 @@ python3 training/evaluate_card_embedder.py \
   --output training/exports/card_embedder_candidate.eval.json
 ```
 
+Evaluation output now includes overall metrics plus per-locale validation counts and retrieval metrics.
+
 Promote only if evaluation passes:
 
 ```bash
@@ -53,6 +75,8 @@ Promotion writes:
 - `models/card_embedder.manifest.json`
 
 The release workflow validates that manifest before building `embeddings.db.zip`.
+The retrieval manifest uses locale-first canonical ids from TCGdex, not legacy English-only ids.
+The production embeddings builder and training/evaluation scripts use the same crop inset, resize, and normalization contract.
 
 ## Detector workflow
 

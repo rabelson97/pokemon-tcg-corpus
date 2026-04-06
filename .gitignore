@@ -8,6 +8,15 @@
 __pycache__/
 *.py[cod]
 
+# Local smoke/build outputs
+/tmp/
+/prices.db
+/prices.db.zip
+/prices-build-summary.json
+/embeddings.db
+/embeddings.db.zip
+/embeddings-build-summary.json
+
 # Training outputs and local model assets
 /runs/
 /yolov8*.pt

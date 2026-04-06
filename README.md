@@ -1,11 +1,13 @@
 # Pokemon TCG Corpus
 
-Release source for CardHawk's Pokemon card retrieval corpus and local price database.
+Release source for CardHawk's locale-first Pokemon card retrieval corpus and local price database.
+
+Current release rollout scope: `en`, `ja`, and `fr`.
 
 The current repository outputs are:
 
-- `embeddings.db.zip`: card metadata plus normalized embedding vectors built with the promoted ONNX embedder
-- `prices.db.zip`: local card market-price snapshot keyed by Pokemon card id
+- `embeddings.db.zip`: locale-first card metadata plus normalized embedding vectors built with the promoted ONNX embedder
+- `prices.db.zip`: market-aware local price snapshot keyed by locale-first Pokemon card id
 - training tooling for the retrieval embedder and a detector-localization model
 
 This repo is upstream data/model infrastructure. Code is the source of truth for the live app runtime, but the current CardHawk consumer path is:
@@ -26,7 +28,7 @@ This repo also includes detector tooling in [training/README.md](/Users/rabelson
 
 The repo includes GitHub Actions workflows that publish standalone SQLite assets built from this corpus:
 
-- `prices-latest` publishes `prices.db.zip`
+- `prices-latest` publishes `prices.db.zip` when the rebuilt DB content differs from the currently published asset
 - `embeddings-latest` publishes `embeddings.db.zip`
 - versioned `embeddings-v*` releases preserve rollback history for embeddings builds
 
@@ -34,17 +36,21 @@ Relevant entry points:
 
 - [scripts/build_prices_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_prices_db.py)
 - [scripts/build_embeddings_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_embeddings_db.py)
+- [scripts/build_training_manifest.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_training_manifest.py)
 - [scripts/prune_embeddings_releases.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/prune_embeddings_releases.py)
 - [.github/workflows/prices.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/prices.yml)
 - [.github/workflows/build-embeddings-db.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/build-embeddings-db.yml)
 
-Workflow prerequisites:
+Workflow notes:
 
-- GitHub Actions secret: `POKEMONTCG_API_KEY`
 - The embeddings workflow uses the promoted ONNX embedder at [models/card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx).
 - The embeddings build applies the same crop inset, resize, and normalization contract that downstream CardHawk runtime code expects from this embedder family.
-- The embeddings workflow is incremental by default: it downloads the current `embeddings-latest` asset when available and only computes vectors for missing `card_id` rows unless `force_rebuild` is set.
-- The embeddings workflow now requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
+- The embeddings workflow is a fresh locale-first rebuild from TCGdex, not an incremental extension of the old English-only corpus.
+- The current automated release workflows publish the Phase B locale set: `en`, `ja`, and `fr`.
+- The embeddings workflow requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
+- TCGdex card payloads expose an asset base URL in `image`; the builders normalize that to the final localized binary art path at `.../high.webp`.
+- Some upstream cards still have no localized art URL. Manifest and embeddings builds skip those rows explicitly and report the skipped counts and reasons by locale.
+- The prices workflow writes `prices-build-summary.json` with a per-locale source coverage audit and a deterministic content hash, then skips release upload when that hash matches the current `prices-latest` asset.
 
 ## Release Format
 
@@ -54,23 +60,35 @@ SQLite database with:
 
 - `cards`
   - `id`
-  - `name`
-  - `set_code`
+  - `locale`
+  - `upstream_id`
+  - `set_id`
   - `set_name`
   - `card_number`
+  - `name`
   - `rarity`
+  - `image_url`
+  - `equivalence_key`
 - `embeddings`
   - `card_id`
   - `model_name`
   - `dim`
   - `vector_blob`
+- `card_equivalents`
+  - `card_id`
+  - `equivalence_key`
+  - `upstream_source`
+  - `upstream_id`
+  - `locale`
+  - `set_id`
+  - `local_id`
 
 Current build contract:
 
 - one normalized float32 embedding vector per card
 - embedding dimension: `256`
 - model name written by the builder: `cardhawk:card_embedder.onnx`
-- incremental rebuild support from an existing compatible `embeddings.db`
+- canonical card id format: `{game}:{locale}:{set_id}:{local_id}`
 
 ### `prices.db.zip`
 
@@ -78,23 +96,31 @@ SQLite database with:
 
 - `prices`
   - `card_id`
+  - `market_code`
+  - `currency_code`
+  - `source_name`
+  - `low_price`
   - `market_price`
+  - `high_price`
   - `updated_at`
+  - `is_primary`
 
 ## Details
 
-- Source: [pokemontcg.io](https://pokemontcg.io) (English cards only)
-- Retrieval source image: canonical Pokemon card art from `images.large` with fallback to `images.small`
+- Source: [TCGdex](https://api.tcgdex.net) locale-scoped REST API
+- Retrieval source image: canonical localized Pokemon card art from normalized TCGdex asset URLs ending in `/high.webp`
 - Embedder preprocessing: crop inset ratio `0.08`, resize to `224x224`, ImageNet-style mean/std normalization
 - Embedding storage: little-endian float32 blob, one row per `card_id`
-- Prices source: `tcgplayer.prices` market data from pokemontcg.io, reduced to one local `market_price` per card
+- Prices source: `pricing.tcgplayer` uses the current TCGdex variant shape (`normal` / `reverse` / `holo`) and `lowPrice` / `midPrice` / `highPrice` / `marketPrice` fields when present, with backward-compatible fallbacks for older payload variants; `pricing.cardmarket` remains the EU fallback/reference row
+- Price row contract: exactly one `is_primary = 1` row for each `card_id` present in `prices`, with `cardmarket` promoted to primary when `tcgplayer` is missing
+- Prices build audit: per locale, the builder reports cards with `tcgplayer`, cards with `cardmarket`, cards with both, cards with neither, and which source ended up primary
 - The app currently uses local retrieval and local price lookup after a stable match. This repo is not the place to document app-only thresholds or UI behavior.
 
 ## Training
 
 See [training/README.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/training/README.md) for:
 
-- retrieval embedder training, evaluation, ONNX export, and promotion
+- multilingual retrieval embedder manifest generation, training, evaluation, ONNX export, and promotion
 - detector frame preparation
 - YOLO detector training
 - detector ONNX export
