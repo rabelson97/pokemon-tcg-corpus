@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from pokemontcgio_api import API_KEY_ENV_VARS, fetch_card_by_id, fetch_english_cards, search_card_by_set_and_number
+from poketrace_api import POKETRACE_API_KEY_ENV_VAR
+from ppt_api import PPT_API_KEY_ENV_VAR
 from tcgdex_api import fetch_all_card_records, parse_locales
 
 
@@ -207,14 +209,13 @@ def select_price_sources(
     pricing = card.get("pricing") or {}
     locale = str(card.get("locale") or "")
 
-    cardmarket = pricing.get("cardmarket")
-    if isinstance(cardmarket, dict):
-        normalized_cardmarket = normalize_cardmarket_payload(cardmarket)
-        if normalized_cardmarket is not None:
-            selected_sources["cardmarket"] = normalized_cardmarket
-            increment_counter(summary["transport_counts"].setdefault("cardmarket", {}), "tcgdex")
-
     if locale != "en":
+        cardmarket = pricing.get("cardmarket")
+        if isinstance(cardmarket, dict):
+            normalized_cardmarket = normalize_cardmarket_payload(cardmarket)
+            if normalized_cardmarket is not None:
+                selected_sources["cardmarket"] = normalized_cardmarket
+                increment_counter(summary["transport_counts"].setdefault("cardmarket", {}), "tcgdex")
         return selected_sources
 
     summary["pokemontcgio"]["english_cards_considered"] += 1
@@ -511,6 +512,87 @@ def validate_prices_db(db_path: Path, *, min_row_count: int) -> int:
         return row_count
 
 
+def try_fallback_providers(
+    card: dict[str, Any],
+    *,
+    poketrace_set_slugs: dict[str, str],
+    summary: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Try PPT then PokeTrace for an English card missing tcgplayer USD.
+
+    Returns a normalized tcgplayer-shaped source dict, or None.
+    """
+    import ppt_api
+    import poketrace_api
+
+    set_id = str(card.get("set_id") or "").strip()
+    card_number = str(card.get("card_number") or "").strip()
+    card_name = str(card.get("name") or "").strip()
+    set_name = str(card.get("set_name") or "").strip()
+
+    ppt_key = ppt_api.resolve_api_key()
+    if ppt_key:
+        try:
+            ppt_card = ppt_api.lookup_card(set_id, card_number, api_key=ppt_key)
+            if ppt_card is None and card_name:
+                ppt_card = ppt_api.search_card(card_name, set_name, api_key=ppt_key)
+            if ppt_card is not None:
+                result = ppt_api.extract_usd_price(ppt_card)
+                if result is not None:
+                    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "ppt")
+                    summary["fallback_providers"]["ppt_hits"] += 1
+                    return result
+            summary["fallback_providers"]["ppt_misses"] += 1
+        except Exception:
+            summary["fallback_providers"]["ppt_errors"] += 1
+
+    poketrace_key = poketrace_api.resolve_api_key()
+    if poketrace_key:
+        slug = poketrace_set_slugs.get(set_id)
+        if slug:
+            try:
+                pt_card = poketrace_api.lookup_card(slug, card_number, api_key=poketrace_key)
+                if pt_card is not None:
+                    result = poketrace_api.extract_usd_price(pt_card)
+                    if result is not None:
+                        increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "poketrace")
+                        summary["fallback_providers"]["poketrace_hits"] += 1
+                        return result
+                summary["fallback_providers"]["poketrace_misses"] += 1
+            except Exception:
+                summary["fallback_providers"]["poketrace_errors"] += 1
+        else:
+            summary["fallback_providers"]["poketrace_set_mapping_failures"] += 1
+
+    return None
+
+
+def build_poketrace_set_slugs(cards: list[dict[str, Any]]) -> dict[str, str]:
+    """Build a set_id -> PokeTrace slug mapping for the given cards."""
+    import poketrace_api
+
+    api_key = poketrace_api.resolve_api_key()
+    if not api_key:
+        return {}
+
+    our_set_names: dict[str, str] = {}
+    for card in cards:
+        set_id = str(card.get("set_id") or "").strip()
+        set_name = str(card.get("set_name") or "").strip()
+        if set_id and set_name and set_id not in our_set_names:
+            our_set_names[set_id] = set_name
+
+    if not our_set_names:
+        return {}
+
+    print(f"fetching PokeTrace sets for slug mapping ({len(our_set_names)} target sets)...")
+    provider_sets = poketrace_api.fetch_sets(api_key=api_key)
+    print(f"fetched {len(provider_sets)} sets from PokeTrace")
+    mapping = poketrace_api.build_set_slug_mapping(provider_sets, our_set_names)
+    print(f"mapped {len(mapping)} of {len(our_set_names)} set IDs to PokeTrace slugs")
+    return mapping
+
+
 def build_prices_db(
     output_path: Path,
     *,
@@ -523,6 +605,7 @@ def build_prices_db(
     cards, _ = fetch_all_card_records(locales, limit=limit)
     pokemontcgio_cards: list[dict[str, Any]] = []
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]] = {}
+    poketrace_set_slugs: dict[str, str] = {}
     if "en" in locales:
         english_cards = [card for card in cards if str(card.get("locale") or "") == "en"]
         if limit is not None and english_cards:
@@ -530,6 +613,7 @@ def build_prices_db(
         else:
             pokemontcgio_cards = fetch_english_cards()
         pokemontcgio_index = build_pokemontcgio_index(pokemontcgio_cards)
+        poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = output_path.with_suffix(output_path.suffix + ".tmp")
@@ -582,7 +666,24 @@ def build_prices_db(
                 "max_age_days": max_pokemontcgio_age_days,
                 "fetched_at": now.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
             },
+            "fallback_providers": {
+                "ppt_configured": bool(os.environ.get(PPT_API_KEY_ENV_VAR, "").strip()),
+                "poketrace_configured": bool(os.environ.get(POKETRACE_API_KEY_ENV_VAR, "").strip()),
+                "poketrace_set_slugs_mapped": len(poketrace_set_slugs),
+                "english_cards_tried_fallback": 0,
+                "ppt_hits": 0,
+                "ppt_misses": 0,
+                "ppt_errors": 0,
+                "poketrace_hits": 0,
+                "poketrace_misses": 0,
+                "poketrace_errors": 0,
+                "poketrace_set_mapping_failures": 0,
+            },
         }
+        has_fallback_providers = (
+            build_metadata["fallback_providers"]["ppt_configured"]
+            or build_metadata["fallback_providers"]["poketrace_configured"]
+        )
         for card in cards:
             selected_sources = select_price_sources(
                 card,
@@ -591,6 +692,17 @@ def build_prices_db(
                 now=now,
                 summary=build_metadata,
             )
+            locale = str(card.get("locale") or "")
+            if locale == "en" and "tcgplayer" not in selected_sources and has_fallback_providers:
+                build_metadata["fallback_providers"]["english_cards_tried_fallback"] += 1
+                fallback_result = try_fallback_providers(
+                    card,
+                    poketrace_set_slugs=poketrace_set_slugs,
+                    summary=build_metadata,
+                )
+                if fallback_result is not None:
+                    selected_sources["tcgplayer"] = fallback_result
+
             extracted = extract_price_rows_from_selected_sources(str(card["id"]), selected_sources)
             update_locale_coverage_audit(locale_coverage, locale=str(card["locale"]), extracted_rows=extracted)
             if not extracted:
@@ -650,6 +762,7 @@ def build_prices_db(
             **{key: value for key, value in build_metadata["pokemontcgio"].items() if key != "stale_reasons"},
             "stale_reasons": dict(build_metadata["pokemontcgio"]["stale_reasons"]),
         },
+        "fallback_providers": dict(build_metadata["fallback_providers"]),
     }
     if summary_json is not None:
         write_summary_json(summary_json, summary)
