@@ -221,41 +221,37 @@ def select_price_sources(
     summary["pokemontcgio"]["english_cards_considered"] += 1
     match_key = (str(card.get("set_id") or "").strip(), str(card.get("card_number") or "").strip())
     matched_card = pokemontcgio_index.get(match_key)
-    if matched_card is None:
+    tcgplayer_resolved = False
+    if matched_card is not None:
+        summary["pokemontcgio"]["english_cards_with_match"] += 1
+        tcgplayer_payload = matched_card.get("tcgplayer")
+        if isinstance(tcgplayer_payload, dict):
+            normalized_tcgplayer, updated_at = normalize_tcgplayer_payload(tcgplayer_payload)
+            if normalized_tcgplayer is not None and updated_at is not None:
+                try:
+                    is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
+                except ValueError:
+                    is_fresh = False
+                    summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
+                    increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "invalid_updated_at")
+                if is_fresh:
+                    selected_sources["tcgplayer"] = normalized_tcgplayer
+                    summary["pokemontcgio"]["english_cards_with_tcgplayer"] += 1
+                    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "pokemontcgio")
+                    tcgplayer_resolved = True
+                elif not is_fresh:
+                    summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
+                    increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "older_than_max_age")
+            elif normalized_tcgplayer is None:
+                summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
+            elif updated_at is None:
+                summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
+                increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "missing_updated_at")
+        else:
+            summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
+    else:
         summary["pokemontcgio"]["english_cards_without_match"] += 1
-        return selected_sources
 
-    summary["pokemontcgio"]["english_cards_with_match"] += 1
-    tcgplayer_payload = matched_card.get("tcgplayer")
-    if not isinstance(tcgplayer_payload, dict):
-        summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
-        return selected_sources
-
-    normalized_tcgplayer, updated_at = normalize_tcgplayer_payload(tcgplayer_payload)
-    if normalized_tcgplayer is None:
-        summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
-        return selected_sources
-
-    if updated_at is None:
-        summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
-        increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "missing_updated_at")
-        return selected_sources
-
-    try:
-        is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
-    except ValueError:
-        summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
-        increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "invalid_updated_at")
-        return selected_sources
-
-    if not is_fresh:
-        summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
-        increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "older_than_max_age")
-        return selected_sources
-
-    selected_sources["tcgplayer"] = normalized_tcgplayer
-    summary["pokemontcgio"]["english_cards_with_tcgplayer"] += 1
-    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "pokemontcgio")
     return selected_sources
 
 
@@ -533,9 +529,14 @@ def try_fallback_providers(
     ppt_key = ppt_api.resolve_api_key()
     if ppt_key:
         try:
-            ppt_card = ppt_api.lookup_card(set_id, card_number, api_key=ppt_key)
-            if ppt_card is None and card_name:
-                ppt_card = ppt_api.search_card(card_name, set_name, api_key=ppt_key)
+            ppt_card = None
+            if card_name:
+                ppt_card = ppt_api.search_card(
+                    card_name,
+                    set_name,
+                    card_number=card_number,
+                    api_key=ppt_key,
+                )
             if ppt_card is not None:
                 result = ppt_api.extract_usd_price(ppt_card)
                 if result is not None:
