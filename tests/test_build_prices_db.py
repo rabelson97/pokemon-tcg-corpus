@@ -321,6 +321,24 @@ class BuildPricesDbTests(unittest.TestCase):
 
 
 class PptApiTests(unittest.TestCase):
+    def test_search_card_matcher_accepts_name_suffix_number(self) -> None:
+        import ppt_api
+
+        card_data = {
+            "name": "Infernape - 173/167",
+            "setName": "SV06: Twilight Masquerade",
+        }
+        self.assertTrue(ppt_api.card_matches(card_data, set_name="Twilight Masquerade", card_number="173"))
+
+    def test_search_card_matcher_rejects_wrong_number(self) -> None:
+        import ppt_api
+
+        card_data = {
+            "name": "Infernape - 172/167",
+            "set": "Twilight Masquerade",
+        }
+        self.assertFalse(ppt_api.card_matches(card_data, set_name="Twilight Masquerade", card_number="173"))
+
     def test_extract_usd_price_standard_shape(self) -> None:
         import ppt_api
 
