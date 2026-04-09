@@ -1,0 +1,86 @@
+{
+  "cards_in_sample": 20,
+  "poketrace_set_mapping": {
+    "base1": "base-set",
+    "gym2": "gym-challenge",
+    "pop5": "pop-series-5",
+    "sv04.5": "paldean-fates",
+    "sv06": "twilight-masquerade",
+    "sv10.5b": "black-bolt",
+    "swsh3.5": "champions-path",
+    "xy10": "fates-collide",
+    "xyp": "xy-black-star-promos"
+  },
+  "providers": {
+    "pokemonpricetracker": {
+      "cards_found": 12,
+      "cards_tested": 20,
+      "cards_with_price": 12,
+      "coverage_rate": 60.0,
+      "errors": 0,
+      "price_rate": 60.0,
+      "screenshot_examples": {
+        "pokemon:en:sv06:173": {
+          "found": true,
+          "high_price": null,
+          "low_price": 8.0,
+          "market_price": 12.22,
+          "notes": "",
+          "provider_card_name": "Infernape - 173/167"
+        },
+        "pokemon:en:sv10.5b:170": {
+          "found": true,
+          "high_price": null,
+          "low_price": 57.99,
+          "market_price": 59.37,
+          "notes": "",
+          "provider_card_name": "N's Plan - 170/086"
+        },
+        "pokemon:en:svp:047": {
+          "found": false,
+          "high_price": null,
+          "low_price": null,
+          "market_price": null,
+          "notes": "",
+          "provider_card_name": ""
+        }
+      },
+      "set_mapping_failures": 0
+    },
+    "poketrace": {
+      "cards_found": 1,
+      "cards_tested": 20,
+      "cards_with_price": 1,
+      "coverage_rate": 5.0,
+      "errors": 0,
+      "price_rate": 5.0,
+      "screenshot_examples": {
+        "pokemon:en:sv06:173": {
+          "found": false,
+          "high_price": null,
+          "low_price": null,
+          "market_price": null,
+          "notes": "",
+          "provider_card_name": ""
+        },
+        "pokemon:en:sv10.5b:170": {
+          "found": false,
+          "high_price": null,
+          "low_price": null,
+          "market_price": null,
+          "notes": "",
+          "provider_card_name": ""
+        },
+        "pokemon:en:svp:047": {
+          "found": false,
+          "high_price": null,
+          "low_price": null,
+          "market_price": null,
+          "notes": "no set mapping for svp",
+          "provider_card_name": ""
+        }
+      },
+      "set_mapping_failures": 5
+    }
+  }
+}

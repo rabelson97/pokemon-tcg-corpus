@@ -52,6 +52,7 @@ Workflow notes:
 - Some upstream cards still have no localized art URL. Manifest and embeddings builds skip those rows explicitly and report the skipped counts and reasons by locale.
 - The prices workflow writes `prices-build-summary.json` with a per-locale source coverage audit, provider transport diagnostics, and a deterministic content hash, then skips release upload when that hash matches the current `prices-latest` asset.
 - The prices workflow can use the existing `POKEMONTCG_API_KEY` secret for higher-rate US price fetches while keeping the published SQLite contract unchanged.
+- The April 2026 English USD provider audit and deterministic gap sample live in [docs/english_price_provider_comparison.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/docs/english_price_provider_comparison.md) and were generated with [scripts/build_english_price_gap_sample.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_english_price_gap_sample.py).
 
 ## Release Format
 
