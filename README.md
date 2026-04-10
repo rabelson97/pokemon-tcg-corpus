@@ -113,7 +113,7 @@ SQLite database with:
 - Retrieval source image: canonical localized Pokemon card art from normalized TCGdex asset URLs ending in `/high.webp`
 - Embedder preprocessing: crop inset ratio `0.08`, resize to `224x224`, ImageNet-style mean/std normalization
 - Embedding storage: little-endian float32 blob, one row per `card_id`
-- Prices source: US `tcgplayer` rows are selected from PokemonTCG.io's English card feed after an alias-aware set/number match against the locale-first TCGdex ids; the matched card's `tcgplayer.updatedAt` must still be present and within the builder freshness window. `pricing.cardmarket` from TCGdex remains the EU fallback/reference row
+- Prices source: US `tcgplayer` rows are selected from PokemonTCG.io's English card feed after an alias-aware set/number match against the locale-first TCGdex ids; the matched card's `tcgplayer.updatedAt` must still be present and within the builder freshness window. English fallback lookups use PPT first, then PokeTrace with cached/manual set-slug overrides plus deterministic slug guesses when the live PokeTrace set index is unavailable. `pricing.cardmarket` from TCGdex remains the EU fallback/reference row
 - Price row contract: exactly one `is_primary = 1` row for each `card_id` present in `prices`, with `cardmarket` promoted to primary when `tcgplayer` is missing
 - Prices build audit: per locale, the builder reports cards with `tcgplayer`, cards with `cardmarket`, cards with both, cards with neither, and which source ended up primary
 - Prices build metadata: `prices-build-summary.json` also records provider transport counts plus PokemonTCG.io fetch/match/staleness diagnostics so release audits can distinguish source selection from database shape

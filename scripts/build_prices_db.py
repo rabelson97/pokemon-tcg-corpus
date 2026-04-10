@@ -175,6 +175,30 @@ def build_pokemontcgio_index(cards: list[dict[str, Any]]) -> dict[tuple[str, str
     return index
 
 
+def slugify_poketrace_set_name(set_name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", set_name.strip().lower()).strip("-")
+    return re.sub(r"-{2,}", "-", slug)
+
+
+def load_poketrace_set_mapping_overrides() -> dict[str, str]:
+    overrides_path = Path(__file__).resolve().parents[1] / "docs" / "provider_set_mapping.json"
+    if not overrides_path.exists():
+        return {}
+    try:
+        payload = json.loads(overrides_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    mapping: dict[str, str] = {}
+    for set_id, slug in payload.items():
+        clean_set_id = str(set_id).strip()
+        clean_slug = str(slug).strip()
+        if clean_set_id and clean_slug:
+            mapping[clean_set_id] = clean_slug
+    return mapping
+
+
 def dedupe_strings(values: list[str]) -> list[str]:
     seen: set[str] = set()
     deduped: list[str] = []
@@ -646,8 +670,6 @@ def build_poketrace_set_slugs(cards: list[dict[str, Any]]) -> dict[str, str]:
     import poketrace_api
 
     api_key = poketrace_api.resolve_api_key()
-    if not api_key:
-        return {}
 
     our_set_names: dict[str, str] = {}
     for card in cards:
@@ -659,10 +681,36 @@ def build_poketrace_set_slugs(cards: list[dict[str, Any]]) -> dict[str, str]:
     if not our_set_names:
         return {}
 
-    print(f"fetching PokeTrace sets for slug mapping ({len(our_set_names)} target sets)...")
-    provider_sets = poketrace_api.fetch_sets(api_key=api_key)
-    print(f"fetched {len(provider_sets)} sets from PokeTrace")
-    mapping = poketrace_api.build_set_slug_mapping(provider_sets, our_set_names)
+    mapping = {
+        set_id: slug
+        for set_id, slug in load_poketrace_set_mapping_overrides().items()
+        if set_id in our_set_names
+    }
+    if mapping:
+        print(f"loaded {len(mapping)} cached PokeTrace set slug overrides")
+
+    if api_key:
+        print(f"fetching PokeTrace sets for slug mapping ({len(our_set_names)} target sets)...")
+        try:
+            provider_sets = poketrace_api.fetch_sets(api_key=api_key)
+        except Exception as error:
+            print(f"warning: failed to fetch PokeTrace sets for slug mapping: {error}")
+        else:
+            print(f"fetched {len(provider_sets)} sets from PokeTrace")
+            mapping.update(poketrace_api.build_set_slug_mapping(provider_sets, our_set_names))
+
+    heuristic_mapped = 0
+    for set_id, set_name in our_set_names.items():
+        if set_id in mapping:
+            continue
+        slug = slugify_poketrace_set_name(set_name)
+        if not slug:
+            continue
+        mapping[set_id] = slug
+        heuristic_mapped += 1
+
+    if heuristic_mapped:
+        print(f"derived {heuristic_mapped} heuristic PokeTrace set slugs from set names")
     print(f"mapped {len(mapping)} of {len(our_set_names)} set IDs to PokeTrace slugs")
     return mapping
 

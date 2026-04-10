@@ -4,6 +4,7 @@ import datetime as dt
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -261,6 +262,16 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual(0, summary["pokemontcgio"]["english_cards_without_match"])
         self.assertEqual(3, summary["pokemontcgio"]["english_cards_with_tcgplayer"])
 
+    def test_load_poketrace_set_mapping_overrides_reads_repo_cache(self) -> None:
+        mapping = build_prices_db.load_poketrace_set_mapping_overrides()
+        self.assertEqual("twilight-masquerade", mapping["sv06"])
+        self.assertEqual("paldean-fates", mapping["sv04.5"])
+
+    def test_slugify_poketrace_set_name(self) -> None:
+        self.assertEqual("scarlet-violet", build_prices_db.slugify_poketrace_set_name("Scarlet & Violet"))
+        self.assertEqual("brilliant-stars", build_prices_db.slugify_poketrace_set_name("Brilliant Stars"))
+        self.assertEqual("sv-black-star-promos", build_prices_db.slugify_poketrace_set_name("SV Black Star Promos"))
+
     def test_locale_coverage_audit_tracks_source_mix(self) -> None:
         audit = build_prices_db.create_locale_coverage_audit(["en"])
 
@@ -417,6 +428,25 @@ class PptApiTests(unittest.TestCase):
 
 
 class PoketraceApiTests(unittest.TestCase):
+    def test_build_poketrace_set_slugs_tolerates_provider_errors(self) -> None:
+        import poketrace_api
+
+        cards = [
+            {
+                "set_id": "swsh9",
+                "set_name": "Brilliant Stars",
+            }
+        ]
+
+        with mock.patch.object(poketrace_api, "resolve_api_key", return_value="test-key"), mock.patch.object(
+            poketrace_api,
+            "fetch_sets",
+            side_effect=RuntimeError("HTTP Error 429: Too Many Requests"),
+        ):
+            mapping = build_prices_db.build_poketrace_set_slugs(cards)
+
+        self.assertEqual("brilliant-stars", mapping["swsh9"])
+
     def test_extract_usd_price_tcgplayer_near_mint(self) -> None:
         import poketrace_api
 
