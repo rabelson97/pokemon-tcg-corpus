@@ -204,6 +204,63 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual(1, summary["pokemontcgio"]["stale_tcgplayer_rows"])
         self.assertEqual(1, summary["pokemontcgio"]["stale_reasons"]["older_than_max_age"])
 
+    def test_candidate_pokemontcgio_match_keys_cover_alias_set_and_number_formats(self) -> None:
+        self.assertIn(
+            ("swsh12pt5gg", "GG05"),
+            build_prices_db.candidate_pokemontcgio_match_keys("swsh12.5", "GG05"),
+        )
+        self.assertIn(
+            ("swsh9tg", "TG02"),
+            build_prices_db.candidate_pokemontcgio_match_keys("swsh9", "TG02"),
+        )
+        self.assertIn(
+            ("sv1", "43"),
+            build_prices_db.candidate_pokemontcgio_match_keys("sv01", "043"),
+        )
+
+    def test_select_price_sources_matches_alias_formatted_english_cards(self) -> None:
+        summary = {
+            "transport_counts": {"tcgplayer": {"pokemontcgio": 0}},
+            "pokemontcgio": {
+                "english_cards_considered": 0,
+                "english_cards_with_match": 0,
+                "english_cards_without_match": 0,
+                "english_cards_with_tcgplayer": 0,
+                "english_cards_without_tcgplayer": 0,
+                "stale_tcgplayer_rows": 0,
+                "stale_reasons": {},
+            },
+        }
+        pokemontcgio_index = {
+            ("swsh12pt5gg", "GG05"): {
+                "tcgplayer": {"updatedAt": "2026/04/10", "prices": {"holofoil": {"low": 16.0, "market": 19.0, "high": 150.0}}}
+            },
+            ("swsh9tg", "TG02"): {
+                "tcgplayer": {"updatedAt": "2026/04/10", "prices": {"holofoil": {"low": 16.0, "market": 19.81, "high": 79.99}}}
+            },
+            ("sv1", "43"): {
+                "tcgplayer": {"updatedAt": "2026/04/10", "prices": {"holofoil": {"low": 0.03, "market": 0.31, "high": 501.5}}}
+            },
+        }
+
+        for card in [
+            {"id": "pokemon:en:swsh12.5:GG05", "locale": "en", "set_id": "swsh12.5", "card_number": "GG05", "pricing": {}},
+            {"id": "pokemon:en:swsh9:TG02", "locale": "en", "set_id": "swsh9", "card_number": "TG02", "pricing": {}},
+            {"id": "pokemon:en:sv01:043", "locale": "en", "set_id": "sv01", "card_number": "043", "pricing": {}},
+        ]:
+            selected = build_prices_db.select_price_sources(
+                card,
+                pokemontcgio_index=pokemontcgio_index,
+                max_pokemontcgio_age_days=14,
+                now=dt.datetime(2026, 4, 10, tzinfo=dt.timezone.utc),
+                summary=summary,
+            )
+            self.assertIn("tcgplayer", selected, card["id"])
+
+        self.assertEqual(3, summary["pokemontcgio"]["english_cards_with_match"])
+        self.assertEqual(0, summary["pokemontcgio"]["english_cards_without_match"])
+        self.assertEqual(3, summary["pokemontcgio"]["english_cards_with_tcgplayer"])
+
     def test_locale_coverage_audit_tracks_source_mix(self) -> None:
         audit = build_prices_db.create_locale_coverage_audit(["en"])
 

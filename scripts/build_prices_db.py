@@ -6,6 +6,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import sqlite3
 from collections import defaultdict
 from pathlib import Path
@@ -174,6 +175,72 @@ def build_pokemontcgio_index(cards: list[dict[str, Any]]) -> dict[tuple[str, str
     return index
 
 
+def dedupe_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        deduped.append(value)
+    return deduped
+
+
+def compact_numeric_token(value: str) -> str:
+    clean_value = value.strip()
+    if clean_value.isdigit():
+        return str(int(clean_value))
+    match = re.fullmatch(r"([A-Za-z]+)0+([1-9][0-9]*)", clean_value)
+    if match:
+        return f"{match.group(1)}{match.group(2)}"
+    return clean_value
+
+
+def alias_set_ids_for_pokemontcgio(set_id: str, card_number: str) -> list[str]:
+    clean_set_id = set_id.strip()
+    clean_number = card_number.strip().upper()
+    candidates = [clean_set_id]
+
+    compact_set_id = re.sub(r"^([A-Za-z]+)0+([1-9][0-9]*(?:\.5)?)$", r"\1\2", clean_set_id)
+    candidates.append(compact_set_id)
+
+    pt5_candidates = [candidate.replace(".5", "pt5") for candidate in candidates if ".5" in candidate]
+    candidates.extend(pt5_candidates)
+
+    gallery_suffix = ""
+    if clean_number.startswith("TG"):
+        gallery_suffix = "tg"
+    elif clean_number.startswith("GG"):
+        gallery_suffix = "gg"
+    if gallery_suffix:
+        candidates.extend(f"{candidate}{gallery_suffix}" for candidate in list(candidates))
+
+    return dedupe_strings(candidates)
+
+
+def candidate_pokemontcgio_match_keys(set_id: str, card_number: str) -> list[tuple[str, str]]:
+    clean_number = card_number.strip()
+    number_candidates = dedupe_strings([clean_number, compact_numeric_token(clean_number)])
+    return [
+        (candidate_set_id, candidate_number)
+        for candidate_set_id in alias_set_ids_for_pokemontcgio(set_id, card_number)
+        for candidate_number in number_candidates
+    ]
+
+
+def match_pokemontcgio_card(
+    pokemontcgio_index: dict[tuple[str, str], dict[str, Any]],
+    *,
+    set_id: str,
+    card_number: str,
+) -> dict[str, Any] | None:
+    for match_key in candidate_pokemontcgio_match_keys(set_id, card_number):
+        matched_card = pokemontcgio_index.get(match_key)
+        if matched_card is not None:
+            return matched_card
+    return None
+
+
 def increment_counter(mapping: dict[str, Any], key: str) -> None:
     mapping[key] = int(mapping.get(key, 0)) + 1
 
@@ -188,10 +255,13 @@ def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> li
         seen_upstream_ids.add(upstream_id)
         matched = fetch_card_by_id(upstream_id)
         if matched is None:
-            matched = search_card_by_set_and_number(
+            for candidate_set_id, candidate_number in candidate_pokemontcgio_match_keys(
                 str(card.get("set_id") or "").strip(),
                 str(card.get("card_number") or "").strip(),
-            )
+            ):
+                matched = search_card_by_set_and_number(candidate_set_id, candidate_number)
+                if matched is not None:
+                    break
         if matched is not None:
             fetched.append(matched)
     return fetched
@@ -219,8 +289,11 @@ def select_price_sources(
         return selected_sources
 
     summary["pokemontcgio"]["english_cards_considered"] += 1
-    match_key = (str(card.get("set_id") or "").strip(), str(card.get("card_number") or "").strip())
-    matched_card = pokemontcgio_index.get(match_key)
+    matched_card = match_pokemontcgio_card(
+        pokemontcgio_index,
+        set_id=str(card.get("set_id") or "").strip(),
+        card_number=str(card.get("card_number") or "").strip(),
+    )
     tcgplayer_resolved = False
     if matched_card is not None:
         summary["pokemontcgio"]["english_cards_with_match"] += 1
