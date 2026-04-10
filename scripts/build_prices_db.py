@@ -723,6 +723,7 @@ def build_prices_db(
     min_row_count: int,
     summary_json: Path | None = None,
     max_pokemontcgio_age_days: int = DEFAULT_MAX_POKEMONTCG_IO_AGE_DAYS,
+    max_fallback_cards: int | None = None,
 ) -> dict[str, Any]:
     cards, _ = fetch_all_card_records(locales, limit=limit)
     pokemontcgio_cards: list[dict[str, Any]] = []
@@ -792,7 +793,9 @@ def build_prices_db(
                 "ppt_configured": bool(os.environ.get(PPT_API_KEY_ENV_VAR, "").strip()),
                 "poketrace_configured": bool(os.environ.get(POKETRACE_API_KEY_ENV_VAR, "").strip()),
                 "poketrace_set_slugs_mapped": len(poketrace_set_slugs),
+                "max_cards": max_fallback_cards,
                 "english_cards_tried_fallback": 0,
+                "english_cards_skipped_due_to_budget": 0,
                 "ppt_hits": 0,
                 "ppt_misses": 0,
                 "ppt_errors": 0,
@@ -806,6 +809,7 @@ def build_prices_db(
             build_metadata["fallback_providers"]["ppt_configured"]
             or build_metadata["fallback_providers"]["poketrace_configured"]
         )
+        fallback_attempts = 0
         for card in cards:
             selected_sources = select_price_sources(
                 card,
@@ -816,14 +820,18 @@ def build_prices_db(
             )
             locale = str(card.get("locale") or "")
             if locale == "en" and "tcgplayer" not in selected_sources and has_fallback_providers:
-                build_metadata["fallback_providers"]["english_cards_tried_fallback"] += 1
-                fallback_result = try_fallback_providers(
-                    card,
-                    poketrace_set_slugs=poketrace_set_slugs,
-                    summary=build_metadata,
-                )
-                if fallback_result is not None:
-                    selected_sources["tcgplayer"] = fallback_result
+                if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:
+                    build_metadata["fallback_providers"]["english_cards_skipped_due_to_budget"] += 1
+                else:
+                    fallback_attempts += 1
+                    build_metadata["fallback_providers"]["english_cards_tried_fallback"] += 1
+                    fallback_result = try_fallback_providers(
+                        card,
+                        poketrace_set_slugs=poketrace_set_slugs,
+                        summary=build_metadata,
+                    )
+                    if fallback_result is not None:
+                        selected_sources["tcgplayer"] = fallback_result
 
             extracted = extract_price_rows_from_selected_sources(str(card["id"]), selected_sources)
             update_locale_coverage_audit(locale_coverage, locale=str(card["locale"]), extracted_rows=extracted)
@@ -920,6 +928,7 @@ def main() -> int:
     parser.add_argument("--min-row-count", type=int, default=1000)
     parser.add_argument("--summary-json", help="Optional path for a build or inspection summary JSON file")
     parser.add_argument("--max-pokemontcgio-age-days", type=int, default=DEFAULT_MAX_POKEMONTCG_IO_AGE_DAYS)
+    parser.add_argument("--max-fallback-cards", type=int, help="Optional cap on English cards that may query fallback USD providers")
     args = parser.parse_args()
 
     summary_json = Path(args.summary_json).resolve() if args.summary_json else None
@@ -942,6 +951,7 @@ def main() -> int:
         min_row_count=args.min_row_count,
         summary_json=summary_json,
         max_pokemontcgio_age_days=args.max_pokemontcgio_age_days,
+        max_fallback_cards=args.max_fallback_cards,
     )
     return 0
 

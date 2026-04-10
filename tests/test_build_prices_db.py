@@ -262,6 +262,54 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual(0, summary["pokemontcgio"]["english_cards_without_match"])
         self.assertEqual(3, summary["pokemontcgio"]["english_cards_with_tcgplayer"])
 
+    def test_fallback_budget_zero_skips_all_english_fallback_attempts(self) -> None:
+        summary = {
+            "transport_counts": {},
+            "pokemontcgio": {
+                "english_cards_considered": 0,
+                "english_cards_with_match": 0,
+                "english_cards_without_match": 0,
+                "english_cards_with_tcgplayer": 0,
+                "english_cards_without_tcgplayer": 0,
+                "stale_tcgplayer_rows": 0,
+                "stale_reasons": {},
+            },
+            "fallback_providers": {
+                "ppt_configured": True,
+                "poketrace_configured": True,
+                "poketrace_set_slugs_mapped": 0,
+                "max_cards": 0,
+                "english_cards_tried_fallback": 0,
+                "english_cards_skipped_due_to_budget": 0,
+                "ppt_hits": 0,
+                "ppt_misses": 0,
+                "ppt_errors": 0,
+                "poketrace_hits": 0,
+                "poketrace_misses": 0,
+                "poketrace_errors": 0,
+                "poketrace_set_mapping_failures": 0,
+            },
+        }
+
+        max_fallback_cards = 0
+        fallback_attempts = 0
+        selected = build_prices_db.select_price_sources(
+            {"id": "pokemon:en:sv01:001", "locale": "en", "set_id": "sv01", "card_number": "001", "pricing": {}},
+            pokemontcgio_index={},
+            max_pokemontcgio_age_days=14,
+            now=dt.datetime(2026, 4, 10, tzinfo=dt.timezone.utc),
+            summary=summary,
+        )
+        if "tcgplayer" not in selected and (summary["fallback_providers"]["ppt_configured"] or summary["fallback_providers"]["poketrace_configured"]):
+            if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:
+                summary["fallback_providers"]["english_cards_skipped_due_to_budget"] += 1
+            else:
+                fallback_attempts += 1
+                summary["fallback_providers"]["english_cards_tried_fallback"] += 1
+
+        self.assertEqual(0, summary["fallback_providers"]["english_cards_tried_fallback"])
+        self.assertEqual(1, summary["fallback_providers"]["english_cards_skipped_due_to_budget"])
+
     def test_load_poketrace_set_mapping_overrides_reads_repo_cache(self) -> None:
         mapping = build_prices_db.load_poketrace_set_mapping_overrides()
         self.assertEqual("twilight-masquerade", mapping["sv06"])

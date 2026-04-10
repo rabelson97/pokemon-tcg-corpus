@@ -33,7 +33,8 @@ jobs:
             --output prices.db \
             --summary-json prices-build-summary.json \
             --locales en,ja,fr \
-            --min-row-count 10000
+            --min-row-count 10000 \
+            --max-fallback-cards 0
 
       - name: Validate prices database
         run: |
