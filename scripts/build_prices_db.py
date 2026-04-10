@@ -430,6 +430,60 @@ def content_hash_for_rows(
     return digest.hexdigest()
 
 
+def load_existing_prices_rows(
+    db_path: Path,
+) -> dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]]:
+    rows_by_card_id: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]] = {}
+    with sqlite3.connect(db_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT
+              card_id,
+              market_code,
+              currency_code,
+              source_name,
+              low_price,
+              market_price,
+              high_price,
+              updated_at,
+              is_primary
+            FROM prices
+            ORDER BY card_id, source_name;
+            """
+        ).fetchall()
+    for row in rows:
+        normalized_row = (
+            str(row[0]),
+            str(row[1]),
+            str(row[2]),
+            str(row[3]),
+            float(row[4]) if row[4] is not None else None,
+            float(row[5]) if row[5] is not None else None,
+            float(row[6]) if row[6] is not None else None,
+            str(row[7]) if row[7] is not None else None,
+            int(row[8]),
+        )
+        rows_by_card_id.setdefault(normalized_row[0], []).append(normalized_row)
+    return rows_by_card_id
+
+
+def collect_reusable_existing_tcgplayer_rows(
+    rows_by_card_id: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]],
+    *,
+    updated_date_prefix: str,
+) -> dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]]:
+    reusable: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]] = {}
+    for card_id, rows in rows_by_card_id.items():
+        reusable_rows = [
+            row
+            for row in rows
+            if row[3] == "tcgplayer" and isinstance(row[7], str) and row[7].startswith(updated_date_prefix)
+        ]
+        if reusable_rows:
+            reusable[card_id] = reusable_rows
+    return reusable
+
+
 def summarize_prices_db(db_path: Path) -> dict[str, Any]:
     with sqlite3.connect(db_path) as connection:
         rows = [
@@ -724,19 +778,39 @@ def build_prices_db(
     summary_json: Path | None = None,
     max_pokemontcgio_age_days: int = DEFAULT_MAX_POKEMONTCG_IO_AGE_DAYS,
     max_fallback_cards: int | None = None,
+    seed_db_path: Path | None = None,
+    reuse_existing_tcgplayer_date: str | None = None,
 ) -> dict[str, Any]:
     cards, _ = fetch_all_card_records(locales, limit=limit)
+    existing_rows_by_card_id: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]] = {}
+    reusable_existing_tcgplayer_rows: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]] = {}
+    if seed_db_path is not None and seed_db_path.exists():
+        existing_rows_by_card_id = load_existing_prices_rows(seed_db_path)
+        if reuse_existing_tcgplayer_date:
+            reusable_existing_tcgplayer_rows = collect_reusable_existing_tcgplayer_rows(
+                existing_rows_by_card_id,
+                updated_date_prefix=reuse_existing_tcgplayer_date,
+            )
     pokemontcgio_cards: list[dict[str, Any]] = []
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]] = {}
     poketrace_set_slugs: dict[str, str] = {}
+    allow_fallback_queries = max_fallback_cards is None or max_fallback_cards > 0
     if "en" in locales:
         english_cards = [card for card in cards if str(card.get("locale") or "") == "en"]
-        if limit is not None and english_cards:
-            pokemontcgio_cards = fetch_targeted_pokemontcgio_cards(english_cards)
+        english_cards_needing_primary_refresh = [
+            card for card in english_cards if str(card.get("id") or "") not in reusable_existing_tcgplayer_rows
+        ]
+        if limit is not None and english_cards_needing_primary_refresh:
+            pokemontcgio_cards = fetch_targeted_pokemontcgio_cards(english_cards_needing_primary_refresh)
+        elif reuse_existing_tcgplayer_date and english_cards_needing_primary_refresh:
+            pokemontcgio_cards = fetch_targeted_pokemontcgio_cards(english_cards_needing_primary_refresh)
+        elif reuse_existing_tcgplayer_date:
+            pokemontcgio_cards = []
         else:
             pokemontcgio_cards = fetch_english_cards()
         pokemontcgio_index = build_pokemontcgio_index(pokemontcgio_cards)
-        poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
+        if allow_fallback_queries:
+            poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = output_path.with_suffix(output_path.suffix + ".tmp")
@@ -804,36 +878,50 @@ def build_prices_db(
                 "poketrace_errors": 0,
                 "poketrace_set_mapping_failures": 0,
             },
+            "seed_reuse": {
+                "seed_db_path": str(seed_db_path) if seed_db_path is not None else None,
+                "reuse_existing_tcgplayer_date": reuse_existing_tcgplayer_date,
+                "cards_with_reused_tcgplayer_rows": 0,
+            },
         }
         has_fallback_providers = (
-            build_metadata["fallback_providers"]["ppt_configured"]
-            or build_metadata["fallback_providers"]["poketrace_configured"]
+            allow_fallback_queries
+            and (
+                build_metadata["fallback_providers"]["ppt_configured"]
+                or build_metadata["fallback_providers"]["poketrace_configured"]
+            )
         )
         fallback_attempts = 0
         for card in cards:
-            selected_sources = select_price_sources(
-                card,
-                pokemontcgio_index=pokemontcgio_index,
-                max_pokemontcgio_age_days=max_pokemontcgio_age_days,
-                now=now,
-                summary=build_metadata,
-            )
             locale = str(card.get("locale") or "")
-            if locale == "en" and "tcgplayer" not in selected_sources and has_fallback_providers:
-                if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:
-                    build_metadata["fallback_providers"]["english_cards_skipped_due_to_budget"] += 1
-                else:
-                    fallback_attempts += 1
-                    build_metadata["fallback_providers"]["english_cards_tried_fallback"] += 1
-                    fallback_result = try_fallback_providers(
-                        card,
-                        poketrace_set_slugs=poketrace_set_slugs,
-                        summary=build_metadata,
-                    )
-                    if fallback_result is not None:
-                        selected_sources["tcgplayer"] = fallback_result
+            card_id = str(card["id"])
+            reusable_rows = reusable_existing_tcgplayer_rows.get(card_id, []) if locale == "en" else []
+            if reusable_rows:
+                extracted = reusable_rows
+                build_metadata["seed_reuse"]["cards_with_reused_tcgplayer_rows"] += 1
+            else:
+                selected_sources = select_price_sources(
+                    card,
+                    pokemontcgio_index=pokemontcgio_index,
+                    max_pokemontcgio_age_days=max_pokemontcgio_age_days,
+                    now=now,
+                    summary=build_metadata,
+                )
+                if locale == "en" and "tcgplayer" not in selected_sources and has_fallback_providers:
+                    if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:
+                        build_metadata["fallback_providers"]["english_cards_skipped_due_to_budget"] += 1
+                    else:
+                        fallback_attempts += 1
+                        build_metadata["fallback_providers"]["english_cards_tried_fallback"] += 1
+                        fallback_result = try_fallback_providers(
+                            card,
+                            poketrace_set_slugs=poketrace_set_slugs,
+                            summary=build_metadata,
+                        )
+                        if fallback_result is not None:
+                            selected_sources["tcgplayer"] = fallback_result
 
-            extracted = extract_price_rows_from_selected_sources(str(card["id"]), selected_sources)
+                extracted = extract_price_rows_from_selected_sources(card_id, selected_sources)
             update_locale_coverage_audit(locale_coverage, locale=str(card["locale"]), extracted_rows=extracted)
             if not extracted:
                 cards_without_prices += 1
@@ -893,6 +981,7 @@ def build_prices_db(
             "stale_reasons": dict(build_metadata["pokemontcgio"]["stale_reasons"]),
         },
         "fallback_providers": dict(build_metadata["fallback_providers"]),
+        "seed_reuse": dict(build_metadata["seed_reuse"]),
     }
     if summary_json is not None:
         write_summary_json(summary_json, summary)
@@ -929,6 +1018,8 @@ def main() -> int:
     parser.add_argument("--summary-json", help="Optional path for a build or inspection summary JSON file")
     parser.add_argument("--max-pokemontcgio-age-days", type=int, default=DEFAULT_MAX_POKEMONTCG_IO_AGE_DAYS)
     parser.add_argument("--max-fallback-cards", type=int, help="Optional cap on English cards that may query fallback USD providers")
+    parser.add_argument("--seed-db", help="Optional existing prices.db to reuse rows from during a rebuild")
+    parser.add_argument("--reuse-existing-tcgplayer-date", help="Reuse existing tcgplayer rows whose updated_at starts with this date prefix, e.g. 2026/04/10")
     args = parser.parse_args()
 
     summary_json = Path(args.summary_json).resolve() if args.summary_json else None
@@ -952,6 +1043,8 @@ def main() -> int:
         summary_json=summary_json,
         max_pokemontcgio_age_days=args.max_pokemontcgio_age_days,
         max_fallback_cards=args.max_fallback_cards,
+        seed_db_path=Path(args.seed_db).resolve() if args.seed_db else None,
+        reuse_existing_tcgplayer_date=args.reuse_existing_tcgplayer_date,
     )
     return 0
 

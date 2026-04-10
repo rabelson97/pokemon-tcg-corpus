@@ -117,7 +117,7 @@ SQLite database with:
 - Price row contract: exactly one `is_primary = 1` row for each `card_id` present in `prices`, with `cardmarket` promoted to primary when `tcgplayer` is missing
 - Prices build audit: per locale, the builder reports cards with `tcgplayer`, cards with `cardmarket`, cards with both, cards with neither, and which source ended up primary
 - Prices build metadata: `prices-build-summary.json` also records provider transport counts plus PokemonTCG.io fetch/match/staleness diagnostics so release audits can distinguish source selection from database shape
-- Prices release workflow: `.github/workflows/prices.yml` builds `prices-latest` with `--max-fallback-cards 0`, so the full corpus rebuild stays bounded and depends only on the primary PokemonTCG.io matcher for English USD rows. PPT and PokeTrace remain available for targeted runs and diagnostics.
+- Prices release workflow: `.github/workflows/prices.yml` builds `prices-latest` with `--max-fallback-cards 0`, so the full corpus rebuild stays bounded, skips fallback-provider network calls entirely, and depends only on the primary PokemonTCG.io matcher for English USD rows. Manual same-day reruns reuse existing same-day `tcgplayer` rows from the published `prices.db` and only query cards still missing USD; scheduled daily runs still refresh the full price set. PPT and PokeTrace remain available for targeted runs and diagnostics.
 - The app currently uses local retrieval and local price lookup after a stable match. This repo is not the place to document app-only thresholds or UI behavior.
 
 ## Training

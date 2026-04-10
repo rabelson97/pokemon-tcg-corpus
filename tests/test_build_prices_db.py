@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import datetime as dt
+import sqlite3
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -309,6 +311,150 @@ class BuildPricesDbTests(unittest.TestCase):
 
         self.assertEqual(0, summary["fallback_providers"]["english_cards_tried_fallback"])
         self.assertEqual(1, summary["fallback_providers"]["english_cards_skipped_due_to_budget"])
+
+    def test_build_prices_db_skips_poketrace_slug_bootstrap_when_fallback_budget_zero(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:sv01:001",
+                "locale": "en",
+                "upstream_id": "sv01-001",
+                "set_id": "sv01",
+                "set_name": "Scarlet & Violet",
+                "card_number": "001",
+                "pricing": {},
+            }
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "prices.db"
+            with mock.patch.object(build_prices_db, "fetch_all_card_records", return_value=(cards, {"en": 1})), mock.patch.object(
+                build_prices_db,
+                "fetch_targeted_pokemontcgio_cards",
+                return_value=[],
+            ), mock.patch.object(
+                build_prices_db,
+                "build_pokemontcgio_index",
+                return_value={},
+            ), mock.patch.object(
+                build_prices_db,
+                "build_poketrace_set_slugs",
+                return_value={"sv01": "scarlet-violet"},
+            ) as build_slugs_mock:
+                summary = build_prices_db.build_prices_db(
+                    output_path,
+                    locales=["en"],
+                    limit=1,
+                    min_row_count=0,
+                    max_fallback_cards=0,
+                )
+
+        build_slugs_mock.assert_not_called()
+        self.assertEqual(0, summary["fallback_providers"]["poketrace_set_slugs_mapped"])
+        self.assertEqual(0, summary["fallback_providers"]["english_cards_tried_fallback"])
+
+    def test_collect_reusable_existing_tcgplayer_rows_filters_by_updated_date(self) -> None:
+        rows = {
+            "pokemon:en:sv01:001": [
+                ("pokemon:en:sv01:001", "US", "USD", "tcgplayer", 1.0, 2.0, 3.0, "2026/04/10", 1),
+            ],
+            "pokemon:en:sv01:002": [
+                ("pokemon:en:sv01:002", "US", "USD", "tcgplayer", 1.0, 2.0, 3.0, "2026/04/09", 1),
+            ],
+        }
+
+        reusable = build_prices_db.collect_reusable_existing_tcgplayer_rows(rows, updated_date_prefix="2026/04/10")
+
+        self.assertIn("pokemon:en:sv01:001", reusable)
+        self.assertNotIn("pokemon:en:sv01:002", reusable)
+
+    def test_build_prices_db_reuses_seed_tcgplayer_rows_for_same_day_manual_rerun(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:sv01:001",
+                "locale": "en",
+                "upstream_id": "sv01-001",
+                "set_id": "sv01",
+                "set_name": "Scarlet & Violet",
+                "card_number": "001",
+                "pricing": {},
+            },
+            {
+                "id": "pokemon:en:sv01:002",
+                "locale": "en",
+                "upstream_id": "sv01-002",
+                "set_id": "sv01",
+                "set_name": "Scarlet & Violet",
+                "card_number": "002",
+                "pricing": {},
+            },
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            seed_db = Path(tmp_dir) / "seed.db"
+            with sqlite3.connect(seed_db) as connection:
+                connection.execute("PRAGMA user_version=2;")
+                connection.execute(
+                    """
+                    CREATE TABLE prices (
+                      card_id TEXT NOT NULL,
+                      market_code TEXT NOT NULL,
+                      currency_code TEXT NOT NULL,
+                      source_name TEXT NOT NULL,
+                      low_price REAL,
+                      market_price REAL,
+                      high_price REAL,
+                      updated_at TEXT,
+                      is_primary INTEGER NOT NULL DEFAULT 0,
+                      PRIMARY KEY (card_id, source_name)
+                    );
+                    """
+                )
+                connection.execute(
+                    """
+                    INSERT INTO prices (
+                      card_id, market_code, currency_code, source_name, low_price, market_price, high_price, updated_at, is_primary
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    ("pokemon:en:sv01:001", "US", "USD", "tcgplayer", 1.0, 2.0, 3.0, "2026/04/10", 1),
+                )
+                connection.commit()
+
+            output_path = Path(tmp_dir) / "prices.db"
+            targeted_result = [{"set": {"id": "sv1"}, "number": "2", "tcgplayer": {"updatedAt": "2026/04/10", "prices": {"normal": {"low": 4.0, "market": 5.0, "high": 6.0}}}}]
+            with mock.patch.object(build_prices_db, "fetch_all_card_records", return_value=(cards, {"en": 2})), mock.patch.object(
+                build_prices_db,
+                "fetch_targeted_pokemontcgio_cards",
+                return_value=targeted_result,
+            ) as targeted_fetch_mock, mock.patch.object(
+                build_prices_db,
+                "build_pokemontcgio_index",
+                return_value={("sv1", "2"): targeted_result[0]},
+            ), mock.patch.object(
+                build_prices_db,
+                "build_poketrace_set_slugs",
+                return_value={},
+            ):
+                summary = build_prices_db.build_prices_db(
+                    output_path,
+                    locales=["en"],
+                    limit=None,
+                    min_row_count=0,
+                    max_fallback_cards=0,
+                    seed_db_path=seed_db,
+                    reuse_existing_tcgplayer_date="2026/04/10",
+                )
+
+            targeted_fetch_mock.assert_called_once()
+            self.assertEqual(1, summary["seed_reuse"]["cards_with_reused_tcgplayer_rows"])
+            with sqlite3.connect(output_path) as connection:
+                rows = connection.execute(
+                    "SELECT card_id, market_price, updated_at FROM prices ORDER BY card_id"
+                ).fetchall()
+            self.assertEqual(
+                [
+                    ("pokemon:en:sv01:001", 2.0, "2026/04/10"),
+                    ("pokemon:en:sv01:002", 5.0, "2026/04/10"),
+                ],
+                rows,
+            )
 
     def test_load_poketrace_set_mapping_overrides_reads_repo_cache(self) -> None:
         mapping = build_prices_db.load_poketrace_set_mapping_overrides()

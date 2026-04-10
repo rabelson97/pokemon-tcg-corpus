@@ -23,18 +23,80 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Download current published prices database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p existing-release
+          gh release view prices-latest >/dev/null 2>&1 || exit 0
+          gh release download prices-latest --pattern prices.db.zip --dir existing-release || exit 0
+          [ -f existing-release/prices.db.zip ] || exit 0
+          unzip -jo existing-release/prices.db.zip -d existing-release
+
+      - name: Resolve build mode
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          from pathlib import Path
+
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+          existing_db_path = Path("existing-release/prices.db")
+          reuse_existing = False
+          reuse_date = ""
+
+          if event_name == "workflow_dispatch" and existing_db_path.exists():
+              try:
+                  release = json.loads(
+                      os.popen("gh release view prices-latest --json assets --repo \"$GITHUB_REPOSITORY\"").read()
+                  )
+              except Exception:
+                  release = {}
+              assets = release.get("assets") if isinstance(release, dict) else None
+              asset_created_at = ""
+              if isinstance(assets, list):
+                  for asset in assets:
+                      if isinstance(asset, dict) and asset.get("name") == "prices.db.zip":
+                          asset_created_at = str(asset.get("createdAt") or "")
+                          break
+              today_utc = dt.datetime.now(dt.timezone.utc).date()
+              if asset_created_at:
+                  created_date = dt.datetime.fromisoformat(asset_created_at.replace("Z", "+00:00")).date()
+                  if created_date == today_utc:
+                      reuse_existing = True
+                      reuse_date = today_utc.strftime("%Y/%m/%d")
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"REUSE_EXISTING_SAME_DAY={'true' if reuse_existing else 'false'}\n")
+              env_file.write(f"REUSE_EXISTING_TCGPLAYER_DATE={reuse_date}\n")
+
+          print(
+              f"event_name={event_name} "
+              f"reuse_existing_same_day={str(reuse_existing).lower()} "
+              f"reuse_existing_tcgplayer_date={reuse_date or 'none'}"
+          )
+          PY
+
       - name: Build prices database
         env:
           POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
           PPT_API_KEY: ${{ secrets.PPT_API_KEY }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
         run: |
+          extra_args=""
+          if [ "${REUSE_EXISTING_SAME_DAY}" = "true" ] && [ -f existing-release/prices.db ] && [ -n "${REUSE_EXISTING_TCGPLAYER_DATE}" ]; then
+            extra_args="--seed-db existing-release/prices.db --reuse-existing-tcgplayer-date ${REUSE_EXISTING_TCGPLAYER_DATE}"
+          fi
           python scripts/build_prices_db.py \
             --output prices.db \
             --summary-json prices-build-summary.json \
             --locales en,ja,fr \
             --min-row-count 10000 \
-            --max-fallback-cards 0
+            --max-fallback-cards 0 \
+            ${extra_args}
 
       - name: Validate prices database
         run: |
@@ -50,16 +112,6 @@ jobs:
         with:
           name: prices-build-summary
           path: prices-build-summary.json
-
-      - name: Download current published prices database
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p existing-release
-          gh release view prices-latest >/dev/null 2>&1 || exit 0
-          gh release download prices-latest --pattern prices.db.zip --dir existing-release || exit 0
-          [ -f existing-release/prices.db.zip ] || exit 0
-          unzip -jo existing-release/prices.db.zip -d existing-release
 
       - name: Resolve publish mode
         run: |
