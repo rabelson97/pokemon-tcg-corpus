@@ -36,8 +36,10 @@ Relevant entry points:
 
 - [scripts/build_prices_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_prices_db.py)
 - [scripts/build_embeddings_db.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_embeddings_db.py)
+- [scripts/rebuild_embeddings_local.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/rebuild_embeddings_local.py)
 - [scripts/build_training_manifest.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_training_manifest.py)
 - [scripts/prune_embeddings_releases.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/prune_embeddings_releases.py)
+- [docs/embeddings_update_runbook.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/docs/embeddings_update_runbook.md)
 - [.github/workflows/prices.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/prices.yml)
 - [.github/workflows/build-embeddings-db.yml](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/.github/workflows/build-embeddings-db.yml)
 

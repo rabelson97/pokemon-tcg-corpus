@@ -21,10 +21,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from embedder_contract import EXPECTED_DIM, IMAGE_SIZE as EMBED_IMAGE_SIZE, preprocess_image_path
-from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id
+from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id, set_detail_cache_path
 
 
-DB_USER_VERSION = 2
+DB_USER_VERSION = 3
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 
@@ -43,7 +43,7 @@ class SkippedCard:
     detail: str | None = None
 
 
-def card_row(card: dict[str, Any]) -> tuple[str, str, str, str, str, str, str, str, str, str]:
+def card_row(card: dict[str, Any]) -> tuple[str, str, str, str, str, str, str, str, str, str, str | None]:
     return (
         card["id"],
         card["locale"],
@@ -55,6 +55,7 @@ def card_row(card: dict[str, Any]) -> tuple[str, str, str, str, str, str, str, s
         card["rarity"],
         card["image_url"],
         card["equivalence_key"],
+        card.get("hp"),
     )
 
 
@@ -86,7 +87,8 @@ def init_db(connection: sqlite3.Connection) -> None:
           name TEXT NOT NULL,
           rarity TEXT NOT NULL,
           image_url TEXT NOT NULL,
-          equivalence_key TEXT NOT NULL
+          equivalence_key TEXT NOT NULL,
+          hp TEXT
         );
 
         CREATE TABLE IF NOT EXISTS embeddings (
@@ -389,12 +391,13 @@ def insert_new_embeddings(
               name,
               rarity,
               image_url,
-              equivalence_key
+              equivalence_key,
+              hp
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING;
             """,
-            [row[:10] for row in rows],
+            [row[:11] for row in rows],
         )
         connection.executemany(
             """
@@ -402,7 +405,7 @@ def insert_new_embeddings(
             VALUES (?, ?, ?, ?)
             ON CONFLICT(card_id) DO NOTHING;
             """,
-            [(row[0], row[10], row[11], row[12]) for row in rows],
+            [(row[0], row[11], row[12], row[13]) for row in rows],
         )
         connection.executemany(
             """
@@ -579,11 +582,19 @@ def main() -> int:
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
     parser.add_argument("--min-row-count", type=int, default=1000)
+    parser.add_argument(
+        "--detail-cache",
+        default="build/tcgdex-detail-cache.jsonl",
+        help="Path to local card-detail response cache (avoids re-fetching on reruns)",
+    )
     args = parser.parse_args()
 
     model_path = Path(args.model_path).resolve()
     if not model_path.exists():
         raise SystemExit(f"Model not found: {model_path}")
+
+    if args.detail_cache:
+        set_detail_cache_path(Path(args.detail_cache).resolve())
 
     build_embeddings_db(
         Path(args.output_db).resolve(),

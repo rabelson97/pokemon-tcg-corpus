@@ -16,6 +16,54 @@ API_BASE_URL = "https://api.tcgdex.net/v2"
 DEFAULT_LOCALES = ("en", "ja", "fr", "de", "it", "es")
 USER_AGENT = "pokemon-tcg-corpus-db-builder/2.0"
 
+# ---------------------------------------------------------------------------
+# Local card-detail cache
+# ---------------------------------------------------------------------------
+# Stores raw API responses keyed by (locale, upstream_id) so that re-runs
+# only hit the network for cards not yet seen.  The cache is a JSONL file
+# where each line is {"locale": ..., "upstream_id": ..., "payload": {...}}.
+# ---------------------------------------------------------------------------
+
+_detail_cache: dict[tuple[str, str], dict[str, Any]] | None = None
+_detail_cache_path: Path | None = None
+
+
+def _load_detail_cache(cache_path: Path) -> dict[tuple[str, str], dict[str, Any]]:
+    cache: dict[tuple[str, str], dict[str, Any]] = {}
+    if cache_path.exists():
+        with cache_path.open(encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                    key = (entry["locale"], entry["upstream_id"])
+                    cache[key] = entry["payload"]
+                except Exception:
+                    pass
+    return cache
+
+
+def set_detail_cache_path(path: Path) -> None:
+    """Call before fetch_all_card_records to enable caching."""
+    global _detail_cache, _detail_cache_path
+    _detail_cache_path = path
+    _detail_cache = _load_detail_cache(path)
+    print(f"detail cache loaded: {len(_detail_cache)} entries from {path}")
+
+
+def _cache_detail(locale: str, upstream_id: str, payload: dict[str, Any]) -> None:
+    if _detail_cache is None or _detail_cache_path is None:
+        return
+    key = (locale, upstream_id)
+    if key in _detail_cache:
+        return  # already cached
+    _detail_cache[key] = payload
+    _detail_cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with _detail_cache_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"locale": locale, "upstream_id": upstream_id, "payload": payload}, ensure_ascii=False) + "\n")
+
 
 def api_get_json(
     url: str,
@@ -96,6 +144,22 @@ def parse_locales(raw: str | None) -> list[str]:
     return locales
 
 
+def _briefs_from_detail_cache(locale: str) -> list[dict[str, Any]] | None:
+    """Return minimal brief-style dicts from the detail cache for a locale.
+
+    Returns None if there are no cached entries for this locale (so the caller
+    falls back to the live listing API).  If the cache has ANY entries for the
+    locale we assume it is complete and skip the slow paginated listing.
+    """
+    if _detail_cache is None:
+        return None
+    briefs = [{"id": uid} for (loc, uid) in _detail_cache if loc == locale]
+    if not briefs:
+        return None
+    print(f"briefs from cache locale={locale} count={len(briefs)}")
+    return briefs
+
+
 def fetch_card_briefs(
     locale: str,
     *,
@@ -105,6 +169,11 @@ def fetch_card_briefs(
     cards: list[dict[str, Any]] = []
     seen_upstream_ids: set[str] = set()
     duplicate_briefs = 0
+
+    cached_briefs = _briefs_from_detail_cache(locale)
+    if cached_briefs is not None:
+        return cached_briefs[:limit] if limit is not None else cached_briefs
+
     page = 1
     while True:
         params = {
@@ -147,9 +216,14 @@ def fetch_card_briefs(
 
 
 def fetch_card_detail(locale: str, upstream_id: str) -> dict[str, Any]:
+    if _detail_cache is not None:
+        cached = _detail_cache.get((locale, upstream_id))
+        if cached is not None:
+            return cached
     payload = api_get_json(f"{API_BASE_URL}/{locale}/cards/{urllib.parse.quote(upstream_id, safe='')}")
     if not isinstance(payload, dict):
         raise RuntimeError(f"Unexpected card payload for locale={locale} id={upstream_id}: expected object")
+    _cache_detail(locale, upstream_id, payload)
     return payload
 
 
@@ -208,6 +282,7 @@ def normalize_card_record(locale: str, card: dict[str, Any]) -> dict[str, Any]:
         "image_url": image_url,
         "equivalence_key": build_equivalence_key(upstream_id),
         "pricing": card.get("pricing") or {},
+        "hp": str(card.get("hp") or "").strip() or None,
     }
 
 

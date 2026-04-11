@@ -9,7 +9,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id
+from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id, set_detail_cache_path
 
 
 def main() -> int:
@@ -20,11 +20,19 @@ def main() -> int:
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--limit", type=int, help="Optional combined card limit for local verification")
     parser.add_argument("--summary-json", help="Optional JSON summary output path")
+    parser.add_argument(
+        "--detail-cache",
+        default="build/tcgdex-detail-cache.jsonl",
+        help="Path to local card-detail response cache (avoids re-fetching on reruns)",
+    )
     args = parser.parse_args()
 
     output_path = Path(args.output).resolve()
     image_dir = Path(args.image_dir).resolve()
     image_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.detail_cache:
+        set_detail_cache_path(Path(args.detail_cache).resolve())
 
     locales = parse_locales(args.locales)
     cards, listed_counts = fetch_all_card_records(locales, limit=args.limit)
@@ -120,6 +128,7 @@ def main() -> int:
                 "upstream_id": card["upstream_id"],
                 "set_id": card["set_id"],
                 "equivalence_key": card["equivalence_key"],
+                "hp": card.get("hp"),
             }
         )
         written_counts[card["locale"]] += 1

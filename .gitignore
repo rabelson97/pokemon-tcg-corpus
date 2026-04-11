@@ -10,6 +10,7 @@ __pycache__/
 
 # Local smoke/build outputs
 /tmp/
+/build/
 /prices.db
 /prices.db.zip
 /prices-build-summary.json
@@ -23,3 +24,4 @@ __pycache__/
 /training/checkpoints/
 /training/exports/
 /training/data/
+/.cache
