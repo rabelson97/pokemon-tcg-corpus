@@ -95,7 +95,6 @@ jobs:
             --summary-json prices-build-summary.json \
             --locales en,ja,fr \
             --min-row-count 10000 \
-            --max-fallback-cards 0 \
             ${extra_args}
 
       - name: Validate prices database
