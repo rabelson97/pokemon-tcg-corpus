@@ -676,9 +676,10 @@ def try_fallback_providers(
     card_number = str(card.get("card_number") or "").strip()
     card_name = str(card.get("name") or "").strip()
     set_name = str(card.get("set_name") or "").strip()
+    fallback_summary = summary["fallback_providers"]
 
     ppt_key = ppt_api.resolve_api_key()
-    if ppt_key:
+    if ppt_key and not bool(fallback_summary.get("ppt_disabled_due_to_errors")):
         try:
             ppt_card = None
             if card_name:
@@ -692,14 +693,23 @@ def try_fallback_providers(
                 result = ppt_api.extract_usd_price(ppt_card)
                 if result is not None:
                     increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "ppt")
-                    summary["fallback_providers"]["ppt_hits"] += 1
+                    fallback_summary["ppt_hits"] += 1
                     return result
-            summary["fallback_providers"]["ppt_misses"] += 1
-        except Exception:
-            summary["fallback_providers"]["ppt_errors"] += 1
+            fallback_summary["ppt_misses"] += 1
+        except Exception as error:
+            fallback_summary["ppt_errors"] += 1
+            if not fallback_summary.get("ppt_first_error"):
+                fallback_summary["ppt_first_error"] = f"{type(error).__name__}: {error}"
+            threshold = int(fallback_summary.get("ppt_error_disable_threshold") or 5)
+            if fallback_summary["ppt_hits"] == 0 and fallback_summary["ppt_errors"] >= threshold:
+                fallback_summary["ppt_disabled_due_to_errors"] = True
+                print(
+                    f"warning: disabling PPT fallback after {fallback_summary['ppt_errors']} errors; "
+                    f"first_error={fallback_summary.get('ppt_first_error')}"
+                )
 
     poketrace_key = poketrace_api.resolve_api_key()
-    if poketrace_key:
+    if poketrace_key and not bool(fallback_summary.get("poketrace_disabled_due_to_errors")):
         slug = poketrace_set_slugs.get(set_id)
         if slug:
             try:
@@ -708,13 +718,23 @@ def try_fallback_providers(
                     result = poketrace_api.extract_usd_price(pt_card)
                     if result is not None:
                         increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "poketrace")
-                        summary["fallback_providers"]["poketrace_hits"] += 1
+                        fallback_summary["poketrace_hits"] += 1
                         return result
-                summary["fallback_providers"]["poketrace_misses"] += 1
-            except Exception:
-                summary["fallback_providers"]["poketrace_errors"] += 1
+                fallback_summary["poketrace_misses"] += 1
+            except Exception as error:
+                fallback_summary["poketrace_errors"] += 1
+                if not fallback_summary.get("poketrace_first_error"):
+                    fallback_summary["poketrace_first_error"] = f"{type(error).__name__}: {error}"
+                threshold = int(fallback_summary.get("poketrace_error_disable_threshold") or 5)
+                if fallback_summary["poketrace_hits"] == 0 and fallback_summary["poketrace_errors"] >= threshold:
+                    fallback_summary["poketrace_disabled_due_to_errors"] = True
+                    print(
+                        "warning: disabling PokeTrace fallback after "
+                        f"{fallback_summary['poketrace_errors']} errors; "
+                        f"first_error={fallback_summary.get('poketrace_first_error')}"
+                    )
         else:
-            summary["fallback_providers"]["poketrace_set_mapping_failures"] += 1
+            fallback_summary["poketrace_set_mapping_failures"] += 1
 
     return None
 
@@ -873,9 +893,15 @@ def build_prices_db(
                 "ppt_hits": 0,
                 "ppt_misses": 0,
                 "ppt_errors": 0,
+                "ppt_first_error": None,
+                "ppt_disabled_due_to_errors": False,
+                "ppt_error_disable_threshold": 5,
                 "poketrace_hits": 0,
                 "poketrace_misses": 0,
                 "poketrace_errors": 0,
+                "poketrace_first_error": None,
+                "poketrace_disabled_due_to_errors": False,
+                "poketrace_error_disable_threshold": 5,
                 "poketrace_set_mapping_failures": 0,
             },
             "seed_reuse": {
