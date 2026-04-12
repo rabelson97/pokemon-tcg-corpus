@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-prices:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -84,7 +85,6 @@ jobs:
         env:
           POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
           PPT_API_KEY: ${{ secrets.PPT_API_KEY }}
-          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
         run: |
           extra_args=""
           if [ "${REUSE_EXISTING_SAME_DAY}" = "true" ] && [ -f existing-release/prices.db ] && [ -n "${REUSE_EXISTING_TCGPLAYER_DATE}" ]; then
@@ -95,6 +95,7 @@ jobs:
             --summary-json prices-build-summary.json \
             --locales en,ja,fr \
             --min-row-count 10000 \
+            --max-fallback-cards 750 \
             ${extra_args}
 
       - name: Validate prices database

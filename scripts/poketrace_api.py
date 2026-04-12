@@ -62,9 +62,9 @@ def api_get_json(
                 retry_after = error.headers.get("Retry-After") if error.headers else None
                 if retry_after:
                     try:
-                        wait = min(60, max(1, int(retry_after)))
+                        wait = min(30, max(1, int(retry_after)))
                     except ValueError:
-                        wait = min(30, 2 ** attempt)
+                        wait = min(5, 2 ** attempt)
                 else:
                     wait = min(5, 2 ** attempt)
                 time.sleep(wait)
@@ -79,12 +79,15 @@ def api_get_json(
     raise RuntimeError(f"PokeTrace request failed after {retries} attempts: {last_error}")
 
 
-def fetch_sets(*, api_key: str | None = None, page_delay: float = 0.5) -> list[dict[str, Any]]:
+def fetch_sets(*, api_key: str | None = None, page_delay: float = 0.5, max_pages: int = 200) -> list[dict[str, Any]]:
     """Fetch all Pokemon sets from PokeTrace."""
     sets: list[dict[str, Any]] = []
     cursor: str | None = None
     pages_fetched = 0
+    seen_cursors: set[str] = set()
     while True:
+        if pages_fetched >= max_pages:
+            break
         params: dict[str, str] = {"game": "pokemon", "limit": "100"}
         if cursor:
             params["cursor"] = cursor
@@ -99,9 +102,13 @@ def fetch_sets(*, api_key: str | None = None, page_delay: float = 0.5) -> list[d
         pagination = payload.get("pagination") or {}
         if not pagination.get("hasMore"):
             break
-        cursor = pagination.get("nextCursor")
-        if not cursor:
+        next_cursor = str(pagination.get("nextCursor") or "").strip()
+        if not next_cursor:
             break
+        if next_cursor in seen_cursors:
+            break
+        seen_cursors.add(next_cursor)
+        cursor = next_cursor
         if page_delay > 0:
             time.sleep(page_delay)
     return sets
