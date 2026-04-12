@@ -28,8 +28,8 @@ def api_get_json(
     path: str,
     *,
     params: dict[str, str] | None = None,
-    timeout: int = 30,
-    retries: int = 3,
+    timeout: int = 10,
+    retries: int = 2,
     api_key: str | None = None,
 ) -> Any:
     query = urllib.parse.urlencode(params or {})
@@ -66,14 +66,14 @@ def api_get_json(
                     except ValueError:
                         wait = min(30, 2 ** attempt)
                 else:
-                    wait = min(30, 2 ** attempt)
+                    wait = min(5, 2 ** attempt)
                 time.sleep(wait)
                 continue
         except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as error:
             last_error = error
             if attempt == retries:
                 raise
-        time.sleep(min(15, 2 ** (attempt - 1)))
+        time.sleep(min(5, 2 ** (attempt - 1)))
 
     assert last_error is not None
     raise RuntimeError(f"PokeTrace request failed after {retries} attempts: {last_error}")
