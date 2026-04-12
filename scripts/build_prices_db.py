@@ -913,6 +913,14 @@ def build_prices_db(
                     else:
                         fallback_attempts += 1
                         build_metadata["fallback_providers"]["english_cards_tried_fallback"] += 1
+                        if fallback_attempts % 100 == 1:
+                            fb = build_metadata["fallback_providers"]
+                            print(
+                                f"fallback attempt={fallback_attempts} "
+                                f"ppt_hits={fb['ppt_hits']} ppt_misses={fb['ppt_misses']} ppt_errors={fb['ppt_errors']} "
+                                f"poketrace_hits={fb['poketrace_hits']} poketrace_misses={fb['poketrace_misses']} "
+                                f"card_id={card_id}"
+                            )
                         fallback_result = try_fallback_providers(
                             card,
                             poketrace_set_slugs=poketrace_set_slugs,
