@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,7 +10,7 @@ from typing import Iterable
 
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 from torch import nn
 from torch.utils.data import Dataset
 from torchvision import models, transforms
@@ -34,6 +35,22 @@ class ManifestRecord:
     upstream_id: str | None = None
     set_id: str | None = None
     equivalence_key: str | None = None
+
+
+def normalize_text(value: str | None) -> str:
+    if not value:
+        return ""
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def same_art_key(record: ManifestRecord) -> str:
+    equivalence_key = normalize_text(record.equivalence_key)
+    if equivalence_key:
+        return f"equiv:{equivalence_key}"
+    upstream_id = normalize_text(record.upstream_id)
+    if upstream_id:
+        return f"upstream:{upstream_id}"
+    return f"name:{normalize_text(record.name)}"
 
 
 def load_manifest(path: str | Path) -> list[ManifestRecord]:
@@ -107,24 +124,127 @@ class RandomStreamOverlay:
         return Image.fromarray(array)
 
 
+def _apply_specular_glare(array: np.ndarray, rng: random.Random) -> np.ndarray:
+    height, width = array.shape[:2]
+    xs = np.linspace(0.0, 1.0, width, dtype=np.float32)
+    ys = np.linspace(0.0, 1.0, height, dtype=np.float32)
+    xx, yy = np.meshgrid(xs, ys)
+    center_x = rng.uniform(0.2, 0.8)
+    center_y = rng.uniform(0.15, 0.85)
+    sigma_x = rng.uniform(0.05, 0.18)
+    sigma_y = rng.uniform(0.04, 0.14)
+    angle = rng.uniform(-1.0, 1.0)
+    cos_a = np.cos(angle)
+    sin_a = np.sin(angle)
+    x_shifted = xx - center_x
+    y_shifted = yy - center_y
+    rot_x = (x_shifted * cos_a) - (y_shifted * sin_a)
+    rot_y = (x_shifted * sin_a) + (y_shifted * cos_a)
+    glare = np.exp(-0.5 * ((rot_x / sigma_x) ** 2 + (rot_y / sigma_y) ** 2))
+    intensity = rng.uniform(90.0, 180.0)
+    tint = np.asarray(
+        [
+            rng.uniform(0.92, 1.0),
+            rng.uniform(0.92, 1.0),
+            rng.uniform(0.86, 0.98),
+        ],
+        dtype=np.float32,
+    )
+    array = array.astype(np.float32)
+    array += glare[..., None] * intensity * tint
+    return np.clip(array, 0.0, 255.0).astype(np.uint8)
+
+
+def _apply_sleeve_scratches(image: Image.Image, rng: random.Random) -> Image.Image:
+    overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    width, height = image.size
+    scratch_count = rng.randint(3, 9)
+    for _ in range(scratch_count):
+        x0 = rng.randint(0, width)
+        y0 = rng.randint(0, height)
+        x1 = x0 + rng.randint(-width // 6, width // 6)
+        y1 = y0 + rng.randint(height // 8, height // 2)
+        alpha = rng.randint(18, 52)
+        color = (255, 255, 255, alpha)
+        draw.line((x0, y0, x1, y1), fill=color, width=rng.randint(1, 3))
+    return Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
+
+
+def _apply_thumb_occlusion(image: Image.Image, rng: random.Random) -> Image.Image:
+    overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    width, height = image.size
+    skin_tones = [
+        (232, 190, 172, 230),
+        (210, 158, 132, 230),
+        (166, 112, 83, 230),
+        (120, 79, 58, 230),
+    ]
+    tone = skin_tones[rng.randrange(len(skin_tones))]
+    if rng.random() < 0.6:
+        ellipse_w = int(width * rng.uniform(0.18, 0.34))
+        ellipse_h = int(height * rng.uniform(0.14, 0.24))
+        x0 = rng.randint(-ellipse_w // 4, width - ellipse_w // 2)
+        y0 = rng.randint(int(height * 0.68), height - ellipse_h // 2)
+        draw.ellipse((x0, y0, x0 + ellipse_w, y0 + ellipse_h), fill=tone)
+    else:
+        ellipse_w = int(width * rng.uniform(0.14, 0.24))
+        ellipse_h = int(height * rng.uniform(0.28, 0.42))
+        x0 = rng.choice([rng.randint(-ellipse_w // 3, 0), rng.randint(width - ellipse_w, width - ellipse_w // 3)])
+        y0 = rng.randint(int(height * 0.35), int(height * 0.62))
+        draw.ellipse((x0, y0, x0 + ellipse_w, y0 + ellipse_h), fill=tone)
+    return Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
+
+
+def make_stream_artifact_image(image: Image.Image, rng: random.Random) -> Image.Image:
+    image = image.convert("RGB")
+    array = np.array(image).copy()
+    if rng.random() < 0.72:
+        array = _apply_specular_glare(array, rng)
+    image = Image.fromarray(array)
+
+    if rng.random() < 0.55:
+        image = _apply_sleeve_scratches(image, rng)
+    if rng.random() < 0.45:
+        image = _apply_thumb_occlusion(image, rng)
+    if rng.random() < 0.60:
+        image = RandomStreamOverlay()(image)
+
+    image = ImageEnhance.Brightness(image).enhance(rng.uniform(0.72, 1.28))
+    image = ImageEnhance.Contrast(image).enhance(rng.uniform(0.72, 1.30))
+    image = ImageEnhance.Color(image).enhance(rng.uniform(0.72, 1.22))
+    if rng.random() < 0.35:
+        image = ImageEnhance.Sharpness(image).enhance(rng.uniform(0.35, 0.9))
+    if rng.random() < 0.55:
+        image = image.filter(ImageFilter.GaussianBlur(radius=rng.uniform(0.25, 2.2)))
+
+    return image
+
+
+class StreamArtifactAugment:
+    def __call__(self, image: Image.Image) -> Image.Image:
+        return make_stream_artifact_image(image, random)
+
+
 def build_stream_train_transform(image_size: int) -> transforms.Compose:
     return transforms.Compose(
         [
             CropInset(),
             transforms.Resize((image_size, image_size), interpolation=InterpolationMode.BICUBIC),
-            transforms.RandomApply([RandomStreamOverlay()], p=0.75),
-            transforms.ColorJitter(brightness=0.35, contrast=0.3, saturation=0.25, hue=0.06),
-            transforms.RandomPerspective(distortion_scale=0.16, p=0.35),
+            transforms.RandomApply([StreamArtifactAugment()], p=0.9),
+            transforms.ColorJitter(brightness=0.42, contrast=0.38, saturation=0.28, hue=0.08),
+            transforms.RandomPerspective(distortion_scale=0.24, p=0.45),
             transforms.RandomAffine(
-                degrees=7,
-                translate=(0.08, 0.08),
-                scale=(0.88, 1.08),
-                shear=4,
+                degrees=9,
+                translate=(0.10, 0.10),
+                scale=(0.84, 1.10),
+                shear=6,
                 interpolation=InterpolationMode.BILINEAR,
             ),
-            transforms.RandomApply([transforms.GaussianBlur(kernel_size=5, sigma=(0.15, 2.0))], p=0.4),
+            transforms.RandomApply([transforms.GaussianBlur(kernel_size=5, sigma=(0.15, 2.4))], p=0.5),
             transforms.ToTensor(),
-            transforms.RandomErasing(p=0.25, scale=(0.02, 0.12), ratio=(0.4, 2.2), value=0),
+            transforms.RandomErasing(p=0.35, scale=(0.02, 0.16), ratio=(0.3, 2.5), value=0),
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         ]
     )

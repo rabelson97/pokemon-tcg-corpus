@@ -103,8 +103,9 @@ def main() -> int:
         )
     )
 
+    train_dataset = TwoViewCardDataset(train_records, build_stream_train_transform(args.image_size))
     train_loader = DataLoader(
-        TwoViewCardDataset(train_records, build_stream_train_transform(args.image_size)),
+        train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=args.num_workers,
@@ -170,10 +171,10 @@ def main() -> int:
                     "label_map": label_map,
                     "best_val_recall_at_1": best_recall,
                     "best_val_stream_recall_at_1": best_recall,
-                    "training_mode": "contrastive",
+                    "training_mode": "baseline",
                 },
                 output_path,
-            )
+                )
 
     metrics_path = output_path.with_suffix(".metrics.json")
     metrics_path.write_text(
@@ -183,7 +184,8 @@ def main() -> int:
                 "best_val_stream_recall_at_1": best_recall,
                 "num_cards": len(records),
                 "num_classes": len(label_map),
-                "training_mode": "contrastive",
+                "training_mode": "baseline",
+                "backbone": "mobilenet_v3_small",
                 "manifest_counts": count_records_by_locale(records),
                 "train_counts": count_records_by_locale(train_records),
                 "validation_counts": count_records_by_locale(val_records),

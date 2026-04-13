@@ -42,6 +42,8 @@ python3 training/train_retrieval.py \
   --output training/checkpoints/card_retrieval_candidate.pt
 ```
 
+The retrieval embedder training path is intentionally simple: `mobilenet_v3_small` with the baseline contrastive + light classification objective.
+
 Export a candidate ONNX model:
 
 ```bash
@@ -60,6 +62,51 @@ python3 training/evaluate_card_embedder.py \
 ```
 
 Evaluation output now includes overall metrics plus per-locale validation counts and retrieval metrics.
+It also reports mean reciprocal rank, mean rank, mean top-1 margin, and same-art top-1 confusion examples so candidate models can be compared on retrieval quality rather than only raw recall.
+
+## CardHawk thumbs-down bundles
+
+CardHawk's Android thumbs-down button already saves a misread bundle containing:
+
+- full frame image
+- cropped image used for the locked candidate
+- predicted card metadata
+- evidence candidate list
+- OCR hints
+- runtime diagnostics
+
+The supported automation for pulling and analyzing those bundles now lives in the sibling CardHawk repo under `tools/misread-tools/`.
+Use that workflow as the source of truth for thumbs-down triage instead of adding separate import scripts here.
+
+## Synthetic benchmark automation
+
+For a reproducible first-pass benchmark from the cached card art, build a sequential clip manifest and run the augmented baseline smoke benchmark:
+
+```bash
+python3 training/run_benchmark_matrix.py \
+  --output-dir training/benchmarks/matrix \
+  --subset-size 1024 \
+  --epochs 2 \
+  --batch-size 32
+```
+
+This will:
+
+- create a grouped subset manifest when `--subset-size` is set
+- generate `synthetic_benchmark.jsonl` from cached images
+- train the baseline MobileNet candidate
+- export it to ONNX
+- evaluate it on exact, stream-like, and sequential synthetic benchmark queries
+- write `benchmark_summary.json` plus the candidate `benchmark_topk.json` artifact
+
+If you only need the sequential benchmark manifest, run:
+
+```bash
+python3 training/build_benchmark_manifest.py \
+  --manifest training/data/full/manifest.jsonl \
+  --output training/benchmarks/synthetic_benchmark.jsonl \
+  --summary-json training/benchmarks/synthetic_benchmark.summary.json
+```
 
 Promote only if evaluation passes:
 

@@ -24,4 +24,5 @@ __pycache__/
 /training/checkpoints/
 /training/exports/
 /training/data/
+/training/benchmarks/
 /.cache
