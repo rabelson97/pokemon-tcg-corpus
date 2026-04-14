@@ -43,6 +43,21 @@ python3 training/train_retrieval.py \
 ```
 
 The retrieval embedder training path is intentionally simple: `mobilenet_v3_small` with the baseline contrastive + light classification objective.
+The trainer now supports explicit stream augmentation profiles via `--augment-profile`:
+
+- `baseline`: current stream-like augmentation stack
+- `targeted_v1`: baseline plus directional motion blur, partial-card crop truncation, JPEG artifacts, and mild sensor noise
+- `targeted_v2`: a narrower version of `targeted_v1` with lighter motion blur, lighter crop truncation, and milder JPEG/noise pressure
+- `targeted_v3`: `targeted_v2` with softer edge behavior plus lower-left/lower-right/body-text occlusion pressure
+
+Before retraining a new profile, render a few visual samples so the distortions can be sanity-checked:
+
+```bash
+python3 training/render_augment_samples.py \
+  --manifest training/data/full/manifest.jsonl \
+  --augment-profile targeted_v1 \
+  --output-dir training/augment_samples/targeted_v1
+```
 
 Export a candidate ONNX model:
 

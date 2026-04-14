@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 
 import torch
@@ -18,6 +19,7 @@ from common import (
     count_records_by_locale,
     create_label_map,
     load_manifest,
+    resolve_stream_augment_profile,
     split_records,
 )
 
@@ -74,6 +76,8 @@ def main() -> int:
     parser.add_argument("--classification-weight", type=float, default=0.25)
     parser.add_argument("--val-fraction", type=float, default=0.1)
     parser.add_argument("--num-workers", type=int, default=0)
+    parser.add_argument("--log-every", type=int, default=50)
+    parser.add_argument("--augment-profile", default="baseline")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -89,6 +93,7 @@ def main() -> int:
     records = load_manifest(args.manifest)
     train_records, val_records = split_records(records, val_fraction=args.val_fraction, seed=args.seed)
     label_map = create_label_map(records)
+    augment_profile = resolve_stream_augment_profile(args.augment_profile)
     print(
         json.dumps(
             {
@@ -98,12 +103,14 @@ def main() -> int:
                 "num_cards": len(records),
                 "num_train": len(train_records),
                 "num_validation": len(val_records),
+                "augment_profile": augment_profile.name,
             },
             indent=2,
         )
     )
 
-    train_dataset = TwoViewCardDataset(train_records, build_stream_train_transform(args.image_size))
+    train_transform = build_stream_train_transform(args.image_size, augment_profile=augment_profile)
+    train_dataset = TwoViewCardDataset(train_records, train_transform)
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
@@ -113,7 +120,7 @@ def main() -> int:
         drop_last=True,
     )
     val_query_loader = DataLoader(
-        CardInferenceDataset(val_records, build_stream_train_transform(args.image_size)),
+        CardInferenceDataset(val_records, build_stream_train_transform(args.image_size, augment_profile=augment_profile)),
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.num_workers,
@@ -143,7 +150,9 @@ def main() -> int:
     for epoch in range(1, args.epochs + 1):
         model.train()
         running_loss = 0.0
-        for view_a, view_b, card_ids in train_loader:
+        epoch_start = time.perf_counter()
+        total_batches = len(train_loader)
+        for step, (view_a, view_b, card_ids) in enumerate(train_loader, start=1):
             images = torch.cat([view_a, view_b], dim=0).to(device)
             labels = torch.tensor([label_map[card_id] for card_id in card_ids], device=device)
             labels = torch.cat([labels, labels], dim=0)
@@ -156,6 +165,16 @@ def main() -> int:
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+
+            if args.log_every > 0 and (step == 1 or step % args.log_every == 0 or step == total_batches):
+                elapsed = time.perf_counter() - epoch_start
+                batches_remaining = max(0, total_batches - step)
+                eta_seconds = (elapsed / step) * batches_remaining if step else 0.0
+                avg_loss_so_far = running_loss / step
+                print(
+                    f"epoch={epoch} batch={step}/{total_batches} avg_loss={avg_loss_so_far:.4f} elapsed={elapsed:.1f}s eta={eta_seconds:.1f}s",
+                    flush=True,
+                )
 
         val_recall = retrieval_at_1(model, val_query_loader, val_reference_loader, device)
         avg_loss = running_loss / max(1, len(train_loader))
@@ -172,6 +191,7 @@ def main() -> int:
                     "best_val_recall_at_1": best_recall,
                     "best_val_stream_recall_at_1": best_recall,
                     "training_mode": "baseline",
+                    "augment_profile": augment_profile.name,
                 },
                 output_path,
                 )
@@ -185,6 +205,7 @@ def main() -> int:
                 "num_cards": len(records),
                 "num_classes": len(label_map),
                 "training_mode": "baseline",
+                "augment_profile": augment_profile.name,
                 "backbone": "mobilenet_v3_small",
                 "manifest_counts": count_records_by_locale(records),
                 "train_counts": count_records_by_locale(train_records),

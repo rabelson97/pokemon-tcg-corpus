@@ -25,4 +25,5 @@ __pycache__/
 /training/exports/
 /training/data/
 /training/benchmarks/
+/training/augment_samples/
 /.cache
