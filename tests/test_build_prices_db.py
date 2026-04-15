@@ -620,6 +620,267 @@ class PptApiTests(unittest.TestCase):
         self.assertIsNone(ppt_api.extract_usd_price({"prices": {}}))
         self.assertIsNone(ppt_api.extract_usd_price({}))
 
+    def test_fetch_set_cards_returns_card_list(self) -> None:
+        import ppt_api
+
+        fake_response = {
+            "data": [
+                {"name": "Venusaur", "cardNumber": "1", "prices": {"market": 0.5}},
+                {"name": "Ivysaur", "cardNumber": "2", "prices": {"market": 0.2}},
+            ]
+        }
+        with mock.patch.object(ppt_api, "api_get_json", return_value=fake_response) as mock_get:
+            result = ppt_api.fetch_set_cards("Paldean Fates", api_key="test-key")
+
+        mock_get.assert_called_once_with(
+            "/cards",
+            params={"set": "Paldean Fates", "fetchAllInSet": "true"},
+            api_key="test-key",
+            timeout=30,
+        )
+        self.assertEqual(2, len(result))
+        self.assertEqual("Venusaur", result[0]["name"])
+
+    def test_fetch_set_cards_returns_empty_for_none_response(self) -> None:
+        import ppt_api
+
+        with mock.patch.object(ppt_api, "api_get_json", return_value=None):
+            result = ppt_api.fetch_set_cards("nonexistent", api_key="test-key")
+        self.assertEqual([], result)
+
+    def test_fetch_set_cards_returns_empty_for_empty_data(self) -> None:
+        import ppt_api
+
+        with mock.patch.object(ppt_api, "api_get_json", return_value={"data": []}):
+            result = ppt_api.fetch_set_cards("empty set", api_key="test-key")
+        self.assertEqual([], result)
+
+    def test_build_card_number_index_basic(self) -> None:
+        import ppt_api
+
+        cards = [
+            {"name": "Card A", "cardNumber": "1", "prices": {"market": 1.0}},
+            {"name": "Card B", "cardNumber": "002", "prices": {"market": 2.0}},
+            {"name": "Card C", "cardNumber": "3/100", "prices": {"market": 3.0}},
+        ]
+        index = ppt_api.build_card_number_index(cards)
+        self.assertIn("1", index)
+        self.assertIn("2", index)
+        self.assertIn("3", index)
+        self.assertEqual("Card A", index["1"]["name"])
+        self.assertEqual("Card B", index["2"]["name"])
+
+    def test_build_card_number_index_first_wins_on_collision(self) -> None:
+        import ppt_api
+
+        cards = [
+            {"name": "First", "cardNumber": "001", "prices": {"market": 1.0}},
+            {"name": "Duplicate", "cardNumber": "1", "prices": {"market": 2.0}},
+        ]
+        index = ppt_api.build_card_number_index(cards)
+        self.assertEqual("First", index["1"]["name"])
+
+    def test_build_card_number_index_skips_cards_without_number(self) -> None:
+        import ppt_api
+
+        cards = [
+            {"name": "No Number", "prices": {"market": 1.0}},
+            {"name": "Has Number", "cardNumber": "5", "prices": {"market": 2.0}},
+        ]
+        index = ppt_api.build_card_number_index(cards)
+        self.assertEqual(1, len(index))
+        self.assertIn("5", index)
+
+
+class PptBulkCacheTests(unittest.TestCase):
+    def test_build_ppt_set_cache_fetches_ranked_by_gap_count(self) -> None:
+        import ppt_api
+
+        gap_cards = [
+            {"set_name": "Small Set", "card_number": "1"},
+            {"set_name": "Big Set", "card_number": "1"},
+            {"set_name": "Big Set", "card_number": "2"},
+            {"set_name": "Big Set", "card_number": "3"},
+        ]
+
+        fetch_calls: list[str] = []
+
+        def fake_fetch(set_name: str, *, api_key: str | None = None, timeout: int = 30) -> list[dict]:
+            fetch_calls.append(set_name)
+            return [
+                {"name": f"Card {i}", "cardNumber": str(i), "prices": {"market": float(i)}}
+                for i in range(1, 4)
+            ]
+
+        with mock.patch.object(ppt_api, "fetch_set_cards", side_effect=fake_fetch):
+            cache = build_prices_db.build_ppt_set_cache(
+                gap_cards,
+                credit_budget=None,
+                api_key="test-key",
+            )
+
+        # Big Set (3 gaps) should be fetched before Small Set (1 gap)
+        self.assertEqual("Big Set", fetch_calls[0])
+        self.assertEqual("Small Set", fetch_calls[1])
+        self.assertEqual(2, len(cache))
+
+    def test_build_ppt_set_cache_respects_credit_budget(self) -> None:
+        import ppt_api
+
+        gap_cards = [
+            {"set_name": "Set A", "card_number": "1"},
+            {"set_name": "Set A", "card_number": "2"},
+            {"set_name": "Set B", "card_number": "1"},
+        ]
+
+        def fake_fetch(set_name: str, *, api_key: str | None = None, timeout: int = 30) -> list[dict]:
+            # Each set returns 50 cards
+            return [
+                {"name": f"Card {i}", "cardNumber": str(i), "prices": {"market": float(i)}}
+                for i in range(1, 51)
+            ]
+
+        with mock.patch.object(ppt_api, "fetch_set_cards", side_effect=fake_fetch):
+            cache = build_prices_db.build_ppt_set_cache(
+                gap_cards,
+                credit_budget=60,
+                api_key="test-key",
+            )
+
+        # Budget is 60 credits. First set costs 50 (remaining=10).
+        # Second set would cost 50 but only 10 remaining, so it's still fetched
+        # since the check is credits_remaining > 0 before fetching.
+        # After second set: remaining = -40.
+        # Third iteration: remaining <= 0, so break.
+        self.assertEqual(2, len(cache))
+
+    def test_build_ppt_set_cache_handles_empty_sets(self) -> None:
+        import ppt_api
+
+        gap_cards = [{"set_name": "Ghost Set", "card_number": "1"}]
+
+        with mock.patch.object(ppt_api, "fetch_set_cards", return_value=[]):
+            cache = build_prices_db.build_ppt_set_cache(
+                gap_cards,
+                credit_budget=100,
+                api_key="test-key",
+            )
+
+        self.assertEqual(0, len(cache))
+
+    def test_build_ppt_set_cache_handles_api_errors(self) -> None:
+        import ppt_api
+
+        gap_cards = [{"set_name": "Error Set", "card_number": "1"}]
+
+        with mock.patch.object(ppt_api, "fetch_set_cards", side_effect=RuntimeError("HTTP 429")):
+            cache = build_prices_db.build_ppt_set_cache(
+                gap_cards,
+                credit_budget=100,
+                api_key="test-key",
+            )
+
+        self.assertEqual(0, len(cache))
+
+    def test_try_fallback_providers_uses_bulk_cache(self) -> None:
+        import ppt_api
+
+        card = {
+            "set_id": "sv04.5",
+            "card_number": "001",
+            "name": "Pineco",
+            "set_name": "Paldean Fates",
+        }
+        ppt_set_cache = {
+            ppt_api.normalize_set_name("Paldean Fates"): {
+                "1": {"name": "Pineco", "cardNumber": "001", "prices": {"market": 0.25, "low": 0.1, "high": 0.5}},
+            }
+        }
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {
+                "ppt_configured": False,
+                "poketrace_configured": False,
+                "ppt_bulk_hits": 0,
+                "ppt_bulk_misses": 0,
+                "ppt_hits": 0,
+                "ppt_misses": 0,
+                "ppt_errors": 0,
+                "ppt_first_error": None,
+                "ppt_disabled_due_to_errors": False,
+                "ppt_error_disable_threshold": 5,
+                "poketrace_hits": 0,
+                "poketrace_misses": 0,
+                "poketrace_errors": 0,
+                "poketrace_first_error": None,
+                "poketrace_disabled_due_to_errors": False,
+                "poketrace_error_disable_threshold": 5,
+                "poketrace_set_mapping_failures": 0,
+            },
+        }
+
+        result = build_prices_db.try_fallback_providers(
+            card,
+            ppt_set_cache=ppt_set_cache,
+            poketrace_set_slugs={},
+            summary=summary,
+        )
+
+        self.assertIsNotNone(result)
+        self.assertEqual("USD", result["unit"])
+        self.assertEqual(0.25, result["selected_variant"]["market"])
+        self.assertEqual(1, summary["fallback_providers"]["ppt_bulk_hits"])
+        self.assertEqual(0, summary["fallback_providers"]["ppt_bulk_misses"])
+        self.assertEqual(1, summary["transport_counts"]["tcgplayer"]["ppt_bulk"])
+
+    def test_try_fallback_providers_bulk_cache_miss_falls_through(self) -> None:
+        import ppt_api
+
+        card = {
+            "set_id": "sv04.5",
+            "card_number": "999",
+            "name": "Nonexistent",
+            "set_name": "Paldean Fates",
+        }
+        ppt_set_cache = {
+            ppt_api.normalize_set_name("Paldean Fates"): {
+                "1": {"name": "Pineco", "cardNumber": "001", "prices": {"market": 0.25}},
+            }
+        }
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {
+                "ppt_configured": False,
+                "poketrace_configured": False,
+                "ppt_bulk_hits": 0,
+                "ppt_bulk_misses": 0,
+                "ppt_hits": 0,
+                "ppt_misses": 0,
+                "ppt_errors": 0,
+                "ppt_first_error": None,
+                "ppt_disabled_due_to_errors": False,
+                "ppt_error_disable_threshold": 5,
+                "poketrace_hits": 0,
+                "poketrace_misses": 0,
+                "poketrace_errors": 0,
+                "poketrace_first_error": None,
+                "poketrace_disabled_due_to_errors": False,
+                "poketrace_error_disable_threshold": 5,
+                "poketrace_set_mapping_failures": 0,
+            },
+        }
+
+        result = build_prices_db.try_fallback_providers(
+            card,
+            ppt_set_cache=ppt_set_cache,
+            poketrace_set_slugs={},
+            summary=summary,
+        )
+
+        self.assertIsNone(result)
+        self.assertEqual(0, summary["fallback_providers"]["ppt_bulk_hits"])
+        self.assertEqual(1, summary["fallback_providers"]["ppt_bulk_misses"])
+
 
 class PoketraceApiTests(unittest.TestCase):
     def test_build_poketrace_set_slugs_tolerates_provider_errors(self) -> None:

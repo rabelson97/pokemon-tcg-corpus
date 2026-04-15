@@ -203,3 +203,45 @@ def extract_usd_price(card_data: dict[str, Any]) -> dict[str, Any] | None:
         "updated": None,
         "selected_variant": variant,
     }
+
+
+def fetch_set_cards(
+    set_name: str,
+    *,
+    api_key: str | None = None,
+    timeout: int = 30,
+) -> list[dict[str, Any]]:
+    """Fetch all cards in a set using the ``fetchAllInSet=true`` bulk endpoint.
+
+    Returns a list of card dicts (may be empty if the set is not found).
+    Each call costs 1 credit per card returned but only
+    ``ceil(card_count / 10)`` calls toward the per-minute rate limit (capped
+    at 30).
+    """
+    payload = api_get_json(
+        "/cards",
+        params={"set": set_name, "fetchAllInSet": "true"},
+        api_key=api_key,
+        timeout=timeout,
+    )
+    if not isinstance(payload, dict):
+        return []
+    data = payload.get("data")
+    if not isinstance(data, list):
+        return []
+    return [card for card in data if isinstance(card, dict)]
+
+
+def build_card_number_index(
+    cards: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Build a normalized card-number -> card-data lookup from a list of PPT cards.
+
+    If multiple cards share the same normalized number the first one wins.
+    """
+    index: dict[str, dict[str, Any]] = {}
+    for card in cards:
+        number = extract_card_number(card)
+        if number and number not in index:
+            index[number] = card
+    return index

@@ -662,10 +662,14 @@ def validate_prices_db(db_path: Path, *, min_row_count: int) -> int:
 def try_fallback_providers(
     card: dict[str, Any],
     *,
+    ppt_set_cache: dict[str, dict[str, dict[str, Any]]],
     poketrace_set_slugs: dict[str, str],
     summary: dict[str, Any],
 ) -> dict[str, Any] | None:
     """Try PPT then PokeTrace for an English card missing tcgplayer USD.
+
+    The PPT cache (populated by ``build_ppt_set_cache``) is checked first for
+    a free O(1) lookup before falling back to per-card API calls.
 
     Returns a normalized tcgplayer-shaped source dict, or None.
     """
@@ -678,6 +682,22 @@ def try_fallback_providers(
     set_name = str(card.get("set_name") or "").strip()
     fallback_summary = summary["fallback_providers"]
 
+    # --- PPT: try pre-fetched bulk cache first (zero API cost) ---
+    if ppt_set_cache and card_number:
+        normalized_set = ppt_api.normalize_set_name(set_name)
+        set_index = ppt_set_cache.get(normalized_set)
+        if set_index is not None:
+            normalized_number = ppt_api.normalize_card_number(card_number)
+            cached_card = set_index.get(normalized_number)
+            if cached_card is not None:
+                result = ppt_api.extract_usd_price(cached_card)
+                if result is not None:
+                    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "ppt_bulk")
+                    fallback_summary["ppt_bulk_hits"] += 1
+                    return result
+            fallback_summary["ppt_bulk_misses"] += 1
+
+    # --- PPT: per-card API fallback ---
     ppt_key = ppt_api.resolve_api_key()
     if ppt_key and not bool(fallback_summary.get("ppt_disabled_due_to_errors")):
         try:
@@ -789,6 +809,78 @@ def build_poketrace_set_slugs(cards: list[dict[str, Any]]) -> dict[str, str]:
     return mapping
 
 
+def build_ppt_set_cache(
+    gap_cards: list[dict[str, Any]],
+    *,
+    credit_budget: int | None,
+    api_key: str,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Bulk-fetch PPT cards for sets that contain gap cards.
+
+    Uses ``fetchAllInSet=true`` to retrieve entire sets at once.  Sets are
+    prioritised by how many gap cards they contain (most gaps first) so the
+    limited credit budget is spent where it helps most.
+
+    Returns a nested dict:  ``set_name -> normalized_card_number -> card_data``
+    ready for O(1) lookup during the fallback loop.
+    """
+    import ppt_api
+
+    set_gap_counts: dict[str, int] = defaultdict(int)
+    for card in gap_cards:
+        set_name = str(card.get("set_name") or "").strip()
+        if set_name:
+            set_gap_counts[set_name] += 1
+
+    if not set_gap_counts:
+        return {}
+
+    ranked_sets = sorted(set_gap_counts.items(), key=lambda item: item[1], reverse=True)
+    credits_remaining = credit_budget
+    cache: dict[str, dict[str, dict[str, Any]]] = {}
+    sets_fetched = 0
+    sets_empty = 0
+    total_cards_cached = 0
+
+    print(
+        f"PPT bulk: {len(ranked_sets)} sets with gap cards, "
+        f"credit_budget={credits_remaining if credits_remaining is not None else 'unlimited'}"
+    )
+
+    for set_name, gap_count in ranked_sets:
+        if credits_remaining is not None and credits_remaining <= 0:
+            break
+        try:
+            cards = ppt_api.fetch_set_cards(set_name, api_key=api_key)
+        except Exception as error:
+            print(f"PPT bulk: error fetching set '{set_name}': {type(error).__name__}: {error}")
+            continue
+
+        if not cards:
+            sets_empty += 1
+            continue
+
+        index = ppt_api.build_card_number_index(cards)
+        cache[ppt_api.normalize_set_name(set_name)] = index
+        sets_fetched += 1
+        total_cards_cached += len(index)
+
+        if credits_remaining is not None:
+            credits_remaining -= len(cards)
+
+        print(
+            f"PPT bulk: fetched {len(cards)} cards from '{set_name}' "
+            f"(gap={gap_count}, indexed={len(index)}, "
+            f"credits_remaining={credits_remaining if credits_remaining is not None else 'unlimited'})"
+        )
+
+    print(
+        f"PPT bulk: done — {sets_fetched} sets fetched, {sets_empty} empty, "
+        f"{total_cards_cached} cards indexed"
+    )
+    return cache
+
+
 def build_prices_db(
     output_path: Path,
     *,
@@ -814,6 +906,7 @@ def build_prices_db(
     pokemontcgio_cards: list[dict[str, Any]] = []
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]] = {}
     poketrace_set_slugs: dict[str, str] = {}
+    ppt_set_cache: dict[str, dict[str, dict[str, Any]]] = {}
     allow_fallback_queries = max_fallback_cards is None or max_fallback_cards > 0
     if "en" in locales:
         english_cards = [card for card in cards if str(card.get("locale") or "") == "en"]
@@ -831,6 +924,33 @@ def build_prices_db(
         pokemontcgio_index = build_pokemontcgio_index(pokemontcgio_cards)
         if allow_fallback_queries:
             poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
+
+            # Pre-identify likely gap cards (English cards not covered by
+            # pokemontcg.io and not reusable from the seed DB) so we can
+            # bulk-fetch their sets from PPT up front.
+            import ppt_api as _ppt_api
+
+            _ppt_key = _ppt_api.resolve_api_key()
+            if _ppt_key:
+                likely_gap_cards = [
+                    card
+                    for card in english_cards
+                    if (
+                        str(card.get("id") or "") not in reusable_existing_tcgplayer_rows
+                        and match_pokemontcgio_card(
+                            pokemontcgio_index,
+                            set_id=str(card.get("set_id") or "").strip(),
+                            card_number=str(card.get("card_number") or "").strip(),
+                        )
+                        is None
+                    )
+                ]
+                if likely_gap_cards:
+                    ppt_set_cache = build_ppt_set_cache(
+                        likely_gap_cards,
+                        credit_budget=max_fallback_cards,
+                        api_key=_ppt_key,
+                    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = output_path.with_suffix(output_path.suffix + ".tmp")
@@ -903,6 +1023,9 @@ def build_prices_db(
                 "poketrace_disabled_due_to_errors": False,
                 "poketrace_error_disable_threshold": 5,
                 "poketrace_set_mapping_failures": 0,
+                "ppt_bulk_sets_cached": len(ppt_set_cache),
+                "ppt_bulk_hits": 0,
+                "ppt_bulk_misses": 0,
             },
             "seed_reuse": {
                 "seed_db_path": str(seed_db_path) if seed_db_path is not None else None,
@@ -915,6 +1038,7 @@ def build_prices_db(
             and (
                 build_metadata["fallback_providers"]["ppt_configured"]
                 or build_metadata["fallback_providers"]["poketrace_configured"]
+                or bool(ppt_set_cache)
             )
         )
         fallback_attempts = 0
@@ -944,11 +1068,13 @@ def build_prices_db(
                             print(
                                 f"fallback attempt={fallback_attempts} "
                                 f"ppt_hits={fb['ppt_hits']} ppt_misses={fb['ppt_misses']} ppt_errors={fb['ppt_errors']} "
+                                f"ppt_bulk_hits={fb['ppt_bulk_hits']} ppt_bulk_misses={fb['ppt_bulk_misses']} "
                                 f"poketrace_hits={fb['poketrace_hits']} poketrace_misses={fb['poketrace_misses']} "
                                 f"card_id={card_id}"
                             )
                         fallback_result = try_fallback_providers(
                             card,
+                            ppt_set_cache=ppt_set_cache,
                             poketrace_set_slugs=poketrace_set_slugs,
                             summary=build_metadata,
                         )
