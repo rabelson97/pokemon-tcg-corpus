@@ -235,11 +235,98 @@ def build_canonical_card_id(locale: str, set_id: str, local_id: str) -> str:
     return f"pokemon:{locale}:{clean_set_id}:{clean_local_id}"
 
 
+def _normalize_damage(raw: Any) -> str:
+    """Normalize attack damage to a canonical form.
+
+    TCGdex inconsistently uses fullwidth operators in JA (e.g. ``'20＋'``)
+    and halfwidth in EN (``'20+'``).  Normalize to halfwidth so the same
+    attack produces an identical signature across locales.
+    """
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    return (
+        text
+        .replace("\uff0b", "+")   # fullwidth plus → +
+        .replace("\uff0d", "-")   # fullwidth minus → -
+        .replace("\u2212", "-")   # minus sign → -
+        .replace("\uff1d", "=")   # fullwidth equals → =
+        .replace("\u00d7", "x")   # multiplication sign → x
+        .replace("\uff38", "x")   # fullwidth X → x
+    )
+
+
+def _attack_signature(attacks: list[dict[str, Any]] | None) -> str:
+    """Build a locale-invariant signature from a card's attacks.
+
+    Only cost (energy types) and damage are used — attack names and effect
+    text are localized and therefore excluded.
+    """
+    if not attacks:
+        return ""
+    parts: list[str] = []
+    for attack in attacks:
+        cost = ",".join(str(c) for c in (attack.get("cost") or []))
+        damage = _normalize_damage(attack.get("damage"))
+        parts.append(f"{cost}:{damage}")
+    return "|".join(parts)
+
+
 def build_equivalence_key(upstream_id: str) -> str:
+    """Legacy upstream-id-based key.  Used as fallback for cards that lack
+    enough locale-invariant fields (Trainer items, basic Energies, etc.)."""
     clean_upstream_id = upstream_id.strip()
     if not clean_upstream_id:
         raise ValueError("upstream_id is required to build an equivalence key")
     return f"pokemon:tcgdex:{clean_upstream_id}"
+
+
+def build_cross_locale_equivalence_key(card: dict[str, Any]) -> str:
+    """Build a composite equivalence key from locale-invariant game-mechanic
+    fields.  Cards that represent the same physical design across EN / JA / FR
+    etc. will produce the same key.
+
+    Falls back to the upstream-id-based singleton key when the card lacks
+    enough discriminating fields (e.g. Trainer items, basic Energy).
+    """
+    category = str(card.get("category") or "").strip()
+    illustrator = str(card.get("illustrator") or "").strip()
+    upstream_id = str(card.get("id") or "").strip()
+
+    # Only Pokemon cards carry the rich game-mechanic payload needed for a
+    # reliable composite key.  Trainer and Energy cards share too few
+    # locale-invariant fields for heuristic matching.
+    if category.lower() != "pokemon" or not illustrator:
+        return build_equivalence_key(upstream_id)
+
+    dex_ids = card.get("dexId") or []
+    hp = str(card.get("hp") or "").strip()
+    types = ",".join(str(t) for t in (card.get("types") or []))
+    stage = str(card.get("stage") or "").strip()
+    suffix = str(card.get("suffix") or "").strip()
+    retreat = str(card.get("retreat") if card.get("retreat") is not None else "").strip()
+    attacks_sig = _attack_signature(card.get("attacks"))
+    abilities = card.get("abilities") or []
+    ability_count = str(len(abilities))
+
+    # dexId is the strongest discriminator but is missing for ~12% of SV-era
+    # JA cards in TCGdex.  When present, include it; when absent, the
+    # remaining fields still resolve most cards.
+    dex_part = ",".join(str(d) for d in sorted(dex_ids)) if dex_ids else "_"
+
+    composite = ":".join([
+        "pokemon",
+        dex_part,
+        illustrator.lower(),
+        hp,
+        types.lower(),
+        stage.lower(),
+        suffix.lower(),
+        retreat,
+        ability_count,
+        attacks_sig.lower(),
+    ])
+    return f"pokemon:xlocale:{composite}"
 
 
 def sanitize_card_id(card_id: str) -> str:
@@ -280,7 +367,7 @@ def normalize_card_record(locale: str, card: dict[str, Any]) -> dict[str, Any]:
         "name": str(card.get("name") or canonical_id).strip(),
         "rarity": str(card.get("rarity") or "Unknown").strip() or "Unknown",
         "image_url": image_url,
-        "equivalence_key": build_equivalence_key(upstream_id),
+        "equivalence_key": build_cross_locale_equivalence_key(card),
         "pricing": card.get("pricing") or {},
         "hp": str(card.get("hp") or "").strip() or None,
     }
