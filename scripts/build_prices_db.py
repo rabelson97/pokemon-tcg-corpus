@@ -58,6 +58,12 @@ CARDMARKET_NUMERIC_KEYS = [
     "trendPrice",
 ]
 
+POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
+    # PokemonTCG.io uses a compact set id for Champion's Path instead of the
+    # TCGdex-style half-set id.
+    "swsh3.5": ["swsh35"],
+}
+
 
 def first_number(payload: dict[str, Any], keys: list[str]) -> float | None:
     for key in keys:
@@ -224,6 +230,8 @@ def alias_set_ids_for_pokemontcgio(set_id: str, card_number: str) -> list[str]:
     clean_set_id = set_id.strip()
     clean_number = card_number.strip().upper()
     candidates = [clean_set_id]
+
+    candidates.extend(POKEMONTCGIO_SET_ID_ALIASES.get(clean_set_id, []))
 
     compact_set_id = re.sub(r"^([A-Za-z]+)0+([1-9][0-9]*(?:\.5)?)$", r"\1\2", clean_set_id)
     candidates.append(compact_set_id)

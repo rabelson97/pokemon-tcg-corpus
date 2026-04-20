@@ -209,6 +209,10 @@ class BuildPricesDbTests(unittest.TestCase):
 
     def test_candidate_pokemontcgio_match_keys_cover_alias_set_and_number_formats(self) -> None:
         self.assertIn(
+            ("swsh35", "71"),
+            build_prices_db.candidate_pokemontcgio_match_keys("swsh3.5", "71"),
+        )
+        self.assertIn(
             ("swsh12pt5gg", "GG05"),
             build_prices_db.candidate_pokemontcgio_match_keys("swsh12.5", "GG05"),
         )
