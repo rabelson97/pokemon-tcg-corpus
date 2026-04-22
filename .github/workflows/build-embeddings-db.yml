@@ -93,9 +93,10 @@ jobs:
       - name: Validate embeddings database
         run: |
           test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "3"
+          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "4"
           cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards') WHERE name = 'image_url_low';")" = "1"
           test "$cards_count" -ge 10000
           test "$cards_count" = "$embeddings_count"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM card_equivalents;')" = "$cards_count"

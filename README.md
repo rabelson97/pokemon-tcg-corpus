@@ -72,6 +72,7 @@ SQLite database with:
   - `name`
   - `rarity`
   - `image_url`
+  - `image_url_low`
   - `equivalence_key`
 - `embeddings`
   - `card_id`
@@ -93,6 +94,9 @@ Current build contract:
 - embedding dimension: `256`
 - model name written by the builder: `cardhawk:card_embedder.onnx`
 - canonical card id format: `{game}:{locale}:{set_id}:{local_id}`
+- `image_url` remains the canonical primary high-res art URL
+- `image_url_low` is nullable and only populated when the upstream contract exposes a lower-res sibling image
+- image precedence for normalized card records is deterministic: prefer TCGdex locale-scoped asset roots (`image` -> `/high.webp` and `/low.webp`), otherwise fall back to PokemonTCG.io `images.large` and `images.small`; single-size direct URLs populate only `image_url`
 
 ### `prices.db.zip`
 

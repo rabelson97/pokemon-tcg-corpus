@@ -24,7 +24,7 @@ from embedder_contract import EXPECTED_DIM, IMAGE_SIZE as EMBED_IMAGE_SIZE, prep
 from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id, set_detail_cache_path
 
 
-DB_USER_VERSION = 3
+DB_USER_VERSION = 4
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 
@@ -43,7 +43,9 @@ class SkippedCard:
     detail: str | None = None
 
 
-def card_row(card: dict[str, Any]) -> tuple[str, str, str, str, str, str, str, str, str, str, str | None]:
+def card_row(
+    card: dict[str, Any],
+) -> tuple[str, str, str, str, str, str, str, str, str, str | None, str, str | None]:
     return (
         card["id"],
         card["locale"],
@@ -54,6 +56,7 @@ def card_row(card: dict[str, Any]) -> tuple[str, str, str, str, str, str, str, s
         card["name"],
         card["rarity"],
         card["image_url"],
+        card.get("image_url_low"),
         card["equivalence_key"],
         card.get("hp"),
     )
@@ -87,6 +90,7 @@ def init_db(connection: sqlite3.Connection) -> None:
           name TEXT NOT NULL,
           rarity TEXT NOT NULL,
           image_url TEXT NOT NULL,
+          image_url_low TEXT,
           equivalence_key TEXT NOT NULL,
           hp TEXT
         );
@@ -109,6 +113,9 @@ def init_db(connection: sqlite3.Connection) -> None:
         );
         """
     )
+    card_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cards);").fetchall()}
+    if "image_url_low" not in card_columns:
+        connection.execute("ALTER TABLE cards ADD COLUMN image_url_low TEXT;")
 
 
 def sample_embedding_diagnostics(
@@ -391,13 +398,14 @@ def insert_new_embeddings(
               name,
               rarity,
               image_url,
+              image_url_low,
               equivalence_key,
               hp
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING;
             """,
-            [row[:11] for row in rows],
+            [row[:12] for row in rows],
         )
         connection.executemany(
             """
@@ -405,7 +413,7 @@ def insert_new_embeddings(
             VALUES (?, ?, ?, ?)
             ON CONFLICT(card_id) DO NOTHING;
             """,
-            [(row[0], row[11], row[12], row[13]) for row in rows],
+            [(row[0], row[12], row[13], row[14]) for row in rows],
         )
         connection.executemany(
             """
@@ -429,7 +437,7 @@ def insert_new_embeddings(
             [
                 (
                     row[0],
-                    row[9],
+                    row[10],
                     record.card["upstream_source"],
                     row[2],
                     row[1],

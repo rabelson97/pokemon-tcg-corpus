@@ -333,13 +333,33 @@ def sanitize_card_id(card_id: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", card_id)
 
 
-def normalize_image_url(image_url: str) -> str:
-    clean_url = image_url.strip()
+def normalize_image_urls(image_value: Any) -> tuple[str, str | None]:
+    if isinstance(image_value, dict):
+        high_url = str(image_value.get("large") or image_value.get("high") or "").strip()
+        low_url = str(image_value.get("small") or image_value.get("low") or "").strip() or None
+        if high_url:
+            return high_url, low_url
+        image_value = str(image_value.get("url") or "")
+
+    clean_url = str(image_value or "").strip()
     if not clean_url:
-        return ""
+        return "", None
     if re.search(r"\.(avif|gif|jpe?g|png|webp)(\?.*)?$", clean_url, re.IGNORECASE):
-        return clean_url
-    return clean_url.rstrip("/") + "/high.webp"
+        return clean_url, None
+
+    asset_root = clean_url.rstrip("/")
+    return asset_root + "/high.webp", asset_root + "/low.webp"
+
+
+def normalize_image_url(image_url: str) -> str:
+    return normalize_image_urls(image_url)[0]
+
+
+def normalize_card_image_urls(card: dict[str, Any]) -> tuple[str, str | None]:
+    image_url, image_url_low = normalize_image_urls(card.get("image"))
+    if image_url:
+        return image_url, image_url_low
+    return normalize_image_urls(card.get("images"))
 
 
 def normalize_card_record(locale: str, card: dict[str, Any]) -> dict[str, Any]:
@@ -347,7 +367,7 @@ def normalize_card_record(locale: str, card: dict[str, Any]) -> dict[str, Any]:
     upstream_id = str(card.get("id") or "").strip()
     set_id = str(set_info.get("id") or "").strip()
     local_id = str(card.get("localId") or "").strip()
-    image_url = normalize_image_url(str(card.get("image") or ""))
+    image_url, image_url_low = normalize_card_image_urls(card)
     if not upstream_id:
         raise ValueError(f"Card payload missing id for locale={locale}")
     if not set_id:
@@ -367,6 +387,7 @@ def normalize_card_record(locale: str, card: dict[str, Any]) -> dict[str, Any]:
         "name": str(card.get("name") or canonical_id).strip(),
         "rarity": str(card.get("rarity") or "Unknown").strip() or "Unknown",
         "image_url": image_url,
+        "image_url_low": image_url_low,
         "equivalence_key": build_cross_locale_equivalence_key(card),
         "pricing": card.get("pricing") or {},
         "hp": str(card.get("hp") or "").strip() or None,
