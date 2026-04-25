@@ -92,22 +92,30 @@ jobs:
 
       - name: Validate embeddings database
         run: |
+          variant_k=4
           test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "4"
+          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "5"
           cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards') WHERE name = 'image_url_low';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('embeddings') WHERE name = 'variant_idx';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('embeddings') WHERE name = 'variant_tag';")" = "1"
           test "$cards_count" -ge 10000
-          test "$cards_count" = "$embeddings_count"
+          test "$embeddings_count" = "$((cards_count * variant_k))"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM card_equivalents;')" = "$cards_count"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(DISTINCT dim) FROM embeddings;')" = "1"
           test "$(sqlite3 embeddings.db 'SELECT MIN(dim) FROM embeddings;')" = "256"
           test "$(sqlite3 embeddings.db 'SELECT MAX(dim) FROM embeddings;')" = "256"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(DISTINCT variant_tag) FROM embeddings;')" = "$variant_k"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE length(vector_blob) != 1024;')" = "0"
+          # every card must carry exactly K variants
+          test "$(sqlite3 embeddings.db 'SELECT MIN(c) FROM (SELECT COUNT(*) AS c FROM embeddings GROUP BY card_id);')" = "$variant_k"
+          test "$(sqlite3 embeddings.db 'SELECT MAX(c) FROM (SELECT COUNT(*) AS c FROM embeddings GROUP BY card_id);')" = "$variant_k"
           sqlite3 embeddings.db "SELECT model_name, dim, COUNT(*) FROM embeddings GROUP BY model_name, dim;"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM (SELECT model_name, dim FROM embeddings GROUP BY model_name, dim);')" = "1"
           echo "cards_count=$cards_count"
           echo "embeddings_count=$embeddings_count"
+          echo "variants_per_card=$variant_k"
 
       - name: Save embeddings image cache
         if: success()

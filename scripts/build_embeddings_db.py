@@ -5,26 +5,40 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import random
 import sqlite3
 import sys
 import time
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import onnxruntime as ort
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from embedder_contract import EXPECTED_DIM, IMAGE_SIZE as EMBED_IMAGE_SIZE, preprocess_image_path
+from embedder_contract import (
+    EXPECTED_DIM,
+    IMAGE_SIZE as EMBED_IMAGE_SIZE,
+    MEAN,
+    STD,
+    prepare_base_image,
+)
 from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id, set_detail_cache_path
 
+# Variants are generated at DB build time so the index has K vectors per card,
+# capturing the kinds of degradation real screen captures introduce. Augments are
+# intentionally lighter than the training profile: we want representative
+# degradation, not training-style invariance forcing.
+VARIANT_TAGS: tuple[str, ...] = ("clean", "blur_lo", "jpeg_lo", "glare_mild")
+VARIANT_K = len(VARIANT_TAGS)
 
-DB_USER_VERSION = 4
+DB_USER_VERSION = 5
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 
@@ -69,8 +83,69 @@ def image_url_for_card(card: dict[str, Any]) -> str:
     return image_url
 
 
-def preprocess_for_embedder(image_path: Path) -> np.ndarray:
-    return preprocess_image_path(image_path, image_size=EMBED_IMAGE_SIZE)
+def base_pil_for_card(image_path: Path) -> Image.Image:
+    """Load a card image and produce the canonical 224x224 PIL crop used for embedding."""
+    with Image.open(image_path) as image:
+        return prepare_base_image(image, image_size=EMBED_IMAGE_SIZE)
+
+
+def normalize_pil_to_nchw(image: Image.Image) -> np.ndarray:
+    """Normalize a 224x224 RGB PIL image to the (1,3,224,224) ImageNet tensor the model expects."""
+    array = np.asarray(image, dtype=np.float32) / 255.0
+    normalized = (array - MEAN) / STD
+    chw = np.transpose(normalized, (2, 0, 1))
+    return np.expand_dims(chw.astype(np.float32, copy=False), axis=0)
+
+
+def _variant_blur_lo(image: Image.Image, rng: random.Random) -> Image.Image:
+    blurred = image.filter(ImageFilter.GaussianBlur(radius=rng.uniform(0.6, 1.0)))
+    width, height = blurred.size
+    small = blurred.resize((max(1, int(width * 0.71)), max(1, int(height * 0.71))), Image.Resampling.BILINEAR)
+    return small.resize((width, height), Image.Resampling.BICUBIC)
+
+
+def _variant_jpeg_lo(image: Image.Image, rng: random.Random) -> Image.Image:
+    quality = rng.randint(50, 60)
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", quality=quality, optimize=False)
+    buffer.seek(0)
+    decoded = Image.open(buffer).convert("RGB")
+    decoded = ImageEnhance.Brightness(decoded).enhance(rng.uniform(0.92, 1.08))
+    decoded = ImageEnhance.Contrast(decoded).enhance(rng.uniform(0.92, 1.08))
+    return decoded
+
+
+def _variant_glare_mild(image: Image.Image, rng: random.Random) -> Image.Image:
+    array = np.asarray(image, dtype=np.float32).copy()
+    height, width = array.shape[:2]
+    xs = np.linspace(0.0, 1.0, width, dtype=np.float32)
+    ys = np.linspace(0.0, 1.0, height, dtype=np.float32)
+    xx, yy = np.meshgrid(xs, ys)
+    center_x = rng.uniform(0.3, 0.7)
+    center_y = rng.uniform(0.25, 0.75)
+    sigma_x = rng.uniform(0.10, 0.20)
+    sigma_y = rng.uniform(0.08, 0.16)
+    glare = np.exp(-0.5 * (((xx - center_x) / sigma_x) ** 2 + ((yy - center_y) / sigma_y) ** 2))
+    intensity = rng.uniform(45.0, 80.0)
+    array += glare[..., None] * intensity
+    return Image.fromarray(np.clip(array, 0.0, 255.0).astype(np.uint8))
+
+
+def render_variant(base_image: Image.Image, variant_idx: int, rng: random.Random) -> Image.Image:
+    if variant_idx == 0:
+        return base_image
+    if variant_idx == 1:
+        return _variant_blur_lo(base_image, rng)
+    if variant_idx == 2:
+        return _variant_jpeg_lo(base_image, rng)
+    if variant_idx == 3:
+        return _variant_glare_mild(base_image, rng)
+    raise ValueError(f"Unknown variant_idx: {variant_idx}")
+
+
+def card_variant_seed(card_id: str, variant_idx: int) -> int:
+    digest = hashlib.sha256(f"{card_id}|{variant_idx}".encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big", signed=False)
 
 
 def init_db(connection: sqlite3.Connection) -> None:
@@ -96,11 +171,16 @@ def init_db(connection: sqlite3.Connection) -> None:
         );
 
         CREATE TABLE IF NOT EXISTS embeddings (
-          card_id TEXT PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
+          card_id TEXT NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
           model_name TEXT NOT NULL,
+          variant_idx INTEGER NOT NULL DEFAULT 0,
+          variant_tag TEXT NOT NULL DEFAULT 'clean',
           dim INTEGER NOT NULL,
-          vector_blob BLOB NOT NULL
+          vector_blob BLOB NOT NULL,
+          PRIMARY KEY (card_id, model_name, variant_idx)
         );
+
+        CREATE INDEX IF NOT EXISTS idx_embeddings_card ON embeddings(card_id);
 
         CREATE TABLE IF NOT EXISTS card_equivalents (
           card_id TEXT NOT NULL PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
@@ -125,15 +205,23 @@ def sample_embedding_diagnostics(
     print_rows: int = 5,
 ) -> dict[str, Any]:
     with sqlite3.connect(db_path) as connection:
+        # Sample only variant_idx=0 (clean) rows for the diagnostics so the
+        # cross-pair cosine check sees distinct cards, not different variants
+        # of the same card.
         rows = connection.execute(
             """
-            SELECT e.card_id, c.name, e.dim, e.vector_blob
+            SELECT e.card_id, c.name, e.dim, e.vector_blob, e.variant_tag
             FROM embeddings e
             JOIN cards c ON c.id = e.card_id
+            WHERE e.variant_idx = 0
             ORDER BY e.card_id
             LIMIT ?;
             """,
             (sample_size,),
+        ).fetchall()
+
+        variant_breakdown_rows = connection.execute(
+            "SELECT variant_tag, COUNT(*) FROM embeddings GROUP BY variant_tag ORDER BY variant_tag;"
         ).fetchall()
 
     diagnostics: list[dict[str, Any]] = []
@@ -141,7 +229,7 @@ def sample_embedding_diagnostics(
     cosine_samples: list[dict[str, Any]] = []
     decoded_vectors: list[tuple[str, str, np.ndarray]] = []
 
-    for card_id, name, dim, blob in rows:
+    for card_id, name, dim, blob, variant_tag in rows:
         vector = np.frombuffer(blob, dtype="<f4")
         vector_hash = hashlib.sha256(blob).hexdigest()
         decoded_vectors.append((str(card_id), str(name), vector))
@@ -150,6 +238,7 @@ def sample_embedding_diagnostics(
             {
                 "card_id": str(card_id),
                 "name": str(name),
+                "variant_tag": str(variant_tag),
                 "dim": int(dim),
                 "blob_len": len(blob),
                 "first8": vector[:8].astype(float).tolist(),
@@ -177,9 +266,11 @@ def sample_embedding_diagnostics(
                 }
             )
 
+    variant_breakdown = {str(tag): int(count) for tag, count in variant_breakdown_rows}
     summary = {
         "sample_count": len(rows),
         "distinct_hashes": len(set(hashes)),
+        "variant_breakdown": variant_breakdown,
         "rows": diagnostics[:print_rows],
         "cosine_samples": cosine_samples[:8],
     }
@@ -206,8 +297,34 @@ def validate_embeddings_db(
         embedding_count = int(connection.execute("SELECT COUNT(*) FROM embeddings;").fetchone()[0])
         if card_count < min_row_count:
             raise RuntimeError(f"cards row count {card_count} is below minimum {min_row_count}")
-        if card_count != embedding_count:
-            raise RuntimeError(f"cards ({card_count}) and embeddings ({embedding_count}) counts do not match")
+        expected_embeddings = card_count * VARIANT_K
+        if embedding_count != expected_embeddings:
+            raise RuntimeError(
+                f"embeddings count {embedding_count} != cards ({card_count}) * variants ({VARIANT_K}) = {expected_embeddings}"
+            )
+
+        variants_per_card_min = int(
+            connection.execute(
+                "SELECT MIN(variant_count) FROM (SELECT card_id, COUNT(*) AS variant_count FROM embeddings GROUP BY card_id);"
+            ).fetchone()[0]
+        )
+        variants_per_card_max = int(
+            connection.execute(
+                "SELECT MAX(variant_count) FROM (SELECT card_id, COUNT(*) AS variant_count FROM embeddings GROUP BY card_id);"
+            ).fetchone()[0]
+        )
+        if variants_per_card_min != VARIANT_K or variants_per_card_max != VARIANT_K:
+            raise RuntimeError(
+                f"Each card must have exactly {VARIANT_K} variants, "
+                f"got min={variants_per_card_min} max={variants_per_card_max}"
+            )
+
+        distinct_tags = {
+            str(row[0])
+            for row in connection.execute("SELECT DISTINCT variant_tag FROM embeddings;").fetchall()
+        }
+        if distinct_tags != set(VARIANT_TAGS):
+            raise RuntimeError(f"Unexpected variant_tag set: {sorted(distinct_tags)} vs expected {list(VARIANT_TAGS)}")
 
         bad_dim = int(connection.execute("SELECT COUNT(*) FROM embeddings WHERE dim <= 0;").fetchone()[0])
         if bad_dim > 0:
@@ -367,24 +484,39 @@ def insert_new_embeddings(
 
     with sqlite3.connect(output_db) as connection:
         init_db(connection)
-        rows = []
+        card_rows: list[tuple] = []
+        embedding_rows: list[tuple[str, str, int, str, int, bytes]] = []
         for record in records:
-            input_tensor = preprocess_for_embedder(record.image_path)
-            outputs = session.run(None, {input_name: input_tensor})
-            vector = np.asarray(outputs[0][0], dtype=np.float32)
-            if vector.ndim != 1 or vector.shape[0] != output_dim:
-                raise RuntimeError(f"Unexpected embedding vector shape for {record.card['id']}: {vector.shape}")
-            if not np.isfinite(vector).all():
-                raise RuntimeError(f"Non-finite embedding values for {record.card['id']}")
-            vector = vector / max(float(np.linalg.norm(vector)), 1e-12)
-            rows.append(
-                (
-                    *card_row(record.card),
-                    MODEL_NAME,
-                    output_dim,
-                    np.asarray(vector, dtype="<f4").tobytes(),
+            card_id: str = record.card["id"]
+            try:
+                base_image = base_pil_for_card(record.image_path)
+            except Exception as exc:
+                raise RuntimeError(f"Failed to load base image for {card_id}: {exc}") from exc
+
+            for variant_idx, variant_tag in enumerate(VARIANT_TAGS):
+                rng = random.Random(card_variant_seed(card_id, variant_idx))
+                variant_image = render_variant(base_image, variant_idx, rng)
+                input_tensor = normalize_pil_to_nchw(variant_image)
+                outputs = session.run(None, {input_name: input_tensor})
+                vector = np.asarray(outputs[0][0], dtype=np.float32)
+                if vector.ndim != 1 or vector.shape[0] != output_dim:
+                    raise RuntimeError(
+                        f"Unexpected embedding vector shape for {card_id} variant={variant_tag}: {vector.shape}"
+                    )
+                if not np.isfinite(vector).all():
+                    raise RuntimeError(f"Non-finite embedding values for {card_id} variant={variant_tag}")
+                vector = vector / max(float(np.linalg.norm(vector)), 1e-12)
+                embedding_rows.append(
+                    (
+                        card_id,
+                        MODEL_NAME,
+                        variant_idx,
+                        variant_tag,
+                        output_dim,
+                        np.asarray(vector, dtype="<f4").tobytes(),
+                    )
                 )
-            )
+            card_rows.append(card_row(record.card))
 
         connection.executemany(
             """
@@ -405,15 +537,15 @@ def insert_new_embeddings(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING;
             """,
-            [row[:12] for row in rows],
+            card_rows,
         )
         connection.executemany(
             """
-            INSERT INTO embeddings (card_id, model_name, dim, vector_blob)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(card_id) DO NOTHING;
+            INSERT INTO embeddings (card_id, model_name, variant_idx, variant_tag, dim, vector_blob)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(card_id, model_name, variant_idx) DO NOTHING;
             """,
-            [(row[0], row[12], row[13], row[14]) for row in rows],
+            embedding_rows,
         )
         connection.executemany(
             """
@@ -444,13 +576,14 @@ def insert_new_embeddings(
                     row[3],
                     row[5],
                 )
-                for row, record in zip(rows, records, strict=True)
+                for row, record in zip(card_rows, records, strict=True)
             ],
         )
         connection.commit()
-    inserted = len(rows)
-    print(f"embedded {inserted}/{len(records)} cards")
-    return inserted, model_load_seconds, time.perf_counter() - started
+    inserted_cards = len(card_rows)
+    inserted_vectors = len(embedding_rows)
+    print(f"embedded {inserted_cards} cards × {VARIANT_K} variants = {inserted_vectors} vectors")
+    return inserted_cards, model_load_seconds, time.perf_counter() - started
 
 
 def build_embeddings_db(
@@ -532,6 +665,8 @@ def build_embeddings_db(
             "duration_seconds": round(time.perf_counter() - started, 3),
             "cards_count": counts[0],
             "embeddings_count": counts[1],
+            "variants_per_card": VARIANT_K,
+            "variant_tags": list(VARIANT_TAGS),
             "user_version": DB_USER_VERSION,
             "expected_dim": EXPECTED_DIM,
             "processed_cards": len(ready_records),
