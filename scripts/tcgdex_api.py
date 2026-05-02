@@ -83,9 +83,14 @@ def api_get_json(
                 return json.load(response)
         except urllib.error.HTTPError as error:
             last_error = error
-            if error.code not in {429, 500, 502, 503, 504} or attempt == retries:
+            # Only retry on specific HTTP status codes (429, 5xx), re-raise others immediately
+            if error.code not in {429, 500, 502, 503, 504}:
+                raise
+            # For retryable status codes, only re-raise if we've exhausted retries
+            if attempt == retries:
                 raise
         except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as error:
+            # Network/timeout errors: always retry, only re-raise if we've exhausted retries
             last_error = error
             if attempt == retries:
                 raise
@@ -113,9 +118,14 @@ def download_binary(
             return
         except urllib.error.HTTPError as error:
             last_error = error
-            if error.code not in {429, 500, 502, 503, 504} or attempt == retries:
+            # Only retry on specific HTTP status codes (429, 5xx), re-raise others immediately
+            if error.code not in {429, 500, 502, 503, 504}:
+                raise
+            # For retryable status codes, only re-raise if we've exhausted retries
+            if attempt == retries:
                 raise
         except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as error:
+            # Network/timeout errors: always retry, only re-raise if we've exhausted retries
             last_error = error
             if attempt == retries:
                 raise
