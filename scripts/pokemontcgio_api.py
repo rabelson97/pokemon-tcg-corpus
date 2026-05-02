@@ -156,7 +156,7 @@ def search_card_by_set_and_number(
             api_key=api_key,
         )
     except urllib.error.HTTPError as error:
-        if error.code == 400:
+        if error.code in {400, 404}:
             return None
         raise
     if not isinstance(payload, dict):

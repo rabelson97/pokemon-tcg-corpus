@@ -20,6 +20,7 @@ from tcgdex_api import fetch_all_card_records, parse_locales
 
 DB_USER_VERSION = 2
 DEFAULT_MAX_POKEMONTCG_IO_AGE_DAYS = 14
+MAX_IDENTITY_AUDIT_SAMPLE_GAPS = 10
 TCGPLAYER_NUMERIC_KEYS = [
     "low",
     "mid",
@@ -62,6 +63,10 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     # PokemonTCG.io uses a compact set id for Champion's Path instead of the
     # TCGdex-style half-set id.
     "swsh3.5": ["swsh35"],
+    # Black Bolt and White Flare are split English SV10.5 sets in TCGdex /
+    # CardHawk, but PokemonTCG.io publishes them as separate provider sets.
+    "sv10.5b": ["zsv10pt5"],
+    "sv10.5w": ["rsv10pt5"],
 }
 
 
@@ -260,21 +265,117 @@ def candidate_pokemontcgio_match_keys(set_id: str, card_number: str) -> list[tup
     ]
 
 
+def format_pokemontcgio_match_key(match_key: tuple[str, str]) -> str:
+    return f"{match_key[0]}-{match_key[1]}"
+
+
+def find_pokemontcgio_card_match(
+    pokemontcgio_index: dict[tuple[str, str], dict[str, Any]],
+    *,
+    set_id: str,
+    card_number: str,
+) -> tuple[dict[str, Any] | None, tuple[str, str] | None, list[tuple[str, str]]]:
+    match_keys = candidate_pokemontcgio_match_keys(set_id, card_number)
+    for match_key in match_keys:
+        matched_card = pokemontcgio_index.get(match_key)
+        if matched_card is not None:
+            return matched_card, match_key, match_keys
+    return None, None, match_keys
+
+
 def match_pokemontcgio_card(
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]],
     *,
     set_id: str,
     card_number: str,
 ) -> dict[str, Any] | None:
-    for match_key in candidate_pokemontcgio_match_keys(set_id, card_number):
-        matched_card = pokemontcgio_index.get(match_key)
-        if matched_card is not None:
-            return matched_card
-    return None
+    matched_card, _, _ = find_pokemontcgio_card_match(
+        pokemontcgio_index,
+        set_id=set_id,
+        card_number=card_number,
+    )
+    return matched_card
 
 
 def increment_counter(mapping: dict[str, Any], key: str) -> None:
     mapping[key] = int(mapping.get(key, 0)) + 1
+
+
+def ensure_identity_audit(summary: dict[str, Any]) -> dict[str, Any]:
+    audit = summary.setdefault(
+        "identity_audit",
+        {
+            "english_cards_without_usd": 0,
+            "pokemontcgio_unmatched_by_set_number": 0,
+            "alias_required_matches": 0,
+            "stale_or_missing_tcgplayer": 0,
+            "price_rows_without_cardhawk_card_id": 0,
+            "sample_gaps": [],
+        },
+    )
+    audit.setdefault("english_cards_without_usd", 0)
+    audit.setdefault("pokemontcgio_unmatched_by_set_number", 0)
+    audit.setdefault("alias_required_matches", 0)
+    audit.setdefault("stale_or_missing_tcgplayer", 0)
+    audit.setdefault("price_rows_without_cardhawk_card_id", 0)
+    audit.setdefault("sample_gaps", [])
+    return audit
+
+
+def record_identity_resolution(
+    summary: dict[str, Any],
+    *,
+    card: dict[str, Any],
+    attempted_keys: list[tuple[str, str]],
+    reason: str | None,
+) -> None:
+    card_id = str(card.get("id") or "")
+    if not card_id:
+        return
+    work = summary.setdefault("_identity_audit_work", {})
+    work[card_id] = {
+        "attempted_pokemontcgio_match_keys": [format_pokemontcgio_match_key(key) for key in attempted_keys],
+        "reason": reason,
+    }
+
+
+def build_identity_gap_sample(
+    card: dict[str, Any],
+    *,
+    attempted_keys: list[str],
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "card_id": str(card.get("id") or ""),
+        "card_name": str(card.get("name") or ""),
+        "tcgdex_set_id": str(card.get("set_id") or ""),
+        "tcgdex_set_name": str(card.get("set_name") or ""),
+        "card_number": str(card.get("card_number") or ""),
+        "attempted_pokemontcgio_match_keys": attempted_keys,
+        "reason": reason,
+    }
+
+
+def record_identity_gap_sample(
+    summary: dict[str, Any],
+    *,
+    card: dict[str, Any],
+    reason: str,
+) -> None:
+    audit = ensure_identity_audit(summary)
+    work = summary.get("_identity_audit_work") or {}
+    card_work = work.get(str(card.get("id") or ""), {}) if isinstance(work, dict) else {}
+    attempted_keys = card_work.get("attempted_pokemontcgio_match_keys")
+    if not isinstance(attempted_keys, list):
+        attempted_keys = [
+            format_pokemontcgio_match_key(key)
+            for key in candidate_pokemontcgio_match_keys(
+                str(card.get("set_id") or ""),
+                str(card.get("card_number") or ""),
+            )
+        ]
+    sample = build_identity_gap_sample(card, attempted_keys=[str(key) for key in attempted_keys], reason=reason)
+    audit["sample_gaps"].append(sample)
 
 
 def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -291,7 +392,9 @@ def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> li
                 str(card.get("set_id") or "").strip(),
                 str(card.get("card_number") or "").strip(),
             ):
-                matched = search_card_by_set_and_number(candidate_set_id, candidate_number)
+                matched = fetch_card_by_id(f"{candidate_set_id}-{candidate_number}")
+                if matched is None:
+                    matched = search_card_by_set_and_number(candidate_set_id, candidate_number)
                 if matched is not None:
                     break
         if matched is not None:
@@ -321,42 +424,68 @@ def select_price_sources(
         return selected_sources
 
     summary["pokemontcgio"]["english_cards_considered"] += 1
-    matched_card = match_pokemontcgio_card(
+    identity_audit = ensure_identity_audit(summary)
+    matched_card, matched_key, attempted_keys = find_pokemontcgio_card_match(
         pokemontcgio_index,
         set_id=str(card.get("set_id") or "").strip(),
         card_number=str(card.get("card_number") or "").strip(),
     )
+    resolution_reason: str | None = None
     tcgplayer_resolved = False
     if matched_card is not None:
         summary["pokemontcgio"]["english_cards_with_match"] += 1
+        if matched_key is not None and attempted_keys and matched_key != attempted_keys[0]:
+            identity_audit["alias_required_matches"] += 1
         tcgplayer_payload = matched_card.get("tcgplayer")
         if isinstance(tcgplayer_payload, dict):
             normalized_tcgplayer, updated_at = normalize_tcgplayer_payload(tcgplayer_payload)
             if normalized_tcgplayer is not None and updated_at is not None:
+                invalid_updated_at = False
                 try:
                     is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
                 except ValueError:
                     is_fresh = False
+                    invalid_updated_at = True
                     summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
                     increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "invalid_updated_at")
+                    identity_audit["stale_or_missing_tcgplayer"] += 1
+                    resolution_reason = "pokemontcgio_tcgplayer_invalid_updated_at"
                 if is_fresh:
                     selected_sources["tcgplayer"] = normalized_tcgplayer
                     summary["pokemontcgio"]["english_cards_with_tcgplayer"] += 1
                     increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "pokemontcgio")
                     tcgplayer_resolved = True
-                elif not is_fresh:
+                elif not invalid_updated_at:
                     summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
                     increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "older_than_max_age")
+                    if resolution_reason is None:
+                        identity_audit["stale_or_missing_tcgplayer"] += 1
+                        resolution_reason = "pokemontcgio_tcgplayer_older_than_max_age"
             elif normalized_tcgplayer is None:
                 summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
+                identity_audit["stale_or_missing_tcgplayer"] += 1
+                resolution_reason = "pokemontcgio_tcgplayer_without_numeric_prices"
             elif updated_at is None:
                 summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
                 increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "missing_updated_at")
+                identity_audit["stale_or_missing_tcgplayer"] += 1
+                resolution_reason = "pokemontcgio_tcgplayer_missing_updated_at"
         else:
             summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
+            identity_audit["stale_or_missing_tcgplayer"] += 1
+            resolution_reason = "pokemontcgio_missing_tcgplayer_payload"
     else:
         summary["pokemontcgio"]["english_cards_without_match"] += 1
+        identity_audit["pokemontcgio_unmatched_by_set_number"] += 1
+        resolution_reason = "no_pokemontcgio_match"
 
+    if not tcgplayer_resolved:
+        record_identity_resolution(
+            summary,
+            card=card,
+            attempted_keys=attempted_keys,
+            reason=resolution_reason,
+        )
     return selected_sources
 
 
@@ -1040,6 +1169,15 @@ def build_prices_db(
                 "reuse_existing_tcgplayer_date": reuse_existing_tcgplayer_date,
                 "cards_with_reused_tcgplayer_rows": 0,
             },
+            "identity_audit": {
+                "english_cards_without_usd": 0,
+                "pokemontcgio_unmatched_by_set_number": 0,
+                "alias_required_matches": 0,
+                "stale_or_missing_tcgplayer": 0,
+                "price_rows_without_cardhawk_card_id": 0,
+                "sample_gaps": [],
+            },
+            "_identity_audit_work": {},
         }
         has_fallback_providers = (
             allow_fallback_queries
@@ -1090,6 +1228,13 @@ def build_prices_db(
                             selected_sources["tcgplayer"] = fallback_result
 
                 extracted = extract_price_rows_from_selected_sources(card_id, selected_sources)
+            if locale == "en" and not any(row[3] == "tcgplayer" and row[2] == "USD" for row in extracted):
+                identity_audit = ensure_identity_audit(build_metadata)
+                identity_audit["english_cards_without_usd"] += 1
+                work = build_metadata.get("_identity_audit_work") or {}
+                card_work = work.get(card_id, {}) if isinstance(work, dict) else {}
+                reason = str(card_work.get("reason") or "no_usd_provider_after_fallback")
+                record_identity_gap_sample(build_metadata, card=card, reason=reason)
             update_locale_coverage_audit(locale_coverage, locale=str(card["locale"]), extracted_rows=extracted)
             if not extracted:
                 cards_without_prices += 1
@@ -1097,6 +1242,13 @@ def build_prices_db(
             cards_with_tcgplayer += sum(1 for row in extracted if row[3] == "tcgplayer")
             cards_with_cardmarket += sum(1 for row in extracted if row[3] == "cardmarket")
             priced_rows += sum(1 for row in extracted if any(value is not None for value in row[4:7]))
+
+        fetched_card_ids = {str(card.get("id") or "") for card in cards}
+        orphan_price_row_card_ids = sorted({row[0] for row in rows if row[0] not in fetched_card_ids})
+        identity_audit = ensure_identity_audit(build_metadata)
+        identity_audit["price_rows_without_cardhawk_card_id"] = len(orphan_price_row_card_ids)
+        if orphan_price_row_card_ids:
+            identity_audit["price_rows_without_cardhawk_card_id_samples"] = orphan_price_row_card_ids[:MAX_IDENTITY_AUDIT_SAMPLE_GAPS]
 
         connection.executemany(
             """
@@ -1117,6 +1269,12 @@ def build_prices_db(
         connection.commit()
 
     row_count = validate_prices_db(temp_path, min_row_count=min_row_count)
+    identity_audit_summary = dict(build_metadata["identity_audit"])
+    identity_audit_summary["sample_gaps"] = sorted(
+        identity_audit_summary.get("sample_gaps", []),
+        key=lambda sample: str(sample.get("card_id") or ""),
+    )[:MAX_IDENTITY_AUDIT_SAMPLE_GAPS]
+
     summary = {
         "locales": locales,
         "row_count": row_count,
@@ -1150,6 +1308,7 @@ def build_prices_db(
         },
         "fallback_providers": dict(build_metadata["fallback_providers"]),
         "seed_reuse": dict(build_metadata["seed_reuse"]),
+        "identity_audit": identity_audit_summary,
     }
     if summary_json is not None:
         write_summary_json(summary_json, summary)
@@ -1172,6 +1331,21 @@ def build_prices_db(
             f"without_prices={coverage['cards_without_prices']} "
             f"primary_tcgplayer={coverage['cards_primary_tcgplayer']} "
             f"primary_cardmarket={coverage['cards_primary_cardmarket']}"
+        )
+    audit = summary["identity_audit"]
+    if (
+        audit["english_cards_without_usd"]
+        or audit["pokemontcgio_unmatched_by_set_number"]
+        or audit["stale_or_missing_tcgplayer"]
+        or audit["price_rows_without_cardhawk_card_id"]
+    ):
+        print(
+            "warning: identity audit "
+            f"english_cards_without_usd={audit['english_cards_without_usd']} "
+            f"pokemontcgio_unmatched_by_set_number={audit['pokemontcgio_unmatched_by_set_number']} "
+            f"alias_required_matches={audit['alias_required_matches']} "
+            f"stale_or_missing_tcgplayer={audit['stale_or_missing_tcgplayer']} "
+            f"price_rows_without_cardhawk_card_id={audit['price_rows_without_cardhawk_card_id']}"
         )
     return summary
 

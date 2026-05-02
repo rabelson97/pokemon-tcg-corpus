@@ -213,6 +213,14 @@ class BuildPricesDbTests(unittest.TestCase):
             build_prices_db.candidate_pokemontcgio_match_keys("swsh3.5", "71"),
         )
         self.assertIn(
+            ("zsv10pt5", "157"),
+            build_prices_db.candidate_pokemontcgio_match_keys("sv10.5b", "157"),
+        )
+        self.assertIn(
+            ("rsv10pt5", "157"),
+            build_prices_db.candidate_pokemontcgio_match_keys("sv10.5w", "157"),
+        )
+        self.assertIn(
             ("swsh12pt5gg", "GG05"),
             build_prices_db.candidate_pokemontcgio_match_keys("swsh12.5", "GG05"),
         )
@@ -267,6 +275,81 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual(3, summary["pokemontcgio"]["english_cards_with_match"])
         self.assertEqual(0, summary["pokemontcgio"]["english_cards_without_match"])
         self.assertEqual(3, summary["pokemontcgio"]["english_cards_with_tcgplayer"])
+
+    def test_select_price_sources_maps_black_bolt_alias_under_original_cardhawk_id(self) -> None:
+        summary = {
+            "transport_counts": {"tcgplayer": {"pokemontcgio": 0}},
+            "pokemontcgio": {
+                "english_cards_considered": 0,
+                "english_cards_with_match": 0,
+                "english_cards_without_match": 0,
+                "english_cards_with_tcgplayer": 0,
+                "english_cards_without_tcgplayer": 0,
+                "stale_tcgplayer_rows": 0,
+                "stale_reasons": {},
+            },
+        }
+        card = {
+            "id": "pokemon:en:sv10.5b:157",
+            "locale": "en",
+            "set_id": "sv10.5b",
+            "set_name": "Black Bolt",
+            "card_number": "157",
+            "pricing": {},
+        }
+        pokemontcgio_index = {
+            ("zsv10pt5", "157"): {
+                "id": "zsv10pt5-157",
+                "tcgplayer": {
+                    "updatedAt": "2026/04/10",
+                    "prices": {
+                        "holofoil": {
+                            "low": 10.0,
+                            "market": 12.5,
+                            "high": 20.0,
+                        }
+                    },
+                },
+            }
+        }
+
+        selected = build_prices_db.select_price_sources(
+            card,
+            pokemontcgio_index=pokemontcgio_index,
+            max_pokemontcgio_age_days=14,
+            now=dt.datetime(2026, 4, 10, tzinfo=dt.timezone.utc),
+            summary=summary,
+        )
+        rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], selected)
+
+        self.assertIn("tcgplayer", selected)
+        self.assertEqual("pokemon:en:sv10.5b:157", rows[0][0])
+        self.assertEqual(12.5, rows[0][5])
+        self.assertEqual(1, summary["identity_audit"]["alias_required_matches"])
+
+    def test_fetch_targeted_pokemontcgio_cards_tries_explicit_alias_provider_id(self) -> None:
+        card = {
+            "upstream_id": "sv10.5b-157",
+            "set_id": "sv10.5b",
+            "card_number": "157",
+        }
+        provider_card = {"id": "zsv10pt5-157", "set": {"id": "zsv10pt5"}, "number": "157"}
+
+        def fake_fetch_card_by_id(card_id: str) -> dict | None:
+            if card_id == "zsv10pt5-157":
+                return provider_card
+            return None
+
+        with mock.patch.object(build_prices_db, "fetch_card_by_id", side_effect=fake_fetch_card_by_id) as fetch_mock, mock.patch.object(
+            build_prices_db,
+            "search_card_by_set_and_number",
+            return_value=None,
+        ) as search_mock:
+            fetched = build_prices_db.fetch_targeted_pokemontcgio_cards([card])
+
+        self.assertEqual([provider_card], fetched)
+        self.assertIn(mock.call("zsv10pt5-157"), fetch_mock.mock_calls)
+        self.assertEqual(1, search_mock.call_count)
 
     def test_fallback_budget_zero_skips_all_english_fallback_attempts(self) -> None:
         summary = {
@@ -355,6 +438,70 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual(0, summary["fallback_providers"]["poketrace_set_slugs_mapped"])
         self.assertEqual(0, summary["fallback_providers"]["english_cards_tried_fallback"])
 
+    def test_build_prices_db_identity_audit_warns_with_deterministic_gap_sample(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:sv01:002",
+                "locale": "en",
+                "upstream_id": "sv01-002",
+                "set_id": "sv01",
+                "set_name": "Scarlet & Violet",
+                "name": "Ivysaur",
+                "card_number": "002",
+                "pricing": {},
+            },
+            {
+                "id": "pokemon:en:sv10.5b:157",
+                "locale": "en",
+                "upstream_id": "sv10.5b-157",
+                "set_id": "sv10.5b",
+                "set_name": "Black Bolt",
+                "name": "Kyurem ex",
+                "card_number": "157",
+                "pricing": {},
+            },
+        ]
+        targeted_result = [
+            {
+                "set": {"id": "zsv10pt5"},
+                "number": "157",
+                "tcgplayer": {"updatedAt": "2026/04/10", "prices": {"holofoil": {"low": 10.0, "market": 12.5, "high": 20.0}}},
+            }
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "prices.db"
+            with mock.patch.object(build_prices_db, "fetch_all_card_records", return_value=(cards, {"en": 2})), mock.patch.object(
+                build_prices_db,
+                "fetch_targeted_pokemontcgio_cards",
+                return_value=targeted_result,
+            ), mock.patch.object(
+                build_prices_db,
+                "build_pokemontcgio_index",
+                return_value={("zsv10pt5", "157"): targeted_result[0]},
+            ), mock.patch.object(
+                build_prices_db,
+                "build_poketrace_set_slugs",
+                return_value={},
+            ):
+                summary = build_prices_db.build_prices_db(
+                    output_path,
+                    locales=["en"],
+                    limit=2,
+                    min_row_count=0,
+                    max_pokemontcgio_age_days=90,
+                    max_fallback_cards=0,
+                )
+
+        audit = summary["identity_audit"]
+        self.assertEqual(1, audit["english_cards_without_usd"])
+        self.assertEqual(1, audit["pokemontcgio_unmatched_by_set_number"])
+        self.assertEqual(1, audit["alias_required_matches"])
+        self.assertEqual(0, audit["price_rows_without_cardhawk_card_id"])
+        self.assertEqual(["pokemon:en:sv01:002"], [sample["card_id"] for sample in audit["sample_gaps"]])
+        self.assertEqual("no_pokemontcgio_match", audit["sample_gaps"][0]["reason"])
+        self.assertIn("sv1-2", audit["sample_gaps"][0]["attempted_pokemontcgio_match_keys"])
+
     def test_collect_reusable_existing_tcgplayer_rows_filters_by_updated_date(self) -> None:
         rows = {
             "pokemon:en:sv01:001": [
@@ -441,6 +588,7 @@ class BuildPricesDbTests(unittest.TestCase):
                     locales=["en"],
                     limit=None,
                     min_row_count=0,
+                    max_pokemontcgio_age_days=90,
                     max_fallback_cards=0,
                     seed_db_path=seed_db,
                     reuse_existing_tcgplayer_date="2026/04/10",
