@@ -408,7 +408,7 @@ def fetch_all_card_records(
     locales: list[str],
     *,
     limit: int | None = None,
-    detail_workers: int = 12,
+    detail_workers: int = 4,
 ) -> tuple[list[dict[str, Any]], dict[str, int]]:
     records: list[dict[str, Any]] = []
     listed_counts: dict[str, int] = {}
