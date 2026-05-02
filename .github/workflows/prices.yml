@@ -93,7 +93,7 @@ jobs:
           python scripts/build_prices_db.py \
             --output prices.db \
             --summary-json prices-build-summary.json \
-            --locales en,ja,fr \
+            --locales en,ja \
             --min-row-count 10000 \
             --max-fallback-cards 100 \
             ${extra_args}
