@@ -13,7 +13,7 @@ from typing import Any
 
 
 API_BASE_URL = "https://api.tcgdex.net/v2"
-DEFAULT_LOCALES = ("en", "ja", "fr", "de", "it", "es")
+DEFAULT_LOCALES = ("en", "ja")
 USER_AGENT = "pokemon-tcg-corpus-db-builder/2.0"
 
 # ---------------------------------------------------------------------------

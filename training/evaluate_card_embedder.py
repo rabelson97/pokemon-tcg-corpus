@@ -324,6 +324,12 @@ def main() -> int:
     parser.add_argument("--stream-query-count", type=int, default=1)
     parser.add_argument("--benchmark-manifest")
     parser.add_argument("--benchmark-topk-output")
+    parser.add_argument(
+        "--benchmark-reference-scope",
+        choices=["manifest", "validation"],
+        default="manifest",
+        help="Reference set for benchmark queries. Use 'manifest' for valid retrieval metrics; 'validation' preserves the old split-only behavior.",
+    )
     args = parser.parse_args()
 
     records = load_manifest(args.manifest)
@@ -354,16 +360,32 @@ def main() -> int:
     benchmark_result = None
     if args.benchmark_manifest:
         frames = load_benchmark_frames(args.benchmark_manifest)
+        benchmark_reference_records = records if args.benchmark_reference_scope == "manifest" else val_records
+        benchmark_reference_images = [Image.open(record.image_path).convert("RGB") for record in benchmark_reference_records]
+        benchmark_reference_vectors = embed_images(session, input_name, benchmark_reference_images)
         benchmark_images = []
         for frame in frames:
             image = Image.open(frame.record.image_path).convert("RGB")
             benchmark_images.append(make_stream_like(image, random.Random(frame.perturbation_seed)))
         benchmark_vectors = embed_images(session, input_name, benchmark_images)
         benchmark_records = [frame.record for frame in frames]
-        benchmark_metrics = retrieve_metrics(benchmark_vectors, benchmark_records, reference_vectors, val_records)
-        topk_rows = benchmark_topk_rows(benchmark_vectors, frames, reference_vectors, val_records, top_k=5)
+        benchmark_metrics = retrieve_metrics(
+            benchmark_vectors,
+            benchmark_records,
+            benchmark_reference_vectors,
+            benchmark_reference_records,
+        )
+        topk_rows = benchmark_topk_rows(
+            benchmark_vectors,
+            frames,
+            benchmark_reference_vectors,
+            benchmark_reference_records,
+            top_k=5,
+        )
         benchmark_result = {
             "benchmark_manifest": str(Path(args.benchmark_manifest).resolve()),
+            "reference_scope": args.benchmark_reference_scope,
+            "reference_count": len(benchmark_reference_records),
             "metrics": asdict(benchmark_metrics),
             "clip_metrics": clip_metrics(topk_rows, top_k=5),
         }

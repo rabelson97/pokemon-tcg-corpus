@@ -35,9 +35,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/card-images
-          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja-fr
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja
           restore-keys: |
-            embeddings-card-images-${{ runner.os }}-en-ja-fr-
+            embeddings-card-images-${{ runner.os }}-en-ja-
             embeddings-card-images-${{ runner.os }}-
 
       - name: Install dependencies
@@ -85,7 +85,7 @@ jobs:
             --model-path models/card_embedder.onnx
             --image-cache-dir "$RUNNER_TEMP/card-images"
             --summary-json embeddings-build-summary.json
-            --locales en,ja,fr
+            --locales en,ja
             --min-row-count 10000
           )
           "${cmd[@]}"
@@ -122,7 +122,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/card-images
-          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja-fr-${{ github.run_id }}
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja-${{ github.run_id }}
 
       - name: Upload build summary artifact
         uses: actions/upload-artifact@v4

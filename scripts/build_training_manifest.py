@@ -16,7 +16,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build a multilingual TCGdex training manifest and image cache.")
     parser.add_argument("--output", default="training/data/full/manifest.jsonl")
     parser.add_argument("--image-dir", default="training/data/full/images")
-    parser.add_argument("--locales", default="en,ja,fr,de,it,es", help="Comma-separated TCGdex locales")
+    parser.add_argument("--locales", default="en,ja", help="Comma-separated TCGdex locales")
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--limit", type=int, help="Optional combined card limit for local verification")
     parser.add_argument("--summary-json", help="Optional JSON summary output path")

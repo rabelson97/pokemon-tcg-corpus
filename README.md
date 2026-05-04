@@ -2,7 +2,7 @@
 
 Release source for CardHawk's locale-first Pokemon card retrieval corpus and local price database.
 
-Current release rollout scope: `en`, `ja`, and `fr`.
+Current release rollout scope: `en` and `ja`.
 
 The current repository outputs are:
 
@@ -48,7 +48,7 @@ Workflow notes:
 - The embeddings workflow uses the promoted ONNX embedder at [models/card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx).
 - The embeddings build applies the same crop inset, resize, and normalization contract that downstream CardHawk runtime code expects from this embedder family.
 - The embeddings workflow is a fresh locale-first rebuild from TCGdex, not an incremental extension of the old English-only corpus.
-- The current automated release workflows publish the Phase B locale set: `en`, `ja`, and `fr`.
+- The current automated release workflows publish the supported locale set: `en` and `ja`.
 - The embeddings workflow requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
 - TCGdex card payloads expose an asset base URL in `image`; the builders normalize that to the final localized binary art path at `.../high.webp`.
 - Some upstream cards still have no localized art URL. Manifest and embeddings builds skip those rows explicitly and report the skipped counts and reasons by locale.
