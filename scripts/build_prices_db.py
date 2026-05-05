@@ -63,6 +63,9 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     # PokemonTCG.io uses a compact set id for Champion's Path instead of the
     # TCGdex-style half-set id.
     "swsh3.5": ["swsh35"],
+    # PokemonTCG.io uses a compact set id for Shining Fates instead of the
+    # TCGdex-style half-set id.
+    "swsh4.5": ["swsh45"],
     # Black Bolt and White Flare are split English SV10.5 sets in TCGdex /
     # CardHawk, but PokemonTCG.io publishes them as separate provider sets.
     "sv10.5b": ["zsv10pt5"],
