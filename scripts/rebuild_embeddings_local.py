@@ -63,7 +63,7 @@ def main() -> int:
     )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--cache-dir", default=str(DEFAULT_CACHE_DIR))
-    parser.add_argument("--locales", default="en,ja")
+    parser.add_argument("--locales", default="en")
     parser.add_argument("--min-row-count", type=int, default=10000)
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--limit", type=int, help="Optional small-card local smoke test.")

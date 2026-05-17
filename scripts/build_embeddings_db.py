@@ -721,7 +721,7 @@ def main() -> int:
     parser.add_argument("--model-path", default=str(DEFAULT_MODEL_PATH), help="Path to the ONNX card embedder model")
     parser.add_argument("--image-cache-dir", required=True, help="Persistent cache directory for downloaded card art")
     parser.add_argument("--summary-json", help="Optional JSON build summary output path")
-    parser.add_argument("--locales", default="en,ja", help="Comma-separated TCGdex locales")
+    parser.add_argument("--locales", default="en", help="Comma-separated TCGdex locales")
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
     parser.add_argument("--min-row-count", type=int, default=1000)

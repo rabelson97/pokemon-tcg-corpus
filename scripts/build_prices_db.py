@@ -1358,7 +1358,7 @@ def main() -> int:
     parser.add_argument("--output", default="prices.db", help="Output SQLite database path")
     parser.add_argument("--inspect-db", help="Inspect an existing SQLite prices DB instead of rebuilding it")
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
-    parser.add_argument("--locales", default="en,ja", help="Comma-separated TCGdex locales")
+    parser.add_argument("--locales", default="en", help="Comma-separated TCGdex locales")
     parser.add_argument("--min-row-count", type=int, default=1000)
     parser.add_argument("--summary-json", help="Optional path for a build or inspection summary JSON file")
     parser.add_argument("--max-pokemontcgio-age-days", type=int, default=DEFAULT_MAX_POKEMONTCG_IO_AGE_DAYS)
