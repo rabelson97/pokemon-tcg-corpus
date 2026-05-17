@@ -85,7 +85,7 @@ jobs:
             --model-path models/card_embedder.onnx
             --image-cache-dir "$RUNNER_TEMP/card-images"
             --summary-json embeddings-build-summary.json
-            --locales en,ja
+            --locales en
             --min-row-count 10000
           )
           "${cmd[@]}"
