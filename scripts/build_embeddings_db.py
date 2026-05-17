@@ -38,7 +38,7 @@ from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, s
 VARIANT_TAGS: tuple[str, ...] = ("clean", "blur_lo", "jpeg_lo", "glare_mild")
 VARIANT_K = len(VARIANT_TAGS)
 
-DB_USER_VERSION = 5
+DB_USER_VERSION = 6
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 
@@ -181,6 +181,14 @@ def init_db(connection: sqlite3.Connection) -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_embeddings_card ON embeddings(card_id);
+
+        CREATE TABLE IF NOT EXISTS embeddings_int8 (
+          card_id TEXT PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
+          dim INTEGER NOT NULL,
+          vector_int8 BLOB NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_embeddings_int8_card ON embeddings_int8(card_id);
 
         CREATE TABLE IF NOT EXISTS card_equivalents (
           card_id TEXT NOT NULL PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
@@ -362,6 +370,120 @@ def validate_embeddings_db(
         raise RuntimeError(f"Too many suspiciously identical sampled cosine similarities: {suspicious_cosines}")
 
     return card_count, embedding_count, diagnostics
+
+
+def quantize_to_int8(vector: np.ndarray) -> bytes:
+    scaled = np.clip(np.round(vector * 127.0), -128, 127).astype(np.int8)
+    return scaled.tobytes()
+
+
+def dequantize_int8(blob: bytes, dim: int) -> np.ndarray:
+    raw = np.frombuffer(blob, dtype=np.int8).astype(np.float32)
+    if raw.shape[0] != dim:
+        raise RuntimeError(f"int8 blob length {raw.shape[0]} != expected dim {dim}")
+    return raw / 127.0
+
+
+def insert_int8_embeddings(connection: sqlite3.Connection) -> tuple[int, int]:
+    rows = connection.execute(
+        """
+        SELECT e.card_id, e.dim, e.vector_blob
+        FROM embeddings e
+        WHERE e.variant_idx = 0
+        ORDER BY e.card_id
+        """
+    ).fetchall()
+
+    int8_rows: list[tuple[str, int, bytes]] = []
+    for card_id, dim, blob in rows:
+        vector = np.frombuffer(blob, dtype="<f4")
+        if vector.shape[0] != dim:
+            raise RuntimeError(f"vector dim mismatch for {card_id}: {vector.shape[0]} vs {dim}")
+        int8_blob = quantize_to_int8(vector)
+        int8_rows.append((card_id, dim, int8_blob))
+
+    connection.executemany(
+        """
+        INSERT INTO embeddings_int8 (card_id, dim, vector_int8)
+        VALUES (?, ?, ?)
+        ON CONFLICT(card_id) DO NOTHING;
+        """,
+        int8_rows,
+    )
+    connection.commit()
+
+    total_bytes = sum(len(row[2]) for row in int8_rows)
+    row_count = len(int8_rows)
+    print(f"inserted {row_count} int8 vectors, total vector bytes = {total_bytes:,} ({total_bytes / 1024 / 1024:.1f} MB)")
+    return row_count, total_bytes
+
+
+def validate_int8_quantization(
+    connection: sqlite3.Connection,
+    sample_size: int = 500,
+) -> dict[str, Any]:
+    rows = connection.execute(
+        """
+        SELECT e.card_id, e.dim, e.vector_blob, i.vector_int8
+        FROM embeddings e
+        JOIN embeddings_int8 i ON i.card_id = e.card_id
+        WHERE e.variant_idx = 0
+        ORDER BY RANDOM()
+        LIMIT ?;
+        """,
+        (sample_size,),
+    ).fetchall()
+
+    if not rows:
+        raise RuntimeError("No rows found for int8 validation")
+
+    cosine_errors: list[float] = []
+    l2_errors: list[float] = []
+    for card_id, dim, f32_blob, i8_blob in rows:
+        f32_vec = np.frombuffer(f32_blob, dtype="<f4").copy()
+        if f32_vec.shape[0] != dim:
+            continue
+        f32_norm = np.linalg.norm(f32_vec)
+        if f32_norm < 1e-9:
+            continue
+        f32_unit = f32_vec / f32_norm
+
+        i8_vec = dequantize_int8(i8_blob, dim)
+        i8_norm = np.linalg.norm(i8_vec)
+        if i8_norm < 1e-9:
+            continue
+        i8_unit = i8_vec / i8_norm
+
+        cosine = float(np.dot(f32_unit, i8_unit))
+        cosine_error = 1.0 - cosine
+        cosine_errors.append(cosine_error)
+
+        l2 = float(np.linalg.norm(f32_unit - i8_unit))
+        l2_errors.append(l2)
+
+    if not cosine_errors:
+        raise RuntimeError("No valid samples for int8 quantization validation")
+
+    mean_cosine_error = float(np.mean(cosine_errors))
+    max_cosine_error = float(np.max(cosine_errors))
+    mean_l2_error = float(np.mean(l2_errors))
+    max_l2_error = float(np.max(l2_errors))
+
+    summary = {
+        "sample_count": len(cosine_errors),
+        "mean_cosine_error": mean_cosine_error,
+        "max_cosine_error": max_cosine_error,
+        "mean_l2_error": mean_l2_error,
+        "max_l2_error": max_l2_error,
+    }
+    print(json.dumps({"int8_quantization_validation": summary}, indent=2))
+
+    if mean_cosine_error > 0.01:
+        raise RuntimeError(
+            f"int8 quantization mean cosine error {mean_cosine_error:.6f} exceeds threshold 0.01"
+        )
+
+    return summary
 
 
 def ensure_images(
@@ -641,6 +763,9 @@ def build_embeddings_db(
     if model_groups != [(MODEL_NAME, EXPECTED_DIM, counts[1])]:
         raise RuntimeError(f"Unexpected model groups in embeddings db: {model_groups}")
 
+    int8_row_count, int8_total_bytes = insert_int8_embeddings(sqlite3.connect(output_db))
+    int8_validation = validate_int8_quantization(sqlite3.connect(output_db))
+
     skipped_by_locale: dict[str, int] = {}
     skipped_reasons: dict[str, int] = {}
     skipped_reason_examples: list[dict[str, str]] = []
@@ -680,6 +805,9 @@ def build_embeddings_db(
             "output_db": str(output_db),
             "model_groups": model_groups,
             "embedding_diagnostics": counts[2],
+            "int8_row_count": int8_row_count,
+            "int8_total_bytes": int8_total_bytes,
+            "int8_validation": int8_validation,
         }
     )
 

@@ -94,7 +94,7 @@ jobs:
         run: |
           variant_k=4
           test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "5"
+          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "6"
           cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards') WHERE name = 'image_url_low';")" = "1"
@@ -108,6 +108,14 @@ jobs:
           test "$(sqlite3 embeddings.db 'SELECT MAX(dim) FROM embeddings;')" = "256"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(DISTINCT variant_tag) FROM embeddings;')" = "$variant_k"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings WHERE length(vector_blob) != 1024;')" = "0"
+          # int8 sidecar table
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('embeddings_int8') WHERE name = 'vector_int8';")" = "1"
+          int8_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings_int8;')"
+          test "$int8_count" -ge 10000
+          test "$(sqlite3 embeddings.db 'SELECT MIN(dim) FROM embeddings_int8;')" = "256"
+          test "$(sqlite3 embeddings.db 'SELECT MAX(dim) FROM embeddings_int8;')" = "256"
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings_int8 WHERE length(vector_int8) != 256;')" = "0"
+          echo "int8_count=$int8_count"
           # every card must carry exactly K variants
           test "$(sqlite3 embeddings.db 'SELECT MIN(c) FROM (SELECT COUNT(*) AS c FROM embeddings GROUP BY card_id);')" = "$variant_k"
           test "$(sqlite3 embeddings.db 'SELECT MAX(c) FROM (SELECT COUNT(*) AS c FROM embeddings GROUP BY card_id);')" = "$variant_k"
