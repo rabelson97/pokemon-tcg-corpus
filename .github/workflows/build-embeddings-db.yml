@@ -35,9 +35,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/card-images
-          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'scripts/pokemontcgio_api.py', 'models/card_embedder.manifest.json') }}-en
           restore-keys: |
-            embeddings-card-images-${{ runner.os }}-en-ja-
+            embeddings-card-images-${{ runner.os }}-en-
             embeddings-card-images-${{ runner.os }}-
 
       - name: Install dependencies
@@ -78,6 +78,8 @@ jobs:
           echo "Resolved embeddings release: $resolved_version"
 
       - name: Build embeddings database
+        env:
+          POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
         run: |
           cmd=(
             python scripts/build_embeddings_db.py
@@ -130,7 +132,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/card-images
-          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'models/card_embedder.manifest.json') }}-en-ja-${{ github.run_id }}
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'scripts/pokemontcgio_api.py', 'models/card_embedder.manifest.json') }}-en-${{ github.run_id }}
 
       - name: Upload build summary artifact
         uses: actions/upload-artifact@v4

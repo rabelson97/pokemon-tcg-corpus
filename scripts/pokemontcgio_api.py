@@ -168,3 +168,32 @@ def search_card_by_set_and_number(
     if not isinstance(first, dict):
         return None
     return first
+
+
+def search_cards_by_name(
+    name: str,
+    *,
+    api_key: str | None = None,
+) -> list[dict[str, Any]]:
+    try:
+        payload = api_get_json(
+            "/cards",
+            params={
+                "q": f'name:"{name}"',
+                "page": "1",
+                "pageSize": "20",
+                "select": "id,name,number,set,hp,artist,images",
+            },
+            api_key=api_key,
+        )
+    except urllib.error.HTTPError as error:
+        if error.code in {400, 404}:
+            return []
+        raise
+    if not isinstance(payload, dict):
+        return []
+    cards = payload.get("data")
+    if not isinstance(cards, list):
+        return []
+    return [c for c in cards if isinstance(c, dict)]
+

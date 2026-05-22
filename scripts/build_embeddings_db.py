@@ -486,6 +486,53 @@ def validate_int8_quantization(
     return summary
 
 
+def resolve_fallback_image(card: dict[str, Any]) -> str | None:
+    try:
+        from scripts.pokemontcgio_api import search_cards_by_name
+    except ImportError:
+        try:
+            from pokemontcgio_api import search_cards_by_name
+        except ImportError:
+            return None
+
+    name = card.get("name")
+    if not name:
+        return None
+
+    print(f"Attempting image fallback for missing URL: {card['id']} ({name})")
+
+    # Try query pokemontcg.io
+    candidates = search_cards_by_name(name)
+    if not candidates:
+        print(f"  Fallback: No matches found for name '{name}'")
+        return None
+
+    for cand in candidates:
+        cand_artist = str(cand.get("artist") or "").lower().strip()
+        card_artist = str(card.get("illustrator") or "").lower().strip()
+
+        cand_hp = str(cand.get("hp") or "").strip()
+        card_hp = str(card.get("hp") or "").strip()
+
+        # Heuristically verify matching illustrator and HP to ensure same card design/artwork
+        artist_match = (
+            (cand_artist == card_artist)
+            or (card_artist in cand_artist)
+            or (cand_artist in card_artist)
+        )
+        hp_match = (cand_hp == card_hp)
+
+        if artist_match and hp_match:
+            large_image = cand.get("images", {}).get("large")
+            if large_image:
+                print(f"  Fallback SUCCESS! Mapped TCGDex {card['id']} to pokemontcg.io {cand['id']}")
+                print(f"  Selected Large Image: {large_image}")
+                return large_image
+
+    print(f"  Fallback: Matches found but none passed artist/HP alignment check.")
+    return None
+
+
 def ensure_images(
     cards: list[dict[str, Any]],
     cache_dir: Path,
@@ -499,11 +546,19 @@ def ensure_images(
 
     pending: list[tuple[dict[str, Any], Path]] = []
     for card, image_path in zip(cards, image_paths, strict=True):
-        if not str(card.get("image_url") or "").strip():
-            skipped.append(SkippedCard(card_id=card["id"], locale=card["locale"], reason="missing_image_url"))
-            continue
         if image_path.exists() and image_path.stat().st_size > 0:
+            if not str(card.get("image_url") or "").strip():
+                card["image_url"] = f"file://{image_path.resolve()}"
             continue
+
+        if not str(card.get("image_url") or "").strip():
+            fallback_url = resolve_fallback_image(card)
+            if fallback_url:
+                card["image_url"] = fallback_url
+            else:
+                skipped.append(SkippedCard(card_id=card["id"], locale=card["locale"], reason="missing_image_url"))
+                continue
+
         pending.append((card, image_path))
 
     if pending:
