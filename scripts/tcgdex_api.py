@@ -401,6 +401,7 @@ def normalize_card_record(locale: str, card: dict[str, Any]) -> dict[str, Any]:
         "equivalence_key": build_cross_locale_equivalence_key(card),
         "pricing": card.get("pricing") or {},
         "hp": str(card.get("hp") or "").strip() or None,
+        "types": card.get("types"),
     }
 
 

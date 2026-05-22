@@ -59,7 +59,9 @@ class SkippedCard:
 
 def card_row(
     card: dict[str, Any],
-) -> tuple[str, str, str, str, str, str, str, str, str, str | None, str, str | None]:
+) -> tuple[str, str, str, str, str, str, str, str, str, str | None, str, str | None, str | None]:
+    types_list = card.get("types")
+    types_str = ",".join(str(t) for t in types_list) if types_list else None
     return (
         card["id"],
         card["locale"],
@@ -73,6 +75,7 @@ def card_row(
         card.get("image_url_low"),
         card["equivalence_key"],
         card.get("hp"),
+        types_str,
     )
 
 
@@ -167,7 +170,8 @@ def init_db(connection: sqlite3.Connection) -> None:
           image_url TEXT NOT NULL,
           image_url_low TEXT,
           equivalence_key TEXT NOT NULL,
-          hp TEXT
+          hp TEXT,
+          types TEXT
         );
 
         CREATE TABLE IF NOT EXISTS embeddings (
@@ -204,6 +208,8 @@ def init_db(connection: sqlite3.Connection) -> None:
     card_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cards);").fetchall()}
     if "image_url_low" not in card_columns:
         connection.execute("ALTER TABLE cards ADD COLUMN image_url_low TEXT;")
+    if "types" not in card_columns:
+        connection.execute("ALTER TABLE cards ADD COLUMN types TEXT;")
 
 
 def sample_embedding_diagnostics(
@@ -709,9 +715,10 @@ def insert_new_embeddings(
               image_url,
               image_url_low,
               equivalence_key,
-              hp
+              hp,
+              types
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING;
             """,
             card_rows,
