@@ -545,9 +545,10 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
 
     if search_cards_by_name is not None:
         # Try query pokemontcg.io
-        candidates = search_cards_by_name(name)
+        card_number = str(card.get("card_number") or "").strip().lstrip("0")
+        candidates = search_cards_by_name(name, number=card_number)
         if not candidates:
-            print(f"  Fallback: No matches found for name '{name}'")
+            print(f"  Fallback: No matches found for name '{name}' and number '{card_number}'")
 
         for cand in candidates:
             cand_artist = str(cand.get("artist") or "").lower().strip()

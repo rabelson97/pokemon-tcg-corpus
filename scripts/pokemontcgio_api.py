@@ -173,13 +173,17 @@ def search_card_by_set_and_number(
 def search_cards_by_name(
     name: str,
     *,
+    number: str | None = None,
     api_key: str | None = None,
 ) -> list[dict[str, Any]]:
+    query_str = f'name:"{name}"'
+    if number:
+        query_str += f' number:"{number}"'
     try:
         payload = api_get_json(
             "/cards",
             params={
-                "q": f'name:"{name}"',
+                "q": query_str,
                 "page": "1",
                 "pageSize": "20",
                 "select": "id,name,number,set,hp,artist,images",

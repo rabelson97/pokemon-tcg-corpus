@@ -334,6 +334,27 @@ class ImageFallbackTests(unittest.TestCase):
         self.assertEqual("https://images.pokemontcg.io/mep/023_hires.png", fallback.url)
         self.assertEqual("pokemontcgio_name_artist_hp", fallback.source)
 
+    def test_pokemontcgio_fallback_passes_card_number_to_api(self) -> None:
+        card = self._missing_image_card()
+        card["card_number"] = "023"
+
+        mock_search = mock.Mock(return_value=[])
+        mock_api = mock.Mock(search_cards_by_name=mock_search)
+        with mock.patch.dict(
+            sys.modules,
+            {
+                "pokemontcgio_api": mock_api,
+                "scripts.pokemontcgio_api": mock_api,
+            },
+        ):
+            build_embeddings_db.resolve_fallback_image(
+                card,
+                allow_web_image_fallback=False,
+            )
+
+        mock_search.assert_called_once_with("Mega Charizard X ex", number="23")
+
+
 
 class RenderVariantTests(unittest.TestCase):
     def test_clean_variant_returns_input_unchanged(self) -> None:
