@@ -187,6 +187,121 @@ class InsertEmbeddingsTests(unittest.TestCase):
             self.assertEqual(len({bytes(blob) for blob in blobs}), build_embeddings_db.VARIANT_K)
 
 
+class ImageFallbackTests(unittest.TestCase):
+    @staticmethod
+    def _missing_image_card() -> dict[str, object]:
+        return {
+            "id": "pokemon:en:mep:023",
+            "locale": "en",
+            "upstream_id": "mep-023",
+            "set_id": "mep",
+            "set_name": "MEP Black Star Promos",
+            "card_number": "023",
+            "name": "Mega Charizard X ex",
+            "rarity": "None",
+            "image_url": "",
+            "image_url_low": None,
+            "equivalence_key": "pokemon:xlocale:mep-023",
+            "upstream_source": "tcgdex",
+            "hp": "360",
+            "types": ["Fire"],
+        }
+
+    @staticmethod
+    def _write_probe_image(_url: str, destination: Path) -> None:
+        Image.new("RGB", (480, 672), color=(180, 40, 40)).save(destination, format="PNG")
+
+    def test_web_fallback_resolution_is_cached_with_source_url(self) -> None:
+        card = self._missing_image_card()
+        fallback = build_embeddings_db.ImageResolution(
+            url="https://example.com/mep-023.png",
+            source="web_search_unverified",
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cache_dir = Path(tmp_dir)
+            with (
+                mock.patch.object(build_embeddings_db, "resolve_fallback_image", return_value=fallback),
+                mock.patch.object(build_embeddings_db, "download_binary", side_effect=self._write_probe_image),
+            ):
+                ready, skipped, _seconds, image_sources = build_embeddings_db.ensure_images(
+                    [card],
+                    cache_dir,
+                    download_workers=1,
+                    allow_web_image_fallback=True,
+                )
+
+            self.assertEqual([], skipped)
+            self.assertEqual(1, len(ready))
+            self.assertEqual("https://example.com/mep-023.png", card["image_url"])
+            self.assertEqual({"pokemon:en:mep:023": "web_search_unverified"}, image_sources)
+            self.assertEqual(
+                {
+                    "pokemon:en:mep:023": {
+                        "url": "https://example.com/mep-023.png",
+                        "source": "web_search_unverified",
+                    }
+                },
+                build_embeddings_db.load_fallback_manifest(cache_dir),
+            )
+
+    def test_cached_fallback_reuses_manifest_url_not_file_url(self) -> None:
+        card = self._missing_image_card()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cache_dir = Path(tmp_dir)
+            image_path = cache_dir / f"{tcgdex_api.sanitize_card_id(str(card['id']))}.img"
+            self._write_probe_image("unused", image_path)
+            build_embeddings_db.write_fallback_manifest(
+                cache_dir,
+                {
+                    "pokemon:en:mep:023": {
+                        "url": "https://example.com/mep-023.png",
+                        "source": "web_search_unverified",
+                    }
+                },
+            )
+
+            with mock.patch.object(build_embeddings_db, "resolve_fallback_image") as resolve_mock:
+                ready, skipped, _seconds, image_sources = build_embeddings_db.ensure_images(
+                    [card],
+                    cache_dir,
+                    download_workers=1,
+                    allow_web_image_fallback=True,
+                )
+
+            resolve_mock.assert_not_called()
+            self.assertEqual([], skipped)
+            self.assertEqual(1, len(ready))
+            self.assertEqual("https://example.com/mep-023.png", card["image_url"])
+            self.assertEqual({"pokemon:en:mep:023": "web_search_unverified:cached"}, image_sources)
+
+    def test_pokemontcgio_fallback_rejects_matching_art_with_wrong_number(self) -> None:
+        card = self._missing_image_card()
+        card["illustrator"] = "Saboteri"
+        candidate = {
+            "id": "me2-13",
+            "name": "Mega Charizard X ex",
+            "number": "13",
+            "hp": "360",
+            "artist": "Saboteri",
+            "images": {"large": "https://images.pokemontcg.io/me2/13_hires.png"},
+        }
+
+        with mock.patch.dict(
+            sys.modules,
+            {
+                "pokemontcgio_api": mock.Mock(search_cards_by_name=mock.Mock(return_value=[candidate])),
+            },
+        ):
+            fallback = build_embeddings_db.resolve_fallback_image(
+                card,
+                allow_web_image_fallback=False,
+            )
+
+        self.assertIsNone(fallback)
+
+
 class RenderVariantTests(unittest.TestCase):
     def test_clean_variant_returns_input_unchanged(self) -> None:
         base = Image.new("RGB", (224, 224), color=(50, 100, 150))

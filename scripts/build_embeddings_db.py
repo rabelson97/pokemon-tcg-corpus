@@ -57,6 +57,12 @@ class SkippedCard:
     detail: str | None = None
 
 
+@dataclass(frozen=True)
+class ImageResolution:
+    url: str
+    source: str
+
+
 def card_row(
     card: dict[str, Any],
 ) -> tuple[str, str, str, str, str, str, str, str, str, str | None, str, str | None, str | None]:
@@ -492,14 +498,44 @@ def validate_int8_quantization(
     return summary
 
 
-def resolve_fallback_image(card: dict[str, Any]) -> str | None:
+def fallback_manifest_path(cache_dir: Path) -> Path:
+    return cache_dir / "image-fallbacks.json"
+
+
+def load_fallback_manifest(cache_dir: Path) -> dict[str, dict[str, str]]:
+    path = fallback_manifest_path(cache_dir)
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    manifest: dict[str, dict[str, str]] = {}
+    for card_id, value in payload.items():
+        if not isinstance(card_id, str) or not isinstance(value, dict):
+            continue
+        url = str(value.get("url") or "").strip()
+        source = str(value.get("source") or "").strip()
+        if url and source:
+            manifest[card_id] = {"url": url, "source": source}
+    return manifest
+
+
+def write_fallback_manifest(cache_dir: Path, manifest: dict[str, dict[str, str]]) -> None:
+    path = fallback_manifest_path(cache_dir)
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
     try:
         from scripts.pokemontcgio_api import search_cards_by_name
     except ImportError:
         try:
             from pokemontcgio_api import search_cards_by_name
         except ImportError:
-            return None
+            search_cards_by_name = None
 
     name = card.get("name")
     if not name:
@@ -507,35 +543,54 @@ def resolve_fallback_image(card: dict[str, Any]) -> str | None:
 
     print(f"Attempting image fallback for missing URL: {card['id']} ({name})")
 
-    # Try query pokemontcg.io
-    candidates = search_cards_by_name(name)
-    if not candidates:
-        print(f"  Fallback: No matches found for name '{name}'")
-        return None
+    if search_cards_by_name is not None:
+        # Try query pokemontcg.io
+        candidates = search_cards_by_name(name)
+        if not candidates:
+            print(f"  Fallback: No matches found for name '{name}'")
 
-    for cand in candidates:
-        cand_artist = str(cand.get("artist") or "").lower().strip()
-        card_artist = str(card.get("illustrator") or "").lower().strip()
+        for cand in candidates:
+            cand_artist = str(cand.get("artist") or "").lower().strip()
+            card_artist = str(card.get("illustrator") or "").lower().strip()
 
-        cand_hp = str(cand.get("hp") or "").strip()
-        card_hp = str(card.get("hp") or "").strip()
+            cand_hp = str(cand.get("hp") or "").strip()
+            card_hp = str(card.get("hp") or "").strip()
+            cand_number = str(cand.get("number") or "").strip().lstrip("0")
+            card_number = str(card.get("card_number") or "").strip().lstrip("0")
 
-        # Heuristically verify matching illustrator and HP to ensure same card design/artwork
-        artist_match = (
-            (cand_artist == card_artist)
-            or (card_artist in cand_artist)
-            or (cand_artist in card_artist)
-        )
-        hp_match = (cand_hp == card_hp)
+            # Heuristically verify matching illustrator and HP to ensure same card design/artwork
+            artist_match = (
+                bool(cand_artist)
+                and bool(card_artist)
+                and (
+                    (cand_artist == card_artist)
+                    or (card_artist in cand_artist)
+                    or (cand_artist in card_artist)
+                )
+            )
+            hp_match = (cand_hp == card_hp)
+            number_match = bool(card_number) and cand_number == card_number
 
-        if artist_match and hp_match:
-            large_image = cand.get("images", {}).get("large")
-            if large_image:
-                print(f"  Fallback SUCCESS! Mapped TCGDex {card['id']} to pokemontcg.io {cand['id']}")
-                print(f"  Selected Large Image: {large_image}")
-                return large_image
+            if artist_match and hp_match and number_match:
+                large_image = cand.get("images", {}).get("large")
+                if large_image:
+                    print(f"  Fallback SUCCESS! Mapped TCGDex {card['id']} to pokemontcg.io {cand['id']}")
+                    print(f"  Selected Large Image: {large_image}")
+                    return ImageResolution(url=large_image, source="pokemontcgio_name_artist_hp")
 
-    print(f"  Fallback: Matches found but none passed artist/HP alignment check.")
+        if candidates:
+            print(f"  Fallback: Matches found but none passed artist/HP alignment check.")
+    if allow_web_image_fallback:
+        try:
+            from scripts.web_image_search import resolve_web_image_fallback
+        except ImportError:
+            try:
+                from web_image_search import resolve_web_image_fallback
+            except ImportError:
+                return None
+        web_image = resolve_web_image_fallback(card)
+        if web_image:
+            return ImageResolution(url=web_image, source="web_search_unverified")
     return None
 
 
@@ -544,26 +599,42 @@ def ensure_images(
     cache_dir: Path,
     *,
     download_workers: int,
-) -> tuple[list[DownloadedCard], list[SkippedCard], float]:
+    allow_web_image_fallback: bool,
+) -> tuple[list[DownloadedCard], list[SkippedCard], float, dict[str, str]]:
     started = time.perf_counter()
     cache_dir.mkdir(parents=True, exist_ok=True)
+    fallback_manifest = load_fallback_manifest(cache_dir)
     image_paths = [cache_dir / f"{sanitize_card_id(card['id'])}.img" for card in cards]
     skipped: list[SkippedCard] = []
+    image_sources: dict[str, str] = {}
 
     pending: list[tuple[dict[str, Any], Path]] = []
     for card, image_path in zip(cards, image_paths, strict=True):
+        card_id = card["id"]
         if image_path.exists() and image_path.stat().st_size > 0:
             if not str(card.get("image_url") or "").strip():
-                card["image_url"] = f"file://{image_path.resolve()}"
+                cached_fallback = fallback_manifest.get(card_id)
+                if cached_fallback:
+                    card["image_url"] = cached_fallback["url"]
+                    image_sources[card_id] = cached_fallback["source"] + ":cached"
+                else:
+                    card["image_url"] = f"file://{image_path.resolve()}"
+                    image_sources[card_id] = "cached_file_legacy"
+            else:
+                image_sources[card_id] = "upstream"
             continue
 
         if not str(card.get("image_url") or "").strip():
-            fallback_url = resolve_fallback_image(card)
-            if fallback_url:
-                card["image_url"] = fallback_url
+            fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
+            if fallback:
+                card["image_url"] = fallback.url
+                image_sources[card_id] = fallback.source
+                fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
             else:
                 skipped.append(SkippedCard(card_id=card["id"], locale=card["locale"], reason="missing_image_url"))
                 continue
+        else:
+            image_sources[card_id] = "upstream"
 
         pending.append((card, image_path))
 
@@ -591,6 +662,9 @@ def ensure_images(
                     print(f"downloaded {completed}/{len(pending)} pending images")
     else:
         print(f"using cached images from {cache_dir}")
+
+    if fallback_manifest:
+        write_fallback_manifest(cache_dir, fallback_manifest)
 
     ready: list[DownloadedCard] = []
     skipped_ids = {item.card_id for item in skipped}
@@ -623,7 +697,7 @@ def ensure_images(
             continue
         ready.append(DownloadedCard(card=card, image_path=image_path))
 
-    return ready, skipped, time.perf_counter() - started
+    return ready, skipped, time.perf_counter() - started, image_sources
 
 
 def inspect_model_contract(connection: sqlite3.Connection) -> list[tuple[str, int, int]]:
@@ -777,6 +851,7 @@ def build_embeddings_db(
     locales: list[str],
     image_cache_dir: Path,
     download_workers: int,
+    allow_web_image_fallback: bool,
     limit: int | None,
     min_row_count: int,
     summary_json: Path | None,
@@ -807,10 +882,11 @@ def build_embeddings_db(
         connection.commit()
     print("initialized fresh embeddings db")
 
-    ready_records, skipped_cards, download_seconds = ensure_images(
+    ready_records, skipped_cards, download_seconds, image_sources = ensure_images(
         cards,
         image_cache_dir,
         download_workers=download_workers,
+        allow_web_image_fallback=allow_web_image_fallback,
     )
     inserted_count, model_load_seconds, inference_seconds = insert_new_embeddings(
         output_db,
@@ -844,6 +920,13 @@ def build_embeddings_db(
                 example["detail"] = skipped.detail
             skipped_reason_examples.append(example)
 
+    image_source_counts: dict[str, int] = {}
+    image_source_examples: list[dict[str, str]] = []
+    for card_id, source in sorted(image_sources.items()):
+        image_source_counts[source] = image_source_counts.get(source, 0) + 1
+        if len(image_source_examples) < 20:
+            image_source_examples.append({"card_id": card_id, "source": source})
+
     summary.update(
         {
             "download_seconds": round(download_seconds, 3),
@@ -864,6 +947,9 @@ def build_embeddings_db(
             "skipped_by_locale": skipped_by_locale,
             "skipped_reasons": skipped_reasons,
             "skipped_examples": skipped_reason_examples,
+            "image_source_counts": image_source_counts,
+            "image_source_examples": image_source_examples,
+            "allow_web_image_fallback": allow_web_image_fallback,
             "output_db": str(output_db),
             "model_groups": model_groups,
             "embedding_diagnostics": counts[2],
@@ -913,6 +999,11 @@ def main() -> int:
     parser.add_argument("--summary-json", help="Optional JSON build summary output path")
     parser.add_argument("--locales", default="en", help="Comma-separated TCGdex locales")
     parser.add_argument("--download-workers", type=int, default=16)
+    parser.add_argument(
+        "--allow-web-image-fallback",
+        action="store_true",
+        help="Use best-effort public web image search as a last-resort source for missing card art.",
+    )
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
     parser.add_argument("--min-row-count", type=int, default=1000)
     parser.add_argument(
@@ -935,6 +1026,7 @@ def main() -> int:
         locales=parse_locales(args.locales),
         image_cache_dir=Path(args.image_cache_dir).resolve(),
         download_workers=args.download_workers,
+        allow_web_image_fallback=args.allow_web_image_fallback,
         limit=args.limit,
         min_row_count=args.min_row_count,
         summary_json=Path(args.summary_json).resolve() if args.summary_json else None,

@@ -66,6 +66,11 @@ def main() -> int:
     parser.add_argument("--locales", default="en")
     parser.add_argument("--min-row-count", type=int, default=10000)
     parser.add_argument("--download-workers", type=int, default=16)
+    parser.add_argument(
+        "--allow-web-image-fallback",
+        action="store_true",
+        help="Use best-effort public web image search as a last-resort source for missing card art.",
+    )
     parser.add_argument("--limit", type=int, help="Optional small-card local smoke test.")
     parser.add_argument("--skip-zip", action="store_true")
     parser.add_argument(
@@ -111,6 +116,8 @@ def main() -> int:
         "--detail-cache",
         str(Path(args.detail_cache).resolve()),
     ]
+    if args.allow_web_image_fallback:
+        build_args.append("--allow-web-image-fallback")
     if args.limit is not None:
         build_args.extend(["--limit", str(args.limit)])
 

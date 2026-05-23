@@ -35,7 +35,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/card-images
-          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'scripts/pokemontcgio_api.py', 'models/card_embedder.manifest.json') }}-en
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'scripts/pokemontcgio_api.py', 'scripts/web_image_search.py', 'models/card_embedder.manifest.json') }}-en
           restore-keys: |
             embeddings-card-images-${{ runner.os }}-en-
             embeddings-card-images-${{ runner.os }}-
@@ -89,6 +89,7 @@ jobs:
             --summary-json embeddings-build-summary.json
             --locales en
             --min-row-count 10000
+            --allow-web-image-fallback
           )
           "${cmd[@]}"
 
@@ -133,7 +134,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/card-images
-          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'scripts/pokemontcgio_api.py', 'models/card_embedder.manifest.json') }}-en-${{ github.run_id }}
+          key: embeddings-card-images-${{ runner.os }}-${{ hashFiles('scripts/tcgdex_api.py', 'scripts/build_embeddings_db.py', 'scripts/pokemontcgio_api.py', 'scripts/web_image_search.py', 'models/card_embedder.manifest.json') }}-en-${{ github.run_id }}
 
       - name: Upload build summary artifact
         uses: actions/upload-artifact@v4
