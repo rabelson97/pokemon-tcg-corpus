@@ -24,7 +24,7 @@ pip install -r requirements.txt -r training/requirements.txt
 python3 scripts/build_training_manifest.py \
   --output training/data/full/manifest.jsonl \
   --image-dir training/data/full/images \
-  --locales en,ja \
+  --locales en \
   --summary-json training/data/full/manifest.summary.json
 ```
 
