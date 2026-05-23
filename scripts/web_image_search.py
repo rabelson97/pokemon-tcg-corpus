@@ -14,7 +14,7 @@ from typing import Any
 from PIL import Image
 
 
-USER_AGENT = "pokemon-tcg-corpus-web-image-fallback/1.0"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 SEARCH_BASE_URL = "https://duckduckgo.com/"
 IMAGE_SEARCH_URL = "https://duckduckgo.com/i.js"
 MIN_IMAGE_WIDTH = 240
@@ -39,7 +39,14 @@ def build_card_image_query(card: dict[str, Any]) -> str:
         str(card.get("card_number") or "").strip(),
         "Pokemon card",
     ]
-    return " ".join(part for part in parts if part)
+    query = " ".join(part for part in parts if part)
+    # Remove any URL-encoded characters (like %3F)
+    query = re.sub(r"%[0-9A-Fa-f]{2}", " ", query)
+    # Remove other suspicious characters that might trigger WAF filters (like ?, !, etc.)
+    query = re.sub(r"[?!#$@*()\"']", " ", query)
+    # Normalize multiple spaces
+    query = re.sub(r"\s+", " ", query).strip()
+    return query
 
 
 def resolve_web_image_fallback(card: dict[str, Any], *, max_candidates: int = 20) -> str | None:
@@ -196,7 +203,16 @@ def http_bytes(
         separator = "&" if urllib.parse.urlparse(url).query else "?"
         url = f"{url}{separator}{urllib.parse.urlencode(params)}"
     headers = {
-        "Accept": "*/*",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
         "User-Agent": USER_AGENT,
     }
     last_error: Exception | None = None

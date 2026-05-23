@@ -618,8 +618,14 @@ def ensure_images(
                     card["image_url"] = cached_fallback["url"]
                     image_sources[card_id] = cached_fallback["source"] + ":cached"
                 else:
-                    card["image_url"] = f"file://{image_path.resolve()}"
-                    image_sources[card_id] = "cached_file_legacy"
+                    fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
+                    if fallback:
+                        card["image_url"] = fallback.url
+                        image_sources[card_id] = fallback.source
+                        fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
+                    else:
+                        card["image_url"] = f"file://{image_path.resolve()}"
+                        image_sources[card_id] = "cached_file_legacy"
             else:
                 image_sources[card_id] = "upstream"
             continue
