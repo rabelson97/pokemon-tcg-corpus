@@ -67,8 +67,12 @@ def resolve_web_image_fallback(card: dict[str, Any], *, max_candidates: int = 20
 
 
 def search_duckduckgo_images(query: str, *, max_candidates: int = 20) -> list[WebImageCandidate]:
+    # Rate limit requests to avoid DuckDuckGo bot/WAF blocks
+    time.sleep(1.5)
     try:
         vqd = fetch_duckduckgo_vqd(query)
+        # Sleep slightly before secondary search payload to mimic human behavior
+        time.sleep(0.5)
         payload = http_json(
             IMAGE_SEARCH_URL,
             params={

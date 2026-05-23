@@ -288,10 +288,12 @@ class ImageFallbackTests(unittest.TestCase):
             "images": {"large": "https://images.pokemontcg.io/me2/13_hires.png"},
         }
 
+        mock_api = mock.Mock(search_cards_by_name=mock.Mock(return_value=[candidate]))
         with mock.patch.dict(
             sys.modules,
             {
-                "pokemontcgio_api": mock.Mock(search_cards_by_name=mock.Mock(return_value=[candidate])),
+                "pokemontcgio_api": mock_api,
+                "scripts.pokemontcgio_api": mock_api,
             },
         ):
             fallback = build_embeddings_db.resolve_fallback_image(
@@ -300,6 +302,37 @@ class ImageFallbackTests(unittest.TestCase):
             )
 
         self.assertIsNone(fallback)
+
+    def test_pokemontcgio_fallback_allows_matching_art_with_missing_illustrator_or_hp(self) -> None:
+        card = self._missing_image_card()
+        # Card from upstream is missing illustrator and HP (common for Trainer cards or promos)
+        card["illustrator"] = None
+        card["hp"] = None
+        candidate = {
+            "id": "mep-023",
+            "name": "Mega Charizard X ex",
+            "number": "023",
+            "hp": "360",
+            "artist": "Saboteri",
+            "images": {"large": "https://images.pokemontcg.io/mep/023_hires.png"},
+        }
+
+        mock_api = mock.Mock(search_cards_by_name=mock.Mock(return_value=[candidate]))
+        with mock.patch.dict(
+            sys.modules,
+            {
+                "pokemontcgio_api": mock_api,
+                "scripts.pokemontcgio_api": mock_api,
+            },
+        ):
+            fallback = build_embeddings_db.resolve_fallback_image(
+                card,
+                allow_web_image_fallback=False,
+            )
+
+        self.assertIsNotNone(fallback)
+        self.assertEqual("https://images.pokemontcg.io/mep/023_hires.png", fallback.url)
+        self.assertEqual("pokemontcgio_name_artist_hp", fallback.source)
 
 
 class RenderVariantTests(unittest.TestCase):

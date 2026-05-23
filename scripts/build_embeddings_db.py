@@ -558,17 +558,16 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
             cand_number = str(cand.get("number") or "").strip().lstrip("0")
             card_number = str(card.get("card_number") or "").strip().lstrip("0")
 
-            # Heuristically verify matching illustrator and HP to ensure same card design/artwork
+            # Heuristically verify matching illustrator and HP to ensure same card design/artwork.
+            # If illustrator or HP is missing in either dataset, we allow the match based on name and number.
             artist_match = (
-                bool(cand_artist)
-                and bool(card_artist)
-                and (
-                    (cand_artist == card_artist)
-                    or (card_artist in cand_artist)
-                    or (cand_artist in card_artist)
-                )
+                not cand_artist
+                or not card_artist
+                or (cand_artist == card_artist)
+                or (card_artist in cand_artist)
+                or (cand_artist in card_artist)
             )
-            hp_match = (cand_hp == card_hp)
+            hp_match = (not cand_hp or not card_hp or cand_hp == card_hp)
             number_match = bool(card_number) and cand_number == card_number
 
             if artist_match and hp_match and number_match:
