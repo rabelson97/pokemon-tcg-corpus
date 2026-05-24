@@ -499,7 +499,8 @@ def validate_int8_quantization(
 
 
 def fallback_manifest_path(cache_dir: Path) -> Path:
-    return cache_dir / "image-fallbacks.json"
+    # Save the fallbacks file in the repository root so it can be committed to git!
+    return REPO_ROOT / "image-fallbacks.json"
 
 
 def load_fallback_manifest(cache_dir: Path) -> dict[str, dict[str, str]]:
