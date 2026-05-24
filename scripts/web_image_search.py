@@ -22,6 +22,11 @@ MIN_IMAGE_HEIGHT = 320
 MIN_CARD_ASPECT = 1.20
 MAX_CARD_ASPECT = 1.85
 
+# DuckDuckGo image search circuit breaker to prevent cascading hangs in CI
+CONSECUTIVE_DDG_FAILURES = 0
+MAX_CONSECUTIVE_DDG_FAILURES = 5
+DDG_BLOCKED = False
+
 
 @dataclass(frozen=True)
 class WebImageCandidate:
@@ -67,6 +72,11 @@ def resolve_web_image_fallback(card: dict[str, Any], *, max_candidates: int = 20
 
 
 def search_duckduckgo_images(query: str, *, max_candidates: int = 20) -> list[WebImageCandidate]:
+    global CONSECUTIVE_DDG_FAILURES, DDG_BLOCKED
+    if DDG_BLOCKED:
+        print("  DuckDuckGo image search is short-circuited due to consecutive blocks/timeouts.")
+        return []
+
     # Rate limit requests to avoid DuckDuckGo bot/WAF blocks
     time.sleep(1.5)
     try:
@@ -84,8 +94,14 @@ def search_duckduckgo_images(query: str, *, max_candidates: int = 20) -> list[We
                 "p": "1",
             },
         )
+        # Reset consecutive failure counter on success
+        CONSECUTIVE_DDG_FAILURES = 0
     except Exception as exc:  # pragma: no cover - network fallback path
-        print(f"  Web image fallback search failed: {exc}")
+        CONSECUTIVE_DDG_FAILURES += 1
+        print(f"  Web image fallback search failed (consecutive={CONSECUTIVE_DDG_FAILURES}): {exc}")
+        if CONSECUTIVE_DDG_FAILURES >= MAX_CONSECUTIVE_DDG_FAILURES:
+            DDG_BLOCKED = True
+            print("  CRITICAL: DuckDuckGo is blocking us consecutively. Short-circuiting all future web search fallbacks!")
         return []
 
     results = payload.get("results") if isinstance(payload, dict) else None
