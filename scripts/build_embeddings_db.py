@@ -612,36 +612,31 @@ def ensure_images(
     pending: list[tuple[dict[str, Any], Path]] = []
     for card, image_path in zip(cards, image_paths, strict=True):
         card_id = card["id"]
-        if image_path.exists() and image_path.stat().st_size > 0:
-            if not str(card.get("image_url") or "").strip():
-                cached_fallback = fallback_manifest.get(card_id)
-                if cached_fallback:
-                    card["image_url"] = cached_fallback["url"]
-                    image_sources[card_id] = cached_fallback["source"] + ":cached"
-                else:
-                    fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
-                    if fallback:
-                        card["image_url"] = fallback.url
-                        image_sources[card_id] = fallback.source
-                        fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
-                    else:
-                        card["image_url"] = f"file://{image_path.resolve()}"
-                        image_sources[card_id] = "cached_file_legacy"
-            else:
-                image_sources[card_id] = "upstream"
-            continue
 
+        # Ensure we have a valid image_url. If missing, look up from fallback manifest first!
         if not str(card.get("image_url") or "").strip():
-            fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
-            if fallback:
-                card["image_url"] = fallback.url
-                image_sources[card_id] = fallback.source
-                fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
+            cached_fallback = fallback_manifest.get(card_id)
+            if cached_fallback:
+                card["image_url"] = cached_fallback["url"]
+                image_sources[card_id] = cached_fallback["source"] + ":cached"
             else:
-                skipped.append(SkippedCard(card_id=card["id"], locale=card["locale"], reason="missing_image_url"))
-                continue
+                fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
+                if fallback:
+                    card["image_url"] = fallback.url
+                    image_sources[card_id] = fallback.source
+                    fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
+                elif image_path.exists() and image_path.stat().st_size > 0:
+                    card["image_url"] = f"file://{image_path.resolve()}"
+                    image_sources[card_id] = "cached_file_legacy"
+                else:
+                    skipped.append(SkippedCard(card_id=card_id, locale=card["locale"], reason="missing_image_url"))
+                    continue
         else:
             image_sources[card_id] = "upstream"
+
+        # Check if the image file is already cached locally and has content
+        if image_path.exists() and image_path.stat().st_size > 0:
+            continue
 
         pending.append((card, image_path))
 
