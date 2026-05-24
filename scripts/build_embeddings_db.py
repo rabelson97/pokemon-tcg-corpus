@@ -499,7 +499,14 @@ def validate_int8_quantization(
 
 
 def fallback_manifest_path(cache_dir: Path) -> Path:
-    # Save the fallbacks file in the repository root so it can be committed to git!
+    # Save the fallbacks file in the repository root so it can be committed to git,
+    # except when running unit tests where a temporary directory is used for isolation.
+    try:
+        import tempfile
+        if cache_dir.is_relative_to(Path(tempfile.gettempdir())):
+            return cache_dir / "image-fallbacks.json"
+    except Exception:
+        pass
     return REPO_ROOT / "image-fallbacks.json"
 
 
