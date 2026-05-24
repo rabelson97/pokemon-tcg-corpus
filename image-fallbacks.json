@@ -395,9 +395,61 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd21/12_hires.png"
   },
+  "pokemon:en:2021swsh:13": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/13_hires.png"
+  },
+  "pokemon:en:2021swsh:14": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/14_hires.png"
+  },
+  "pokemon:en:2021swsh:15": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/15_hires.png"
+  },
+  "pokemon:en:2021swsh:16": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/16_hires.png"
+  },
+  "pokemon:en:2021swsh:17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/17_hires.png"
+  },
+  "pokemon:en:2021swsh:18": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/18_hires.png"
+  },
+  "pokemon:en:2021swsh:19": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/19_hires.png"
+  },
   "pokemon:en:2021swsh:2": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd21/2_hires.png"
+  },
+  "pokemon:en:2021swsh:20": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/20_hires.png"
+  },
+  "pokemon:en:2021swsh:21": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/21_hires.png"
+  },
+  "pokemon:en:2021swsh:22": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/22_hires.png"
+  },
+  "pokemon:en:2021swsh:23": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/23_hires.png"
+  },
+  "pokemon:en:2021swsh:24": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/24_hires.png"
+  },
+  "pokemon:en:2021swsh:25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd21/25_hires.png"
   },
   "pokemon:en:2021swsh:3": {
     "source": "pokemontcgio_name_artist_hp",
@@ -435,6 +487,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd22/10_hires.png"
   },
+  "pokemon:en:2022swsh:14": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/mcd22/14_hires.png"
+  },
   "pokemon:en:2022swsh:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd22/3_hires.png"
@@ -459,9 +515,325 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/bp/7_hires.png"
   },
+  "pokemon:en:bwp:BW96": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/bwp/BW96_hires.png"
+  },
+  "pokemon:en:cel25:25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/cel25/25_hires.png"
+  },
+  "pokemon:en:ecard2:H10": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H10_hires.png"
+  },
+  "pokemon:en:ecard2:H11": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H11_hires.png"
+  },
+  "pokemon:en:ecard2:H12": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H12_hires.png"
+  },
+  "pokemon:en:ecard2:H13": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H13_hires.png"
+  },
+  "pokemon:en:ecard2:H14": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H14_hires.png"
+  },
+  "pokemon:en:ecard2:H15": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H15_hires.png"
+  },
+  "pokemon:en:ecard2:H16": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H16_hires.png"
+  },
+  "pokemon:en:ecard2:H17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H17_hires.png"
+  },
+  "pokemon:en:ecard2:H18": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H18_hires.png"
+  },
+  "pokemon:en:ecard2:H19": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H19_hires.png"
+  },
+  "pokemon:en:ecard2:H20": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H20_hires.png"
+  },
+  "pokemon:en:ecard2:H21": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H21_hires.png"
+  },
+  "pokemon:en:ecard2:H22": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H22_hires.png"
+  },
+  "pokemon:en:ecard2:H23": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H23_hires.png"
+  },
+  "pokemon:en:ecard2:H24": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H24_hires.png"
+  },
+  "pokemon:en:ecard2:H25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H25_hires.png"
+  },
+  "pokemon:en:ecard2:H26": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H26_hires.png"
+  },
+  "pokemon:en:ecard2:H27": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H27_hires.png"
+  },
+  "pokemon:en:ecard2:H28": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H28_hires.png"
+  },
+  "pokemon:en:ecard2:H29": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H29_hires.png"
+  },
+  "pokemon:en:ecard2:H30": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H30_hires.png"
+  },
+  "pokemon:en:ecard2:H31": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H31_hires.png"
+  },
+  "pokemon:en:ecard2:H32": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard2/H32_hires.png"
+  },
+  "pokemon:en:ecard3:H10": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H10_hires.png"
+  },
+  "pokemon:en:ecard3:H11": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H11_hires.png"
+  },
+  "pokemon:en:ecard3:H12": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H12_hires.png"
+  },
+  "pokemon:en:ecard3:H13": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H13_hires.png"
+  },
+  "pokemon:en:ecard3:H14": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H14_hires.png"
+  },
+  "pokemon:en:ecard3:H15": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H15_hires.png"
+  },
+  "pokemon:en:ecard3:H16": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H16_hires.png"
+  },
+  "pokemon:en:ecard3:H17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H17_hires.png"
+  },
+  "pokemon:en:ecard3:H18": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H18_hires.png"
+  },
+  "pokemon:en:ecard3:H20": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H20_hires.png"
+  },
+  "pokemon:en:ecard3:H21": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H21_hires.png"
+  },
+  "pokemon:en:ecard3:H22": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H22_hires.png"
+  },
+  "pokemon:en:ecard3:H23": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H23_hires.png"
+  },
+  "pokemon:en:ecard3:H24": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H24_hires.png"
+  },
+  "pokemon:en:ecard3:H25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H25_hires.png"
+  },
+  "pokemon:en:ecard3:H26": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H26_hires.png"
+  },
+  "pokemon:en:ecard3:H27": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H27_hires.png"
+  },
+  "pokemon:en:ecard3:H28": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H28_hires.png"
+  },
+  "pokemon:en:ecard3:H29": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H29_hires.png"
+  },
+  "pokemon:en:ecard3:H30": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H30_hires.png"
+  },
+  "pokemon:en:ecard3:H31": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H31_hires.png"
+  },
+  "pokemon:en:ecard3:H32": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ecard3/H32_hires.png"
+  },
   "pokemon:en:exu:!": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/ex10/!_hires.png"
+  },
+  "pokemon:en:exu:A": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/A_hires.png"
+  },
+  "pokemon:en:exu:B": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/B_hires.png"
+  },
+  "pokemon:en:exu:D": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/D_hires.png"
+  },
+  "pokemon:en:exu:E": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/E_hires.png"
+  },
+  "pokemon:en:exu:F": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/F_hires.png"
+  },
+  "pokemon:en:exu:G": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/G_hires.png"
+  },
+  "pokemon:en:exu:H": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/H_hires.png"
+  },
+  "pokemon:en:exu:I": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/I_hires.png"
+  },
+  "pokemon:en:exu:J": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/J_hires.png"
+  },
+  "pokemon:en:exu:K": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/K_hires.png"
+  },
+  "pokemon:en:exu:L": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/L_hires.png"
+  },
+  "pokemon:en:exu:M": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/M_hires.png"
+  },
+  "pokemon:en:exu:N": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/N_hires.png"
+  },
+  "pokemon:en:exu:O": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/O_hires.png"
+  },
+  "pokemon:en:exu:P": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/P_hires.png"
+  },
+  "pokemon:en:exu:Q": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/Q_hires.png"
+  },
+  "pokemon:en:exu:R": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/R_hires.png"
+  },
+  "pokemon:en:exu:S": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/S_hires.png"
+  },
+  "pokemon:en:exu:U": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/U_hires.png"
+  },
+  "pokemon:en:exu:V": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/V_hires.png"
+  },
+  "pokemon:en:exu:W": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/W_hires.png"
+  },
+  "pokemon:en:exu:Y": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/Y_hires.png"
+  },
+  "pokemon:en:exu:Z": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/ex10/Z_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS17_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS18": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS18_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS19": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS19_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS20": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS20_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS21": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS21_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS22": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS22_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS23": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS23_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS24": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS24_hires.png"
+  },
+  "pokemon:en:hgssp:HGSS25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/hsp/HGSS25_hires.png"
   },
   "pokemon:en:mee:001": {
     "source": "pokemontcgio_name_artist_hp",
@@ -495,6 +867,22 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/8_hires.png"
   },
+  "pokemon:en:pl2:84": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/pl2/84_hires.png"
+  },
+  "pokemon:en:pop6:13": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/pop6/13_hires.png"
+  },
+  "pokemon:en:pop6:17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/pop6/17_hires.png"
+  },
+  "pokemon:en:sm2:143": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm2/143_hires.png"
+  },
   "pokemon:en:sm3.5:1": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/1_hires.png"
@@ -507,29 +895,249 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/12_hires.png"
   },
+  "pokemon:en:sm3.5:13": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/13_hires.png"
+  },
+  "pokemon:en:sm3.5:14": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/14_hires.png"
+  },
+  "pokemon:en:sm3.5:15": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/15_hires.png"
+  },
+  "pokemon:en:sm3.5:16": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/16_hires.png"
+  },
+  "pokemon:en:sm3.5:17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/17_hires.png"
+  },
+  "pokemon:en:sm3.5:18": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/18_hires.png"
+  },
+  "pokemon:en:sm3.5:19": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/19_hires.png"
+  },
   "pokemon:en:sm3.5:2": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/2_hires.png"
+  },
+  "pokemon:en:sm3.5:20": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/20_hires.png"
+  },
+  "pokemon:en:sm3.5:21": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/21_hires.png"
+  },
+  "pokemon:en:sm3.5:22": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/22_hires.png"
+  },
+  "pokemon:en:sm3.5:23": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/23_hires.png"
+  },
+  "pokemon:en:sm3.5:24": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/24_hires.png"
+  },
+  "pokemon:en:sm3.5:25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/25_hires.png"
+  },
+  "pokemon:en:sm3.5:26": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/26_hires.png"
+  },
+  "pokemon:en:sm3.5:27": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/27_hires.png"
+  },
+  "pokemon:en:sm3.5:28": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/28_hires.png"
   },
   "pokemon:en:sm3.5:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/3_hires.png"
   },
+  "pokemon:en:sm3.5:30": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/30_hires.png"
+  },
+  "pokemon:en:sm3.5:31": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/31_hires.png"
+  },
+  "pokemon:en:sm3.5:32": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/32_hires.png"
+  },
+  "pokemon:en:sm3.5:33": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/33_hires.png"
+  },
+  "pokemon:en:sm3.5:34": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/34_hires.png"
+  },
+  "pokemon:en:sm3.5:35": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/35_hires.png"
+  },
+  "pokemon:en:sm3.5:36": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/36_hires.png"
+  },
+  "pokemon:en:sm3.5:37": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/37_hires.png"
+  },
+  "pokemon:en:sm3.5:38": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/38_hires.png"
+  },
   "pokemon:en:sm3.5:4": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/4_hires.png"
+  },
+  "pokemon:en:sm3.5:40": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/40_hires.png"
+  },
+  "pokemon:en:sm3.5:41": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/41_hires.png"
+  },
+  "pokemon:en:sm3.5:42": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/42_hires.png"
+  },
+  "pokemon:en:sm3.5:43": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/43_hires.png"
+  },
+  "pokemon:en:sm3.5:44": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/44_hires.png"
+  },
+  "pokemon:en:sm3.5:45": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/45_hires.png"
+  },
+  "pokemon:en:sm3.5:46": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/46_hires.png"
+  },
+  "pokemon:en:sm3.5:47": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/47_hires.png"
+  },
+  "pokemon:en:sm3.5:48": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/48_hires.png"
+  },
+  "pokemon:en:sm3.5:49": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/49_hires.png"
   },
   "pokemon:en:sm3.5:5": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/5_hires.png"
   },
+  "pokemon:en:sm3.5:50": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/50_hires.png"
+  },
+  "pokemon:en:sm3.5:51": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/51_hires.png"
+  },
+  "pokemon:en:sm3.5:52": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/52_hires.png"
+  },
+  "pokemon:en:sm3.5:54": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/54_hires.png"
+  },
+  "pokemon:en:sm3.5:55": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/55_hires.png"
+  },
+  "pokemon:en:sm3.5:56": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/56_hires.png"
+  },
+  "pokemon:en:sm3.5:57": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/57_hires.png"
+  },
+  "pokemon:en:sm3.5:58": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/58_hires.png"
+  },
+  "pokemon:en:sm3.5:59": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/59_hires.png"
+  },
   "pokemon:en:sm3.5:6": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/6_hires.png"
   },
+  "pokemon:en:sm3.5:60": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/60_hires.png"
+  },
+  "pokemon:en:sm3.5:61": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/61_hires.png"
+  },
+  "pokemon:en:sm3.5:62": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/62_hires.png"
+  },
+  "pokemon:en:sm3.5:63": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/63_hires.png"
+  },
+  "pokemon:en:sm3.5:64": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/64_hires.png"
+  },
+  "pokemon:en:sm3.5:65": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/65_hires.png"
+  },
+  "pokemon:en:sm3.5:67": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/67_hires.png"
+  },
+  "pokemon:en:sm3.5:68": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/68_hires.png"
+  },
+  "pokemon:en:sm3.5:69": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/69_hires.png"
+  },
   "pokemon:en:sm3.5:7": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/7_hires.png"
+  },
+  "pokemon:en:sm3.5:70": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/70_hires.png"
+  },
+  "pokemon:en:sm3.5:73": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm35/73_hires.png"
   },
   "pokemon:en:sm3.5:8": {
     "source": "pokemontcgio_name_artist_hp",
@@ -551,29 +1159,217 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/12_hires.png"
   },
+  "pokemon:en:sm7.5:13": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/13_hires.png"
+  },
+  "pokemon:en:sm7.5:14": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/14_hires.png"
+  },
+  "pokemon:en:sm7.5:15": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/15_hires.png"
+  },
+  "pokemon:en:sm7.5:16": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/16_hires.png"
+  },
+  "pokemon:en:sm7.5:17": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/17_hires.png"
+  },
   "pokemon:en:sm7.5:2": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/2_hires.png"
+  },
+  "pokemon:en:sm7.5:20": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/20_hires.png"
+  },
+  "pokemon:en:sm7.5:21": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/21_hires.png"
+  },
+  "pokemon:en:sm7.5:22": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/22_hires.png"
+  },
+  "pokemon:en:sm7.5:23": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/23_hires.png"
+  },
+  "pokemon:en:sm7.5:24": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/24_hires.png"
+  },
+  "pokemon:en:sm7.5:25": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/25_hires.png"
+  },
+  "pokemon:en:sm7.5:26": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/26_hires.png"
+  },
+  "pokemon:en:sm7.5:27": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/27_hires.png"
+  },
+  "pokemon:en:sm7.5:28": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/28_hires.png"
   },
   "pokemon:en:sm7.5:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/3_hires.png"
   },
+  "pokemon:en:sm7.5:30": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/30_hires.png"
+  },
+  "pokemon:en:sm7.5:31": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/31_hires.png"
+  },
+  "pokemon:en:sm7.5:32": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/32_hires.png"
+  },
+  "pokemon:en:sm7.5:33": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/33_hires.png"
+  },
+  "pokemon:en:sm7.5:34": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/34_hires.png"
+  },
+  "pokemon:en:sm7.5:35": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/35_hires.png"
+  },
+  "pokemon:en:sm7.5:36": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/36_hires.png"
+  },
+  "pokemon:en:sm7.5:38": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/38_hires.png"
+  },
+  "pokemon:en:sm7.5:39": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/39_hires.png"
+  },
   "pokemon:en:sm7.5:4": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/4_hires.png"
+  },
+  "pokemon:en:sm7.5:40": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/40_hires.png"
+  },
+  "pokemon:en:sm7.5:42": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/42_hires.png"
+  },
+  "pokemon:en:sm7.5:43": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/43_hires.png"
+  },
+  "pokemon:en:sm7.5:45": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/45_hires.png"
+  },
+  "pokemon:en:sm7.5:46": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/46_hires.png"
+  },
+  "pokemon:en:sm7.5:47": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/47_hires.png"
+  },
+  "pokemon:en:sm7.5:49": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/49_hires.png"
   },
   "pokemon:en:sm7.5:5": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/5_hires.png"
   },
+  "pokemon:en:sm7.5:50": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/50_hires.png"
+  },
+  "pokemon:en:sm7.5:51": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/51_hires.png"
+  },
+  "pokemon:en:sm7.5:52": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/52_hires.png"
+  },
+  "pokemon:en:sm7.5:53": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/53_hires.png"
+  },
+  "pokemon:en:sm7.5:54": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/54_hires.png"
+  },
+  "pokemon:en:sm7.5:55": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/55_hires.png"
+  },
+  "pokemon:en:sm7.5:56": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/56_hires.png"
+  },
+  "pokemon:en:sm7.5:57": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/57_hires.png"
+  },
+  "pokemon:en:sm7.5:59": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/59_hires.png"
+  },
   "pokemon:en:sm7.5:6": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/6_hires.png"
   },
+  "pokemon:en:sm7.5:60": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/60_hires.png"
+  },
+  "pokemon:en:sm7.5:61": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/61_hires.png"
+  },
+  "pokemon:en:sm7.5:62": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/62_hires.png"
+  },
+  "pokemon:en:sm7.5:63": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/63_hires.png"
+  },
+  "pokemon:en:sm7.5:64": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/64_hires.png"
+  },
   "pokemon:en:sm7.5:7": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/7_hires.png"
+  },
+  "pokemon:en:sm7.5:70": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/70_hires.png"
+  },
+  "pokemon:en:sm7.5:76": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/76_hires.png"
+  },
+  "pokemon:en:sm7.5:77": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sm75/77_hires.png"
   },
   "pokemon:en:sm7.5:8": {
     "source": "pokemontcgio_name_artist_hp",
@@ -582,6 +1378,154 @@
   "pokemon:en:sm7.5:9": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/9_hires.png"
+  },
+  "pokemon:en:smp:SM135": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM135_hires.png"
+  },
+  "pokemon:en:smp:SM136": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM136_hires.png"
+  },
+  "pokemon:en:smp:SM144": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM144_hires.png"
+  },
+  "pokemon:en:smp:SM170": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM170_hires.png"
+  },
+  "pokemon:en:smp:SM179": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM179_hires.png"
+  },
+  "pokemon:en:smp:SM180": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM180_hires.png"
+  },
+  "pokemon:en:smp:SM181": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM181_hires.png"
+  },
+  "pokemon:en:smp:SM182": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM182_hires.png"
+  },
+  "pokemon:en:smp:SM183": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM183_hires.png"
+  },
+  "pokemon:en:smp:SM184": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM184_hires.png"
+  },
+  "pokemon:en:smp:SM185": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM185_hires.png"
+  },
+  "pokemon:en:smp:SM186": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM186_hires.png"
+  },
+  "pokemon:en:smp:SM190": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM190_hires.png"
+  },
+  "pokemon:en:smp:SM194": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM194_hires.png"
+  },
+  "pokemon:en:smp:SM198": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM198_hires.png"
+  },
+  "pokemon:en:smp:SM199": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM199_hires.png"
+  },
+  "pokemon:en:smp:SM200": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM200_hires.png"
+  },
+  "pokemon:en:smp:SM218": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM218_hires.png"
+  },
+  "pokemon:en:smp:SM219": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM219_hires.png"
+  },
+  "pokemon:en:smp:SM220": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM220_hires.png"
+  },
+  "pokemon:en:smp:SM221": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM221_hires.png"
+  },
+  "pokemon:en:smp:SM222": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM222_hires.png"
+  },
+  "pokemon:en:smp:SM223": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM223_hires.png"
+  },
+  "pokemon:en:smp:SM224": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM224_hires.png"
+  },
+  "pokemon:en:smp:SM225": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM225_hires.png"
+  },
+  "pokemon:en:smp:SM226": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM226_hires.png"
+  },
+  "pokemon:en:smp:SM227": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM227_hires.png"
+  },
+  "pokemon:en:smp:SM228": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM228_hires.png"
+  },
+  "pokemon:en:smp:SM231": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM231_hires.png"
+  },
+  "pokemon:en:smp:SM234": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM234_hires.png"
+  },
+  "pokemon:en:smp:SM235": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM235_hires.png"
+  },
+  "pokemon:en:smp:SM237": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM237_hires.png"
+  },
+  "pokemon:en:smp:SM238": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM238_hires.png"
+  },
+  "pokemon:en:smp:SM243": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM243_hires.png"
+  },
+  "pokemon:en:smp:SM244": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM244_hires.png"
+  },
+  "pokemon:en:smp:SM89": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM89_hires.png"
+  },
+  "pokemon:en:smp:SM93": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/smp/SM93_hires.png"
   },
   "pokemon:en:sve:001": {
     "source": "pokemontcgio_name_artist_hp",
@@ -630,6 +1574,66 @@
   "pokemon:en:sve:012": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/tk2b/12_hires.png"
+  },
+  "pokemon:en:sve:013": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sve/13_hires.png"
+  },
+  "pokemon:en:sve:014": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sve/14_hires.png"
+  },
+  "pokemon:en:sve:015": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sve/15_hires.png"
+  },
+  "pokemon:en:sve:016": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/sve/16_hires.png"
+  },
+  "pokemon:en:svp:085": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/85_hires.png"
+  },
+  "pokemon:en:svp:102": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/102_hires.png"
+  },
+  "pokemon:en:svp:196": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/196_hires.png"
+  },
+  "pokemon:en:svp:199": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/199_hires.png"
+  },
+  "pokemon:en:svp:200": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/200_hires.png"
+  },
+  "pokemon:en:svp:201": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/201_hires.png"
+  },
+  "pokemon:en:svp:202": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/202_hires.png"
+  },
+  "pokemon:en:svp:203": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/svp/203_hires.png"
+  },
+  "pokemon:en:swshp:SWSH074": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/swshp/SWSH074_hires.png"
+  },
+  "pokemon:en:swshp:SWSH177": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/swshp/SWSH177_hires.png"
+  },
+  "pokemon:en:swshp:SWSH251": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/swshp/SWSH251_hires.png"
   },
   "pokemon:en:tk-bw-e:12": {
     "source": "pokemontcgio_name_artist_hp",
@@ -850,5 +1854,41 @@
   "pokemon:en:tk-xy-su:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/3_hires.png"
+  },
+  "pokemon:en:xy8:146a": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xy8/146a_hires.png"
+  },
+  "pokemon:en:xya:107a": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xy9/107a_hires.png"
+  },
+  "pokemon:en:xya:24a": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xy4/24a_hires.png"
+  },
+  "pokemon:en:xya:28a": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/g1/28a_hires.png"
+  },
+  "pokemon:en:xya:54a": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xy10/54a_hires.png"
+  },
+  "pokemon:en:xya:55a": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xy3/55a_hires.png"
+  },
+  "pokemon:en:xyp:XY39": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xyp/XY39_hires.png"
+  },
+  "pokemon:en:xyp:XY46": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xyp/XY46_hires.png"
+  },
+  "pokemon:en:xyp:XY68": {
+    "source": "pokemontcgio_name_artist_hp",
+    "url": "https://images.pokemontcg.io/xyp/XY68_hires.png"
   }
 }
