@@ -151,7 +151,7 @@ def search_card_by_set_and_number(
                 "q": f'set.id:"{set_id}" number:"{number}"',
                 "page": "1",
                 "pageSize": "1",
-                "select": "id,number,set,tcgplayer",
+                "select": "id,name,number,set,hp,artist,images,tcgplayer",
             },
             api_key=api_key,
         )
@@ -200,4 +200,3 @@ def search_cards_by_name(
     if not isinstance(cards, list):
         return []
     return [c for c in cards if isinstance(c, dict)]
-

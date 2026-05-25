@@ -55,6 +55,30 @@ class NormalizeCardImageUrlsTests(unittest.TestCase):
         self.assertIsNone(image_url_low)
 
 
+class TcgDexCacheTests(unittest.TestCase):
+    def test_card_listing_uses_live_api_even_when_detail_cache_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cache_path = Path(tmp_dir) / "detail-cache.jsonl"
+            cache_path.write_text(
+                '{"locale":"en","upstream_id":"cached-old","payload":{"id":"cached-old"}}\n',
+                encoding="utf-8",
+            )
+            tcgdex_api.set_detail_cache_path(cache_path)
+
+            with (
+                mock.patch.dict("os.environ", {"TCGDEX_USE_DETAIL_CACHE_AS_LISTING": ""}),
+                mock.patch.object(
+                    tcgdex_api,
+                    "api_get_json",
+                    side_effect=[[{"id": "live-new"}], []],
+                ) as api_get_json,
+            ):
+                briefs = tcgdex_api.fetch_card_briefs("en", items_per_page=100)
+
+        self.assertEqual([{"id": "live-new"}], briefs)
+        self.assertEqual(1, api_get_json.call_count)
+
+
 class InsertEmbeddingsTests(unittest.TestCase):
     @staticmethod
     def _make_card(card_id: str, name: str = "Alakazam") -> dict[str, object]:
@@ -276,6 +300,56 @@ class ImageFallbackTests(unittest.TestCase):
             self.assertEqual("https://example.com/mep-023.png", card["image_url"])
             self.assertEqual({"pokemon:en:mep:023": "web_search_unverified:cached"}, image_sources)
 
+    def test_cached_image_without_public_url_is_ready_for_embedding(self) -> None:
+        card = self._missing_image_card()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cache_dir = Path(tmp_dir)
+            image_path = cache_dir / f"{tcgdex_api.sanitize_card_id(str(card['id']))}.img"
+            self._write_probe_image("unused", image_path)
+
+            with mock.patch.object(build_embeddings_db, "resolve_fallback_image") as resolve_mock:
+                ready, skipped, _seconds, image_sources = build_embeddings_db.ensure_images(
+                    [card],
+                    cache_dir,
+                    download_workers=1,
+                    allow_web_image_fallback=False,
+                )
+
+            resolve_mock.assert_not_called()
+            self.assertEqual([], skipped)
+            self.assertEqual(1, len(ready))
+            self.assertIsNone(card["image_url"])
+            self.assertEqual({"pokemon:en:mep:023": "local_cache_without_public_url"}, image_sources)
+
+    def test_file_url_fallback_manifest_is_ignored(self) -> None:
+        card = self._missing_image_card()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cache_dir = Path(tmp_dir)
+            build_embeddings_db.write_fallback_manifest(
+                cache_dir,
+                {
+                    "pokemon:en:mep:023": {
+                        "url": "file:///home/runner/work/card.png",
+                        "source": "bad_local_path",
+                    }
+                },
+            )
+
+            with mock.patch.object(build_embeddings_db, "resolve_fallback_image", return_value=None):
+                ready, skipped, _seconds, image_sources = build_embeddings_db.ensure_images(
+                    [card],
+                    cache_dir,
+                    download_workers=1,
+                    allow_web_image_fallback=False,
+                )
+
+            self.assertEqual([], ready)
+            self.assertEqual(1, len(skipped))
+            self.assertEqual("missing_image_url", skipped[0].reason)
+            self.assertEqual({}, image_sources)
+
     def test_pokemontcgio_fallback_rejects_matching_art_with_wrong_number(self) -> None:
         card = self._missing_image_card()
         card["illustrator"] = "Saboteri"
@@ -288,7 +362,10 @@ class ImageFallbackTests(unittest.TestCase):
             "images": {"large": "https://images.pokemontcg.io/me2/13_hires.png"},
         }
 
-        mock_api = mock.Mock(search_cards_by_name=mock.Mock(return_value=[candidate]))
+        mock_api = mock.Mock(
+            search_card_by_set_and_number=mock.Mock(return_value=None),
+            search_cards_by_name=mock.Mock(return_value=[candidate]),
+        )
         with mock.patch.dict(
             sys.modules,
             {
@@ -317,7 +394,10 @@ class ImageFallbackTests(unittest.TestCase):
             "images": {"large": "https://images.pokemontcg.io/mep/023_hires.png"},
         }
 
-        mock_api = mock.Mock(search_cards_by_name=mock.Mock(return_value=[candidate]))
+        mock_api = mock.Mock(
+            search_card_by_set_and_number=mock.Mock(return_value=None),
+            search_cards_by_name=mock.Mock(return_value=[candidate]),
+        )
         with mock.patch.dict(
             sys.modules,
             {
@@ -339,7 +419,10 @@ class ImageFallbackTests(unittest.TestCase):
         card["card_number"] = "023"
 
         mock_search = mock.Mock(return_value=[])
-        mock_api = mock.Mock(search_cards_by_name=mock_search)
+        mock_api = mock.Mock(
+            search_card_by_set_and_number=mock.Mock(return_value=None),
+            search_cards_by_name=mock_search,
+        )
         with mock.patch.dict(
             sys.modules,
             {
@@ -353,6 +436,47 @@ class ImageFallbackTests(unittest.TestCase):
             )
 
         mock_search.assert_called_once_with("Mega Charizard X ex", number="23")
+
+    def test_pokemontcgio_identity_fallback_handles_provider_alias_and_name_punctuation(self) -> None:
+        card = self._missing_image_card()
+        card.update(
+            {
+                "id": "pokemon:en:sm3.5:10",
+                "set_id": "sm3.5",
+                "card_number": "10",
+                "name": "Entei GX",
+                "hp": "180",
+                "illustrator": "5ban Graphics",
+            }
+        )
+        candidate = {
+            "id": "sm35-10",
+            "name": "Entei-GX",
+            "number": "10",
+            "hp": "180",
+            "artist": "5ban Graphics",
+            "images": {"large": "https://images.pokemontcg.io/sm35/10_hires.png"},
+        }
+
+        mock_api = mock.Mock(
+            search_card_by_set_and_number=mock.Mock(side_effect=lambda set_id, number: candidate if (set_id, number) == ("sm35", "10") else None),
+            search_cards_by_name=mock.Mock(return_value=[]),
+        )
+        with mock.patch.dict(
+            sys.modules,
+            {
+                "pokemontcgio_api": mock_api,
+                "scripts.pokemontcgio_api": mock_api,
+            },
+        ):
+            fallback = build_embeddings_db.resolve_fallback_image(
+                card,
+                allow_web_image_fallback=False,
+            )
+
+        self.assertIsNotNone(fallback)
+        self.assertEqual("https://images.pokemontcg.io/sm35/10_hires.png", fallback.url)
+        self.assertEqual("pokemontcgio_set_number_name", fallback.source)
 
 
 

@@ -71,6 +71,11 @@ def main() -> int:
         action="store_true",
         help="Use best-effort public web image search as a last-resort source for missing card art.",
     )
+    parser.add_argument(
+        "--allow-missing-images",
+        action="store_true",
+        help="Allow scan-eligible cards without verified image bytes to be skipped. Local debugging only.",
+    )
     parser.add_argument("--limit", type=int, help="Optional small-card local smoke test.")
     parser.add_argument("--skip-zip", action="store_true")
     parser.add_argument(
@@ -107,6 +112,8 @@ def main() -> int:
         str(cache_dir),
         "--summary-json",
         str(summary_path),
+        "--missing-images-json",
+        str(output_dir / "missing-images-report.json"),
         "--locales",
         args.locales,
         "--min-row-count",
@@ -118,6 +125,8 @@ def main() -> int:
     ]
     if args.allow_web_image_fallback:
         build_args.append("--allow-web-image-fallback")
+    if args.allow_missing_images:
+        build_args.append("--allow-missing-images")
     if args.limit is not None:
         build_args.extend(["--limit", str(args.limit)])
 

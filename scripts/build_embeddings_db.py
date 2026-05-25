@@ -6,9 +6,11 @@ import concurrent.futures
 import hashlib
 import json
 import random
+import re
 import sqlite3
 import sys
 import time
+import urllib.parse
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
@@ -41,6 +43,27 @@ VARIANT_K = len(VARIANT_TAGS)
 DB_USER_VERSION = 6
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
+SCAN_EXCLUDED_SERIES_IDS = {"tcgp"}
+
+POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
+    "sm3.5": ["sm35"],
+    "sm7.5": ["sm75"],
+    "swsh3.5": ["swsh35"],
+    "swsh4.5": ["swsh45"],
+    "sv10.5b": ["zsv10pt5"],
+    "sv10.5w": ["rsv10pt5"],
+    "2011bw": ["mcd11"],
+    "2012bw": ["mcd12"],
+    "2014xy": ["mcd14"],
+    "2015xy": ["mcd15"],
+    "2016xy": ["mcd16"],
+    "2017sm": ["mcd17"],
+    "2018sm": ["mcd18"],
+    "2019sm": ["mcd19"],
+    "2021swsh": ["mcd21"],
+    "2022swsh": ["mcd22"],
+    "cel25": ["cel25c"],
+}
 
 
 @dataclass(frozen=True)
@@ -65,7 +88,7 @@ class ImageResolution:
 
 def card_row(
     card: dict[str, Any],
-) -> tuple[str, str, str, str, str, str, str, str, str, str | None, str, str | None, str | None]:
+) -> tuple[str, str, str, str, str, str, str, str, str | None, str | None, str, str | None, str | None]:
     types_list = card.get("types")
     types_str = ",".join(str(t) for t in types_list) if types_list else None
     return (
@@ -77,19 +100,41 @@ def card_row(
         card["card_number"],
         card["name"],
         card["rarity"],
-        card["image_url"],
-        card.get("image_url_low"),
+        public_image_url_or_none(card.get("image_url")),
+        public_image_url_or_none(card.get("image_url_low")),
         card["equivalence_key"],
         card.get("hp"),
         types_str,
     )
 
 
+def public_image_url_or_none(value: Any) -> str | None:
+    url = str(value or "").strip()
+    if not url:
+        return None
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        return None
+    host = parsed.hostname or ""
+    if host in {"localhost", "127.0.0.1", "0.0.0.0"} or host.endswith(".local"):
+        return None
+    return url
+
+
 def image_url_for_card(card: dict[str, Any]) -> str:
-    image_url = str(card.get("image_url") or "").strip()
+    image_url = public_image_url_or_none(card.get("image_url"))
     if not image_url:
-        raise RuntimeError(f"Card {card['id']} is missing image_url")
+        raise RuntimeError(f"Card {card['id']} is missing public https image_url")
     return image_url
+
+
+def has_cached_image(image_path: Path) -> bool:
+    return image_path.exists() and image_path.stat().st_size > 0
+
+
+def is_scan_eligible(card: dict[str, Any]) -> bool:
+    series_id = str(card.get("set_series_id") or "").strip().lower()
+    return series_id not in SCAN_EXCLUDED_SERIES_IDS
 
 
 def base_pil_for_card(image_path: Path) -> Image.Image:
@@ -173,7 +218,7 @@ def init_db(connection: sqlite3.Connection) -> None:
           card_number TEXT NOT NULL,
           name TEXT NOT NULL,
           rarity TEXT NOT NULL,
-          image_url TEXT NOT NULL,
+          image_url TEXT,
           image_url_low TEXT,
           equivalence_key TEXT NOT NULL,
           hp TEXT,
@@ -358,6 +403,21 @@ def validate_embeddings_db(
         if bad_blob > 0:
             raise RuntimeError("Found embeddings rows with invalid vector_blob lengths")
 
+        local_url_count = int(
+            connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM cards
+                WHERE image_url LIKE 'file:%'
+                   OR image_url_low LIKE 'file:%'
+                   OR image_url LIKE '%/home/runner/%'
+                   OR image_url_low LIKE '%/home/runner/%';
+                """
+            ).fetchone()[0]
+        )
+        if local_url_count > 0:
+            raise RuntimeError(f"Found {local_url_count} cards with local runner image URLs")
+
     diagnostics = sample_embedding_diagnostics(db_path)
     sample_count = int(diagnostics["sample_count"])
     distinct_hashes = int(diagnostics["distinct_hashes"])
@@ -524,7 +584,7 @@ def load_fallback_manifest(cache_dir: Path) -> dict[str, dict[str, str]]:
     for card_id, value in payload.items():
         if not isinstance(card_id, str) or not isinstance(value, dict):
             continue
-        url = str(value.get("url") or "").strip()
+        url = public_image_url_or_none(value.get("url"))
         source = str(value.get("source") or "").strip()
         if url and source:
             manifest[card_id] = {"url": url, "source": source}
@@ -536,7 +596,106 @@ def write_fallback_manifest(cache_dir: Path, manifest: dict[str, dict[str, str]]
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def dedupe_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        clean_value = value.strip()
+        if not clean_value or clean_value in seen:
+            continue
+        seen.add(clean_value)
+        deduped.append(clean_value)
+    return deduped
+
+
+def compact_numeric_token(value: str) -> str:
+    clean_value = value.strip()
+    if clean_value.isdigit():
+        return str(int(clean_value))
+    match = re.fullmatch(r"([A-Za-z]+)0+([1-9][0-9]*)", clean_value)
+    if match:
+        return f"{match.group(1)}{int(match.group(2))}"
+    return clean_value
+
+
+def candidate_pokemontcgio_set_ids(set_id: str, card_number: str) -> list[str]:
+    clean_set_id = set_id.strip()
+    candidates = [clean_set_id]
+    candidates.extend(POKEMONTCGIO_SET_ID_ALIASES.get(clean_set_id, []))
+    candidates.append(re.sub(r"^([A-Za-z]+)0+([1-9][0-9]*(?:\.5)?)$", r"\1\2", clean_set_id))
+    if ".5" in clean_set_id:
+        candidates.append(clean_set_id.replace(".5", ""))
+        candidates.append(clean_set_id.replace(".5", "pt5"))
+    clean_number = card_number.strip().upper()
+    if clean_number.startswith("TG"):
+        candidates.extend(f"{candidate}tg" for candidate in list(candidates))
+    elif clean_number.startswith("GG"):
+        candidates.extend(f"{candidate}gg" for candidate in list(candidates))
+    return dedupe_strings(candidates)
+
+
+def candidate_pokemontcgio_numbers(card_number: str) -> list[str]:
+    clean_number = card_number.strip()
+    candidates = [clean_number, compact_numeric_token(clean_number)]
+    classic_match = re.fullmatch(r"([0-9]+)A.*", clean_number.upper())
+    if classic_match:
+        candidates.append(str(int(classic_match.group(1))))
+    return dedupe_strings(candidates)
+
+
+def normalize_card_name_for_match(value: Any) -> str:
+    text = str(value or "").lower()
+    text = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u2013", "-").replace("\u2014", "-")
+    text = re.sub(r"\b(gx|ex|vmax|vstar)\b", r"\1", text)
+    text = text.replace("v-union", "vunion")
+    return re.sub(r"[^a-z0-9]+", "", text)
+
+
+def candidate_matches_card(card: dict[str, Any], candidate: dict[str, Any]) -> bool:
+    if normalize_card_name_for_match(candidate.get("name")) != normalize_card_name_for_match(card.get("name")):
+        return False
+    cand_hp = str(candidate.get("hp") or "").strip()
+    card_hp = str(card.get("hp") or "").strip()
+    if cand_hp and card_hp and cand_hp != card_hp:
+        return False
+    cand_artist = str(candidate.get("artist") or "").lower().strip()
+    card_artist = str(card.get("illustrator") or "").lower().strip()
+    return not cand_artist or not card_artist or cand_artist == card_artist
+
+
+def resolve_pokemontcgio_image_by_identity(card: dict[str, Any]) -> ImageResolution | None:
+    try:
+        from scripts.pokemontcgio_api import search_card_by_set_and_number
+    except ImportError:
+        try:
+            from pokemontcgio_api import search_card_by_set_and_number
+        except ImportError:
+            return None
+
+    set_id = str(card.get("set_id") or "").strip()
+    card_number = str(card.get("card_number") or "").strip()
+    if not set_id or not card_number:
+        return None
+    for candidate_set_id in candidate_pokemontcgio_set_ids(set_id, card_number):
+        for candidate_number in candidate_pokemontcgio_numbers(card_number):
+            candidate = search_card_by_set_and_number(candidate_set_id, candidate_number)
+            if not candidate or not candidate_matches_card(card, candidate):
+                continue
+            large_image = public_image_url_or_none((candidate.get("images") or {}).get("large"))
+            if large_image:
+                print(
+                    f"  Fallback SUCCESS! Mapped TCGdex {card['id']} "
+                    f"to pokemontcg.io {candidate.get('id')} by set/number"
+                )
+                return ImageResolution(url=large_image, source="pokemontcgio_set_number_name")
+    return None
+
+
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
+    identity_match = resolve_pokemontcgio_image_by_identity(card)
+    if identity_match:
+        return identity_match
+
     try:
         from scripts.pokemontcgio_api import search_cards_by_name
     except ImportError:
@@ -580,7 +739,7 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
             number_match = bool(card_number) and cand_number == card_number
 
             if artist_match and hp_match and number_match:
-                large_image = cand.get("images", {}).get("large")
+                large_image = public_image_url_or_none(cand.get("images", {}).get("large"))
                 if large_image:
                     print(f"  Fallback SUCCESS! Mapped TCGDex {card['id']} to pokemontcg.io {cand['id']}")
                     print(f"  Selected Large Image: {large_image}")
@@ -597,9 +756,75 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
             except ImportError:
                 return None
         web_image = resolve_web_image_fallback(card)
-        if web_image:
+        if public_image_url_or_none(web_image):
             return ImageResolution(url=web_image, source="web_search_unverified")
     return None
+
+
+def skipped_cards_by_locale_and_reason(skipped_cards: list[SkippedCard]) -> tuple[dict[str, int], dict[str, int]]:
+    skipped_by_locale: dict[str, int] = {}
+    skipped_reasons: dict[str, int] = {}
+    for skipped in skipped_cards:
+        skipped_by_locale[skipped.locale] = skipped_by_locale.get(skipped.locale, 0) + 1
+        skipped_reasons[skipped.reason] = skipped_reasons.get(skipped.reason, 0) + 1
+    return skipped_by_locale, skipped_reasons
+
+
+def build_missing_images_report(
+    skipped_cards: list[SkippedCard],
+    cards: list[dict[str, Any]],
+    *,
+    image_cache_dir: Path,
+    excluded_cards: list[dict[str, Any]],
+) -> dict[str, Any]:
+    card_by_id = {str(card["id"]): card for card in cards}
+    skipped_by_locale, skipped_reasons = skipped_cards_by_locale_and_reason(skipped_cards)
+    entries: list[dict[str, Any]] = []
+    for skipped in skipped_cards:
+        card = card_by_id.get(skipped.card_id, {})
+        image_path = image_cache_dir / f"{sanitize_card_id(skipped.card_id)}.img"
+        entry: dict[str, Any] = {
+            "card_id": skipped.card_id,
+            "locale": skipped.locale,
+            "reason": skipped.reason,
+            "name": card.get("name"),
+            "set_id": card.get("set_id"),
+            "set_name": card.get("set_name"),
+            "set_series_id": card.get("set_series_id"),
+            "set_series_name": card.get("set_series_name"),
+            "card_number": card.get("card_number"),
+            "upstream_id": card.get("upstream_id"),
+            "illustrator": card.get("illustrator"),
+            "hp": card.get("hp"),
+            "types": card.get("types"),
+            "expected_cache_file": str(image_path),
+            "cache_file_exists": has_cached_image(image_path),
+        }
+        if skipped.detail:
+            entry["detail"] = skipped.detail
+        entries.append(entry)
+    return {
+        "status": "blocked_missing_scan_images",
+        "message": "No embeddings release was published. Seed or resolve these real card images, then rerun the workflow.",
+        "missing_count": len(skipped_cards),
+        "skipped_by_locale": skipped_by_locale,
+        "skipped_reasons": skipped_reasons,
+        "excluded_non_scan_cards": len(excluded_cards),
+        "excluded_series_ids": sorted(SCAN_EXCLUDED_SERIES_IDS),
+        "recovery_steps": [
+            "For each entry, add a verified real card image to the image cache using expected_cache_file naming or add a verified HTTPS fallback URL to image-fallbacks.json.",
+            "Do not add placeholder/card-back images for scan-eligible cards; embeddings must be generated from real card art.",
+            "Rerun Build Embeddings DB. The app keeps using the previous embeddings-latest release until a complete build succeeds.",
+        ],
+        "cards": entries,
+    }
+
+
+def write_json_file(path: Path | None, payload: dict[str, Any]) -> None:
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def ensure_images(
@@ -619,13 +844,21 @@ def ensure_images(
     pending: list[tuple[dict[str, Any], Path]] = []
     for card, image_path in zip(cards, image_paths, strict=True):
         card_id = card["id"]
+        image_url = public_image_url_or_none(card.get("image_url"))
+        card["image_url"] = image_url
+        card["image_url_low"] = public_image_url_or_none(card.get("image_url_low"))
+        cached_image_available = has_cached_image(image_path)
 
-        # Ensure we have a valid image_url. If missing, look up from fallback manifest first!
-        if not str(card.get("image_url") or "").strip():
+        # Ensure downloads only use public HTTPS URLs. If missing, look up from fallback manifest first.
+        if not image_url:
             cached_fallback = fallback_manifest.get(card_id)
             if cached_fallback:
                 card["image_url"] = cached_fallback["url"]
                 image_sources[card_id] = cached_fallback["source"] + ":cached"
+            elif cached_image_available:
+                # A cached image is sufficient for embedding even if no public display URL is known.
+                image_sources[card_id] = "local_cache_without_public_url"
+                continue
             else:
                 fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
                 if fallback:
@@ -639,7 +872,7 @@ def ensure_images(
             image_sources[card_id] = "upstream"
 
         # Check if the image file is already cached locally and has content
-        if image_path.exists() and image_path.stat().st_size > 0:
+        if has_cached_image(image_path):
             continue
 
         pending.append((card, image_path))
@@ -858,9 +1091,11 @@ def build_embeddings_db(
     image_cache_dir: Path,
     download_workers: int,
     allow_web_image_fallback: bool,
+    allow_missing_images: bool,
     limit: int | None,
     min_row_count: int,
     summary_json: Path | None,
+    missing_images_json: Path | None,
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
         "model_name": MODEL_NAME,
@@ -880,6 +1115,19 @@ def build_embeddings_db(
         detailed_counts[card["locale"]] = detailed_counts.get(card["locale"], 0) + 1
     summary["detailed_counts"] = detailed_counts
 
+    eligible_cards = [card for card in cards if is_scan_eligible(card)]
+    excluded_cards = [card for card in cards if not is_scan_eligible(card)]
+    excluded_by_series: dict[str, int] = {}
+    for card in excluded_cards:
+        series_id = str(card.get("set_series_id") or "unknown")
+        excluded_by_series[series_id] = excluded_by_series.get(series_id, 0) + 1
+    eligible_counts: dict[str, int] = {}
+    for card in eligible_cards:
+        eligible_counts[card["locale"]] = eligible_counts.get(card["locale"], 0) + 1
+    summary["scan_eligible_cards"] = len(eligible_cards)
+    summary["excluded_cards"] = len(excluded_cards)
+    summary["excluded_by_series"] = excluded_by_series
+
     output_db.parent.mkdir(parents=True, exist_ok=True)
     if output_db.exists():
         output_db.unlink()
@@ -889,11 +1137,43 @@ def build_embeddings_db(
     print("initialized fresh embeddings db")
 
     ready_records, skipped_cards, download_seconds, image_sources = ensure_images(
-        cards,
+        eligible_cards,
         image_cache_dir,
         download_workers=download_workers,
         allow_web_image_fallback=allow_web_image_fallback,
     )
+    if skipped_cards and not allow_missing_images:
+        skipped_by_locale, skipped_reasons = skipped_cards_by_locale_and_reason(skipped_cards)
+        missing_report = build_missing_images_report(
+            skipped_cards,
+            eligible_cards,
+            image_cache_dir=image_cache_dir,
+            excluded_cards=excluded_cards,
+        )
+        write_json_file(missing_images_json, missing_report)
+        summary.update(
+            {
+                "status": "blocked_missing_scan_images",
+                "download_seconds": round(download_seconds, 3),
+                "duration_seconds": round(time.perf_counter() - started, 3),
+                "processed_cards": len(ready_records),
+                "skipped_cards": len(skipped_cards),
+                "skipped_by_locale": skipped_by_locale,
+                "skipped_reasons": skipped_reasons,
+                "missing_images_report": str(missing_images_json) if missing_images_json is not None else None,
+                "allow_web_image_fallback": allow_web_image_fallback,
+                "allow_missing_images": allow_missing_images,
+                "output_db": str(output_db),
+            }
+        )
+        write_json_file(summary_json, summary)
+        raise RuntimeError(
+            "Refusing to build a partial scan corpus: "
+            f"{len(skipped_cards)} scan-eligible cards are missing verified image bytes. "
+            "No release was published; the app will keep using the previous embeddings-latest release. "
+            "Use the missing-images report to seed or resolve real card images, then rerun. "
+            + json.dumps(missing_report["cards"][:20], indent=2)
+        )
     inserted_count, model_load_seconds, inference_seconds = insert_new_embeddings(
         output_db,
         ready_records,
@@ -956,6 +1236,7 @@ def build_embeddings_db(
             "image_source_counts": image_source_counts,
             "image_source_examples": image_source_examples,
             "allow_web_image_fallback": allow_web_image_fallback,
+            "allow_missing_images": allow_missing_images,
             "output_db": str(output_db),
             "model_groups": model_groups,
             "embedding_diagnostics": counts[2],
@@ -967,17 +1248,19 @@ def build_embeddings_db(
 
     per_locale_listed_count = {locale: int(listed_counts.get(locale, 0)) for locale in locales}
     per_locale_detailed_count = {locale: int(detailed_counts.get(locale, 0)) for locale in locales}
+    per_locale_scan_eligible_count = {locale: int(eligible_counts.get(locale, 0)) for locale in locales}
     per_locale_embedded_count = {locale: int(embedded_counts.get(locale, 0)) for locale in locales}
     per_locale_skipped_count = {locale: int(skipped_by_locale.get(locale, 0)) for locale in locales}
     if any(
-        per_locale_embedded_count[locale] + per_locale_skipped_count[locale] != per_locale_detailed_count[locale]
+        per_locale_embedded_count[locale] + per_locale_skipped_count[locale] != per_locale_scan_eligible_count[locale]
         for locale in locales
     ):
         raise RuntimeError(
-            "Per-locale embedded/skipped totals do not reconcile with detailed counts: "
+            "Per-locale embedded/skipped totals do not reconcile with scan-eligible counts: "
             + json.dumps(
                 {
                     "detailed": per_locale_detailed_count,
+                    "scan_eligible": per_locale_scan_eligible_count,
                     "embedded": per_locale_embedded_count,
                     "skipped": per_locale_skipped_count,
                 },
@@ -986,12 +1269,12 @@ def build_embeddings_db(
         )
     summary["per_locale_listed_count"] = per_locale_listed_count
     summary["per_locale_detailed_count"] = per_locale_detailed_count
+    summary["per_locale_scan_eligible_count"] = per_locale_scan_eligible_count
     summary["per_locale_embedded_count"] = per_locale_embedded_count
     summary["per_locale_skipped_count"] = per_locale_skipped_count
 
     if summary_json is not None:
-        summary_json.parent.mkdir(parents=True, exist_ok=True)
-        summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        write_json_file(summary_json, summary)
 
     print(json.dumps(summary, indent=2))
     return summary
@@ -1003,12 +1286,18 @@ def main() -> int:
     parser.add_argument("--model-path", default=str(DEFAULT_MODEL_PATH), help="Path to the ONNX card embedder model")
     parser.add_argument("--image-cache-dir", required=True, help="Persistent cache directory for downloaded card art")
     parser.add_argument("--summary-json", help="Optional JSON build summary output path")
+    parser.add_argument("--missing-images-json", help="Optional missing scan-image report output path")
     parser.add_argument("--locales", default="en", help="Comma-separated TCGdex locales")
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument(
         "--allow-web-image-fallback",
         action="store_true",
         help="Use best-effort public web image search as a last-resort source for missing card art.",
+    )
+    parser.add_argument(
+        "--allow-missing-images",
+        action="store_true",
+        help="Allow scan-eligible cards without verified image bytes to be skipped. Local debugging only.",
     )
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
     parser.add_argument("--min-row-count", type=int, default=1000)
@@ -1033,9 +1322,11 @@ def main() -> int:
         image_cache_dir=Path(args.image_cache_dir).resolve(),
         download_workers=args.download_workers,
         allow_web_image_fallback=args.allow_web_image_fallback,
+        allow_missing_images=args.allow_missing_images,
         limit=args.limit,
         min_row_count=args.min_row_count,
         summary_json=Path(args.summary_json).resolve() if args.summary_json else None,
+        missing_images_json=Path(args.missing_images_json).resolve() if args.missing_images_json else None,
     )
     return 0
 

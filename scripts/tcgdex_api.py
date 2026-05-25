@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
+import os
 import re
 import socket
 import time
@@ -157,9 +158,9 @@ def parse_locales(raw: str | None) -> list[str]:
 def _briefs_from_detail_cache(locale: str) -> list[dict[str, Any]] | None:
     """Return minimal brief-style dicts from the detail cache for a locale.
 
-    Returns None if there are no cached entries for this locale (so the caller
-    falls back to the live listing API).  If the cache has ANY entries for the
-    locale we assume it is complete and skip the slow paginated listing.
+    This is retained only for explicit offline/debug use. Production builds must
+    use the live listing API so newly released cards are discovered even when the
+    detail cache is restored from a previous run.
     """
     if _detail_cache is None:
         return None
@@ -180,9 +181,10 @@ def fetch_card_briefs(
     seen_upstream_ids: set[str] = set()
     duplicate_briefs = 0
 
-    cached_briefs = _briefs_from_detail_cache(locale)
-    if cached_briefs is not None:
-        return cached_briefs[:limit] if limit is not None else cached_briefs
+    if os.environ.get("TCGDEX_USE_DETAIL_CACHE_AS_LISTING") == "1":
+        cached_briefs = _briefs_from_detail_cache(locale)
+        if cached_briefs is not None:
+            return cached_briefs[:limit] if limit is not None else cached_briefs
 
     page = 1
     while True:
@@ -235,6 +237,30 @@ def fetch_card_detail(locale: str, upstream_id: str) -> dict[str, Any]:
         raise RuntimeError(f"Unexpected card payload for locale={locale} id={upstream_id}: expected object")
     _cache_detail(locale, upstream_id, payload)
     return payload
+
+
+def fetch_set_detail(locale: str, set_id: str) -> dict[str, Any]:
+    payload = api_get_json(f"{API_BASE_URL}/{locale}/sets/{urllib.parse.quote(set_id, safe='')}")
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"Unexpected set payload for locale={locale} id={set_id}: expected object")
+    return payload
+
+
+def fetch_set_metadata(locale: str, set_ids: set[str], *, workers: int = 12) -> dict[str, dict[str, str]]:
+    metadata: dict[str, dict[str, str]] = {}
+    if not set_ids:
+        return metadata
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(fetch_set_detail, locale, set_id): set_id for set_id in sorted(set_ids)}
+        for future in concurrent.futures.as_completed(futures):
+            set_id = futures[future]
+            detail = future.result()
+            serie = detail.get("serie") if isinstance(detail.get("serie"), dict) else {}
+            metadata[set_id] = {
+                "set_series_id": str(serie.get("id") or "").strip(),
+                "set_series_name": str(serie.get("name") or "").strip(),
+            }
+    return metadata
 
 
 def build_canonical_card_id(locale: str, set_id: str, local_id: str) -> str:
@@ -432,5 +458,8 @@ def fetch_all_card_records(
                     print(f"detailed locale={locale} fetched={completed}/{len(futures)}")
 
         fetched.sort(key=lambda row: row["id"])
+        set_metadata = fetch_set_metadata(locale, {str(row["set_id"]) for row in fetched})
+        for row in fetched:
+            row.update(set_metadata.get(str(row["set_id"]), {}))
         records.extend(fetched)
     return records, listed_counts
