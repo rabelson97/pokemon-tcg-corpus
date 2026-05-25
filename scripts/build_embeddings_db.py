@@ -632,9 +632,6 @@ def ensure_images(
                     card["image_url"] = fallback.url
                     image_sources[card_id] = fallback.source
                     fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
-                elif image_path.exists() and image_path.stat().st_size > 0:
-                    card["image_url"] = f"file://{image_path.resolve()}"
-                    image_sources[card_id] = "cached_file_legacy"
                 else:
                     skipped.append(SkippedCard(card_id=card_id, locale=card["locale"], reason="missing_image_url"))
                     continue
