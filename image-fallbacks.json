@@ -804,8 +804,8 @@
     "url": "https://images.pokemontcg.io/hsp/HGSS17_hires.png"
   },
   "pokemon:en:hgssp:HGSS18": {
-    "source": "pokemontcgio_name_artist_hp",
-    "url": "https://images.pokemontcg.io/hsp/HGSS18_hires.png"
+    "source": "pkmncards_verified",
+    "url": "https://pkmncards.com/wp-content/uploads/tropical-tidal-wave-heartgold-soulsilver-promos-hgss18-1.png"
   },
   "pokemon:en:hgssp:HGSS19": {
     "source": "pokemontcgio_name_artist_hp",
