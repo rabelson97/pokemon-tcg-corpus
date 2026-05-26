@@ -1890,5 +1890,9 @@
   "pokemon:en:xyp:XY68": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/xyp/XY68_hires.png"
+  },
+  "pokemon:en:hsp:HGSS18": {
+    "source": "pkmncards_verified",
+    "url": "https://pkmncards.com/wp-content/uploads/tropical-tidal-wave-heartgold-soulsilver-promos-hgss18-1.png"
   }
 }
