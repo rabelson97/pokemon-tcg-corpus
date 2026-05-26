@@ -210,6 +210,144 @@ class InsertEmbeddingsTests(unittest.TestCase):
             self.assertEqual(build_embeddings_db.VARIANT_K, len(blobs))
             self.assertEqual(len({bytes(blob) for blob in blobs}), build_embeddings_db.VARIANT_K)
 
+    def test_insert_int8_embeddings_writes_all_variants(self) -> None:
+        card = self._make_card("pokemon:en:base1:3", name="Blastoise")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_db = Path(tmp_dir) / "embeddings.db"
+            record = build_embeddings_db.DownloadedCard(card=card, image_path=Path(tmp_dir) / "unused.img")
+
+            with (
+                mock.patch.object(
+                    build_embeddings_db,
+                    "load_onnx_session",
+                    return_value=(self._patched_session(), "input", build_embeddings_db.EXPECTED_DIM, 0.0),
+                ),
+                mock.patch.object(
+                    build_embeddings_db,
+                    "base_pil_for_card",
+                    return_value=Image.new("RGB", (224, 224), color=(127, 127, 127)),
+                ),
+            ):
+                build_embeddings_db.insert_new_embeddings(
+                    output_db,
+                    [record],
+                    model_path=Path("unused.onnx"),
+                )
+
+            with sqlite3.connect(output_db) as connection:
+                row_count, total_bytes = build_embeddings_db.insert_int8_embeddings(connection)
+                self.assertEqual(build_embeddings_db.VARIANT_K, row_count)
+                self.assertEqual(build_embeddings_db.VARIANT_K * build_embeddings_db.EXPECTED_DIM, total_bytes)
+                rows = connection.execute(
+                    """
+                    SELECT variant_idx, variant_tag, length(vector_int8)
+                    FROM embeddings_int8
+                    WHERE card_id = ?
+                    ORDER BY variant_idx;
+                    """,
+                    (card["id"],),
+                ).fetchall()
+
+            self.assertEqual(
+                [(idx, tag, build_embeddings_db.EXPECTED_DIM) for idx, tag in enumerate(build_embeddings_db.VARIANT_TAGS)],
+                rows,
+            )
+
+    def test_rebuild_int8_embeddings_recreates_table_without_inference(self) -> None:
+        card = self._make_card("pokemon:en:base1:4", name="Venusaur")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_db = Path(tmp_dir) / "embeddings.db"
+            summary_json = Path(tmp_dir) / "summary.json"
+            record = build_embeddings_db.DownloadedCard(card=card, image_path=Path(tmp_dir) / "unused.img")
+
+            with (
+                mock.patch.object(
+                    build_embeddings_db,
+                    "load_onnx_session",
+                    return_value=(self._patched_session(), "input", build_embeddings_db.EXPECTED_DIM, 0.0),
+                ),
+                mock.patch.object(
+                    build_embeddings_db,
+                    "base_pil_for_card",
+                    return_value=Image.new("RGB", (224, 224), color=(127, 127, 127)),
+                ),
+            ):
+                build_embeddings_db.insert_new_embeddings(
+                    output_db,
+                    [record],
+                    model_path=Path("unused.onnx"),
+                )
+
+            with sqlite3.connect(output_db) as connection:
+                connection.execute("DROP TABLE embeddings_int8;")
+                connection.execute(
+                    """
+                    CREATE TABLE embeddings_int8 (
+                      card_id TEXT PRIMARY KEY,
+                      dim INTEGER NOT NULL,
+                      vector_int8 BLOB NOT NULL
+                    );
+                    """
+                )
+                connection.execute("PRAGMA user_version=6;")
+
+            summary = build_embeddings_db.rebuild_int8_embeddings(output_db, summary_json=summary_json)
+
+            self.assertEqual("int8_rebuilt", summary["status"])
+            self.assertEqual(build_embeddings_db.VARIANT_K, summary["int8_row_count"])
+            with sqlite3.connect(output_db) as connection:
+                user_version = connection.execute("PRAGMA user_version;").fetchone()[0]
+                self.assertEqual(build_embeddings_db.DB_USER_VERSION, user_version)
+                columns = [row[1] for row in connection.execute("PRAGMA table_info(embeddings_int8);").fetchall()]
+                self.assertIn("variant_idx", columns)
+                self.assertIn("variant_tag", columns)
+                row_count = connection.execute("SELECT COUNT(*) FROM embeddings_int8;").fetchone()[0]
+                self.assertEqual(build_embeddings_db.VARIANT_K, row_count)
+            self.assertTrue(summary_json.exists())
+
+    def test_copy_seed_embeddings_reuses_complete_variant_rows(self) -> None:
+        card = self._make_card("pokemon:en:base1:5", name="Mewtwo")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            seed_db = Path(tmp_dir) / "seed.db"
+            output_db = Path(tmp_dir) / "output.db"
+            record = build_embeddings_db.DownloadedCard(card=card, image_path=Path(tmp_dir) / "unused.img")
+
+            with (
+                mock.patch.object(
+                    build_embeddings_db,
+                    "load_onnx_session",
+                    return_value=(self._patched_session(), "input", build_embeddings_db.EXPECTED_DIM, 0.0),
+                ),
+                mock.patch.object(
+                    build_embeddings_db,
+                    "base_pil_for_card",
+                    return_value=Image.new("RGB", (224, 224), color=(127, 127, 127)),
+                ),
+            ):
+                build_embeddings_db.insert_new_embeddings(
+                    seed_db,
+                    [record],
+                    model_path=Path("unused.onnx"),
+                )
+
+            updated_card = dict(card)
+            updated_card["name"] = "Mewtwo Updated"
+            with sqlite3.connect(output_db) as connection:
+                build_embeddings_db.init_db(connection)
+
+            reused_ids = build_embeddings_db.copy_seed_embeddings(output_db, seed_db, [updated_card])
+
+            self.assertEqual({card["id"]}, reused_ids)
+            with sqlite3.connect(output_db) as connection:
+                name = connection.execute("SELECT name FROM cards WHERE id = ?;", (card["id"],)).fetchone()[0]
+                embedding_count = connection.execute("SELECT COUNT(*) FROM embeddings WHERE card_id = ?;", (card["id"],)).fetchone()[0]
+
+            self.assertEqual("Mewtwo Updated", name)
+            self.assertEqual(build_embeddings_db.VARIANT_K, embedding_count)
+
 
 class ImageFallbackTests(unittest.TestCase):
     @staticmethod

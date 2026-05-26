@@ -79,6 +79,15 @@ def main() -> int:
     parser.add_argument("--limit", type=int, help="Optional small-card local smoke test.")
     parser.add_argument("--skip-zip", action="store_true")
     parser.add_argument(
+        "--seed-db",
+        help="Optional existing embeddings.db to reuse float embeddings for unchanged cards; only missing cards are embedded.",
+    )
+    parser.add_argument(
+        "--int8-only",
+        action="store_true",
+        help="Recreate only embeddings_int8 in the existing local embeddings.db; skips API, image downloads, and ONNX inference.",
+    )
+    parser.add_argument(
         "--detail-cache",
         default=str(REPO_ROOT / "build" / "tcgdex-detail-cache.jsonl"),
         help="Path to local card-detail response cache (shared with build_training_manifest.py)",
@@ -94,6 +103,39 @@ def main() -> int:
     db_path = output_dir / "embeddings.db"
     summary_path = output_dir / "embeddings-build-summary.json"
     zip_path = output_dir / "embeddings.db.zip"
+
+    if args.int8_only:
+        if not db_path.exists():
+            raise SystemExit(f"Existing embeddings db not found: {db_path}")
+        run_python(
+            REPO_ROOT / "scripts" / "build_embeddings_db.py",
+            "--output-db",
+            str(db_path),
+            "--image-cache-dir",
+            str(cache_dir),
+            "--summary-json",
+            str(summary_path),
+            "--rebuild-int8-only",
+        )
+        if not args.skip_zip:
+            zip_file(db_path, zip_path)
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        print()
+        print("Local embeddings int8 rebuild complete.")
+        print(f"DB: {db_path}")
+        if not args.skip_zip:
+            print(f"ZIP: {zip_path}")
+        print(f"Summary: {summary_path}")
+        print(
+            "Rows:",
+            summary.get("cards_count"),
+            "cards /",
+            summary.get("embeddings_count"),
+            "embeddings /",
+            summary.get("int8_row_count"),
+            "int8",
+        )
+        return 0
 
     run_python(
         REPO_ROOT / "training" / "validate_production_embedder.py",
@@ -129,6 +171,8 @@ def main() -> int:
         build_args.append("--allow-missing-images")
     if args.limit is not None:
         build_args.extend(["--limit", str(args.limit)])
+    if args.seed_db:
+        build_args.extend(["--seed-db", str(Path(args.seed_db).resolve())])
 
     run_python(REPO_ROOT / "scripts" / "build_embeddings_db.py", *build_args)
 

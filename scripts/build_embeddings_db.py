@@ -40,7 +40,7 @@ from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, s
 VARIANT_TAGS: tuple[str, ...] = ("clean", "blur_lo", "jpeg_lo", "glare_mild")
 VARIANT_K = len(VARIANT_TAGS)
 
-DB_USER_VERSION = 6
+DB_USER_VERSION = 7
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 SCAN_EXCLUDED_SERIES_IDS = {"tcgp"}
@@ -237,14 +237,6 @@ def init_db(connection: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_embeddings_card ON embeddings(card_id);
 
-        CREATE TABLE IF NOT EXISTS embeddings_int8 (
-          card_id TEXT PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
-          dim INTEGER NOT NULL,
-          vector_int8 BLOB NOT NULL
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_embeddings_int8_card ON embeddings_int8(card_id);
-
         CREATE TABLE IF NOT EXISTS card_equivalents (
           card_id TEXT NOT NULL PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
           equivalence_key TEXT NOT NULL,
@@ -256,11 +248,41 @@ def init_db(connection: sqlite3.Connection) -> None:
         );
         """
     )
+    create_int8_table(connection)
     card_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cards);").fetchall()}
     if "image_url_low" not in card_columns:
         connection.execute("ALTER TABLE cards ADD COLUMN image_url_low TEXT;")
     if "types" not in card_columns:
         connection.execute("ALTER TABLE cards ADD COLUMN types TEXT;")
+
+
+def create_int8_table(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS embeddings_int8 (
+          card_id TEXT NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+          variant_idx INTEGER NOT NULL DEFAULT 0,
+          variant_tag TEXT NOT NULL DEFAULT 'clean',
+          dim INTEGER NOT NULL,
+          vector_int8 BLOB NOT NULL,
+          PRIMARY KEY (card_id, variant_idx)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_embeddings_int8_card ON embeddings_int8(card_id);
+        """
+    )
+
+
+def recreate_int8_table(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        DROP INDEX IF EXISTS idx_embeddings_int8_card;
+        DROP TABLE IF EXISTS embeddings_int8;
+        """
+    )
+    create_int8_table(connection)
+    connection.execute(f"PRAGMA user_version={DB_USER_VERSION};")
+    connection.commit()
 
 
 def sample_embedding_diagnostics(
@@ -459,35 +481,74 @@ def dequantize_int8(blob: bytes, dim: int) -> np.ndarray:
 def insert_int8_embeddings(connection: sqlite3.Connection) -> tuple[int, int]:
     rows = connection.execute(
         """
-        SELECT e.card_id, e.dim, e.vector_blob
+        SELECT e.card_id, e.variant_idx, e.variant_tag, e.dim, e.vector_blob
         FROM embeddings e
-        WHERE e.variant_idx = 0
-        ORDER BY e.card_id
+        ORDER BY e.card_id, e.variant_idx
         """
     ).fetchall()
 
-    int8_rows: list[tuple[str, int, bytes]] = []
-    for card_id, dim, blob in rows:
+    int8_rows: list[tuple[str, int, str, int, bytes]] = []
+    for card_id, variant_idx, variant_tag, dim, blob in rows:
         vector = np.frombuffer(blob, dtype="<f4")
         if vector.shape[0] != dim:
-            raise RuntimeError(f"vector dim mismatch for {card_id}: {vector.shape[0]} vs {dim}")
+            raise RuntimeError(f"vector dim mismatch for {card_id} variant={variant_idx}: {vector.shape[0]} vs {dim}")
         int8_blob = quantize_to_int8(vector)
-        int8_rows.append((card_id, dim, int8_blob))
+        int8_rows.append((card_id, int(variant_idx), str(variant_tag), dim, int8_blob))
 
     connection.executemany(
         """
-        INSERT INTO embeddings_int8 (card_id, dim, vector_int8)
-        VALUES (?, ?, ?)
-        ON CONFLICT(card_id) DO NOTHING;
+        INSERT INTO embeddings_int8 (card_id, variant_idx, variant_tag, dim, vector_int8)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(card_id, variant_idx) DO NOTHING;
         """,
         int8_rows,
     )
     connection.commit()
 
-    total_bytes = sum(len(row[2]) for row in int8_rows)
+    total_bytes = sum(len(row[4]) for row in int8_rows)
     row_count = len(int8_rows)
-    print(f"inserted {row_count} int8 vectors, total vector bytes = {total_bytes:,} ({total_bytes / 1024 / 1024:.1f} MB)")
+    print(f"inserted {row_count} int8 variant vectors, total vector bytes = {total_bytes:,} ({total_bytes / 1024 / 1024:.1f} MB)")
     return row_count, total_bytes
+
+
+def rebuild_int8_embeddings(
+    db_path: Path,
+    *,
+    summary_json: Path | None = None,
+) -> dict[str, Any]:
+    started = time.perf_counter()
+    with sqlite3.connect(db_path) as connection:
+        connection.execute("PRAGMA foreign_keys=ON;")
+        card_count = int(connection.execute("SELECT COUNT(*) FROM cards;").fetchone()[0])
+        embedding_count = int(connection.execute("SELECT COUNT(*) FROM embeddings;").fetchone()[0])
+        if card_count <= 0 or embedding_count <= 0:
+            raise RuntimeError(f"Cannot rebuild int8 rows from empty db: cards={card_count}, embeddings={embedding_count}")
+
+        recreate_int8_table(connection)
+        int8_row_count, int8_total_bytes = insert_int8_embeddings(connection)
+        int8_validation = validate_int8_quantization(connection)
+        variant_count = int(
+            connection.execute("SELECT COUNT(DISTINCT variant_idx) FROM embeddings;").fetchone()[0]
+        )
+
+    summary = {
+        "status": "int8_rebuilt",
+        "output_db": str(db_path),
+        "duration_seconds": round(time.perf_counter() - started, 3),
+        "cards_count": card_count,
+        "embeddings_count": embedding_count,
+        "variants_per_card": variant_count,
+        "user_version": DB_USER_VERSION,
+        "int8_row_count": int8_row_count,
+        "int8_total_bytes": int8_total_bytes,
+        "int8_validation": int8_validation,
+    }
+    if int8_row_count != embedding_count:
+        raise RuntimeError(f"int8 row count mismatch: {int8_row_count} != embeddings count {embedding_count}")
+    if summary_json is not None:
+        write_json_file(summary_json, summary)
+    print(json.dumps(summary, indent=2))
+    return summary
 
 
 def validate_int8_quantization(
@@ -496,10 +557,9 @@ def validate_int8_quantization(
 ) -> dict[str, Any]:
     rows = connection.execute(
         """
-        SELECT e.card_id, e.dim, e.vector_blob, i.vector_int8
+        SELECT e.card_id, e.variant_idx, e.dim, e.vector_blob, i.vector_int8
         FROM embeddings e
-        JOIN embeddings_int8 i ON i.card_id = e.card_id
-        WHERE e.variant_idx = 0
+        JOIN embeddings_int8 i ON i.card_id = e.card_id AND i.variant_idx = e.variant_idx
         ORDER BY RANDOM()
         LIMIT ?;
         """,
@@ -511,7 +571,7 @@ def validate_int8_quantization(
 
     cosine_errors: list[float] = []
     l2_errors: list[float] = []
-    for card_id, dim, f32_blob, i8_blob in rows:
+    for card_id, variant_idx, dim, f32_blob, i8_blob in rows:
         f32_vec = np.frombuffer(f32_blob, dtype="<f4").copy()
         if f32_vec.shape[0] != dim:
             continue
@@ -953,6 +1013,132 @@ def locale_row_counts(connection: sqlite3.Connection) -> dict[str, int]:
     return {str(locale): int(count) for locale, count in rows}
 
 
+def insert_card_metadata(connection: sqlite3.Connection, cards: list[dict[str, Any]]) -> None:
+    card_rows = [card_row(card) for card in cards]
+    connection.executemany(
+        """
+        INSERT INTO cards (
+          id,
+          locale,
+          upstream_id,
+          set_id,
+          set_name,
+          card_number,
+          name,
+          rarity,
+          image_url,
+          image_url_low,
+          equivalence_key,
+          hp,
+          types
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          locale = excluded.locale,
+          upstream_id = excluded.upstream_id,
+          set_id = excluded.set_id,
+          set_name = excluded.set_name,
+          card_number = excluded.card_number,
+          name = excluded.name,
+          rarity = excluded.rarity,
+          image_url = excluded.image_url,
+          image_url_low = excluded.image_url_low,
+          equivalence_key = excluded.equivalence_key,
+          hp = excluded.hp,
+          types = excluded.types;
+        """,
+        card_rows,
+    )
+    connection.executemany(
+        """
+        INSERT INTO card_equivalents (
+          card_id,
+          equivalence_key,
+          upstream_source,
+          upstream_id,
+          locale,
+          set_id,
+          local_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(card_id) DO UPDATE SET
+          equivalence_key = excluded.equivalence_key,
+          upstream_source = excluded.upstream_source,
+          upstream_id = excluded.upstream_id,
+          locale = excluded.locale,
+          set_id = excluded.set_id,
+          local_id = excluded.local_id;
+        """,
+        [
+            (
+                row[0],
+                row[10],
+                card.get("upstream_source", "tcgdex"),
+                row[2],
+                row[1],
+                row[3],
+                row[5],
+            )
+            for row, card in zip(card_rows, cards, strict=True)
+        ],
+    )
+
+
+def copy_seed_embeddings(output_db: Path, seed_db: Path, cards: list[dict[str, Any]]) -> set[str]:
+    if not seed_db.exists():
+        raise RuntimeError(f"Seed embeddings db not found: {seed_db}")
+    if seed_db.resolve() == output_db.resolve():
+        raise RuntimeError("Seed embeddings db must be different from output db")
+
+    card_ids = [str(card["id"]) for card in cards]
+    if not card_ids:
+        return set()
+
+    with sqlite3.connect(output_db) as connection:
+        connection.execute("PRAGMA foreign_keys=ON;")
+        connection.execute("ATTACH DATABASE ? AS seed;", (str(seed_db),))
+        try:
+            reused_ids: set[str] = set()
+            for start in range(0, len(card_ids), 500):
+                chunk = card_ids[start : start + 500]
+                placeholders = ",".join("?" for _ in chunk)
+                rows = connection.execute(
+                    f"""
+                    SELECT card_id
+                    FROM seed.embeddings
+                    WHERE card_id IN ({placeholders})
+                      AND model_name = ?
+                      AND dim = ?
+                    GROUP BY card_id
+                    HAVING COUNT(*) = ?
+                       AND COUNT(DISTINCT variant_idx) = ?;
+                    """,
+                    [*chunk, MODEL_NAME, EXPECTED_DIM, VARIANT_K, VARIANT_K],
+                ).fetchall()
+                reused_ids.update(str(row[0]) for row in rows)
+
+            reused_cards = [card for card in cards if str(card["id"]) in reused_ids]
+            insert_card_metadata(connection, reused_cards)
+            for start in range(0, len(reused_ids), 500):
+                chunk = list(sorted(reused_ids))[start : start + 500]
+                placeholders = ",".join("?" for _ in chunk)
+                connection.execute(
+                    f"""
+                    INSERT INTO embeddings (card_id, model_name, variant_idx, variant_tag, dim, vector_blob)
+                    SELECT card_id, model_name, variant_idx, variant_tag, dim, vector_blob
+                    FROM seed.embeddings
+                    WHERE card_id IN ({placeholders})
+                      AND model_name = ?
+                      AND dim = ?;
+                    """,
+                    [*chunk, MODEL_NAME, EXPECTED_DIM],
+                )
+            connection.commit()
+            print(f"reused {len(reused_ids)} cards × {VARIANT_K} variants from seed db")
+            return reused_ids
+        finally:
+            connection.execute("DETACH DATABASE seed;")
+
+
 def load_onnx_session(model_path: Path) -> tuple[ort.InferenceSession, str, int, float]:
     started = time.perf_counter()
     session = ort.InferenceSession(
@@ -980,7 +1166,6 @@ def insert_new_embeddings(
 
     with sqlite3.connect(output_db) as connection:
         init_db(connection)
-        card_rows: list[tuple] = []
         embedding_rows: list[tuple[str, str, int, str, int, bytes]] = []
         for record in records:
             card_id: str = record.card["id"]
@@ -1012,30 +1197,7 @@ def insert_new_embeddings(
                         np.asarray(vector, dtype="<f4").tobytes(),
                     )
                 )
-            card_rows.append(card_row(record.card))
-
-        connection.executemany(
-            """
-            INSERT INTO cards (
-              id,
-              locale,
-              upstream_id,
-              set_id,
-              set_name,
-              card_number,
-              name,
-              rarity,
-              image_url,
-              image_url_low,
-              equivalence_key,
-              hp,
-              types
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(id) DO NOTHING;
-            """,
-            card_rows,
-        )
+        insert_card_metadata(connection, [record.card for record in records])
         connection.executemany(
             """
             INSERT INTO embeddings (card_id, model_name, variant_idx, variant_tag, dim, vector_blob)
@@ -1044,40 +1206,8 @@ def insert_new_embeddings(
             """,
             embedding_rows,
         )
-        connection.executemany(
-            """
-            INSERT INTO card_equivalents (
-              card_id,
-              equivalence_key,
-              upstream_source,
-              upstream_id,
-              locale,
-              set_id,
-              local_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(card_id) DO UPDATE SET
-              equivalence_key = excluded.equivalence_key,
-              upstream_source = excluded.upstream_source,
-              upstream_id = excluded.upstream_id,
-              locale = excluded.locale,
-              set_id = excluded.set_id,
-              local_id = excluded.local_id;
-            """,
-            [
-                (
-                    row[0],
-                    row[10],
-                    record.card["upstream_source"],
-                    row[2],
-                    row[1],
-                    row[3],
-                    row[5],
-                )
-                for row, record in zip(card_rows, records, strict=True)
-            ],
-        )
         connection.commit()
-    inserted_cards = len(card_rows)
+    inserted_cards = len(records)
     inserted_vectors = len(embedding_rows)
     print(f"embedded {inserted_cards} cards × {VARIANT_K} variants = {inserted_vectors} vectors")
     return inserted_cards, model_load_seconds, time.perf_counter() - started
@@ -1094,6 +1224,7 @@ def build_embeddings_db(
     allow_missing_images: bool,
     limit: int | None,
     min_row_count: int,
+    seed_db: Path | None,
     summary_json: Path | None,
     missing_images_json: Path | None,
 ) -> dict[str, Any]:
@@ -1136,8 +1267,14 @@ def build_embeddings_db(
         connection.commit()
     print("initialized fresh embeddings db")
 
+    reused_card_ids: set[str] = set()
+    if seed_db is not None:
+        reused_card_ids = copy_seed_embeddings(output_db, seed_db, eligible_cards)
+
+    cards_to_embed = [card for card in eligible_cards if str(card["id"]) not in reused_card_ids]
+
     ready_records, skipped_cards, download_seconds, image_sources = ensure_images(
-        eligible_cards,
+        cards_to_embed,
         image_cache_dir,
         download_workers=download_workers,
         allow_web_image_fallback=allow_web_image_fallback,
@@ -1157,6 +1294,7 @@ def build_embeddings_db(
                 "download_seconds": round(download_seconds, 3),
                 "duration_seconds": round(time.perf_counter() - started, 3),
                 "processed_cards": len(ready_records),
+                "reused_seed_cards": len(reused_card_ids),
                 "skipped_cards": len(skipped_cards),
                 "skipped_by_locale": skipped_by_locale,
                 "skipped_reasons": skipped_reasons,
@@ -1227,6 +1365,7 @@ def build_embeddings_db(
             "expected_dim": EXPECTED_DIM,
             "processed_cards": len(ready_records),
             "inserted_embeddings": inserted_count,
+            "reused_seed_cards": len(reused_card_ids),
             "per_locale_embedded_count": embedded_counts,
             "per_locale_skipped_count": skipped_by_locale,
             "skipped_cards": len(skipped_cards),
@@ -1287,6 +1426,11 @@ def main() -> int:
     parser.add_argument("--image-cache-dir", required=True, help="Persistent cache directory for downloaded card art")
     parser.add_argument("--summary-json", help="Optional JSON build summary output path")
     parser.add_argument("--missing-images-json", help="Optional missing scan-image report output path")
+    parser.add_argument(
+        "--rebuild-int8-only",
+        action="store_true",
+        help="Recreate only embeddings_int8 from existing embeddings rows; skips API, image downloads, and ONNX inference.",
+    )
     parser.add_argument("--locales", default="en", help="Comma-separated TCGdex locales")
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument(
@@ -1302,11 +1446,22 @@ def main() -> int:
     parser.add_argument("--limit", type=int, help="Optional card limit for local verification")
     parser.add_argument("--min-row-count", type=int, default=1000)
     parser.add_argument(
+        "--seed-db",
+        help="Optional existing embeddings.db to reuse float embeddings for unchanged cards; only missing cards are embedded.",
+    )
+    parser.add_argument(
         "--detail-cache",
         default="build/tcgdex-detail-cache.jsonl",
         help="Path to local card-detail response cache (avoids re-fetching on reruns)",
     )
     args = parser.parse_args()
+
+    if args.rebuild_int8_only:
+        rebuild_int8_embeddings(
+            Path(args.output_db).resolve(),
+            summary_json=Path(args.summary_json).resolve() if args.summary_json else None,
+        )
+        return 0
 
     model_path = Path(args.model_path).resolve()
     if not model_path.exists():
@@ -1325,6 +1480,7 @@ def main() -> int:
         allow_missing_images=args.allow_missing_images,
         limit=args.limit,
         min_row_count=args.min_row_count,
+        seed_db=Path(args.seed_db).resolve() if args.seed_db else None,
         summary_json=Path(args.summary_json).resolve() if args.summary_json else None,
         missing_images_json=Path(args.missing_images_json).resolve() if args.missing_images_json else None,
     )
