@@ -84,6 +84,9 @@ def _pio_set_id_to_ours(pio_set_id: str) -> str:
         return f"{tg_match.group(1)}{tg_match.group(2).zfill(2)}"
     sv_match = re.match(r'^(swsh)(\d+)sv$', result)
     if sv_match:
+        num = int(sv_match.group(2))
+        if num in (45, 35):
+            return f"swsh{num // 10}.{num % 10}"
         return f"{sv_match.group(1)}{sv_match.group(2).zfill(2)}"
     gg_match = re.match(r'^(sv|swsh|sm)([\d.]+)gg$', result)
     if gg_match:
@@ -94,7 +97,7 @@ def _pio_set_id_to_ours(pio_set_id: str) -> str:
         if len(digits) == 1:
             return f"{prefix}0{digits}"
         return m.group(0)
-    result = re.sub(r'^(sv|swsh|sm|bw|xy|ex|dp|hgss|base)(\d+)', _pad_single_digit, result)
+    result = re.sub(r'^(sv|swsh|sm|bw|xy|ex|dp|hgss|base|me|ru|si|col|rs|pl|ec|g1|g2|dp|la|mt|fb|ma)(\d+)', _pad_single_digit, result)
     if result in reverse_aliases:
         return reverse_aliases[result]
     return result
