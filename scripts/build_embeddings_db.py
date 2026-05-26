@@ -5,6 +5,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import os
 import random
 import re
 import sqlite3
@@ -32,6 +33,7 @@ from embedder_contract import (
     prepare_base_image,
 )
 from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id, set_detail_cache_path
+from pokemontcgio_api import api_get_json as pio_api_get_json, resolve_api_key as pio_resolve_api_key
 
 # Variants are generated at DB build time so the index has K vectors per card,
 # capturing the kinds of degradation real screen captures introduce. Augments are
@@ -64,6 +66,187 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "2022swsh": ["mcd22"],
     "cel25": ["cel25c"],
 }
+
+
+def _pio_set_id_to_ours(pio_set_id: str) -> str:
+    reverse_aliases: dict[str, str] = {}
+    for our_id, aliases in POKEMONTCGIO_SET_ID_ALIASES.items():
+        for alias in aliases:
+            reverse_aliases[alias] = our_id
+    if pio_set_id in reverse_aliases:
+        return reverse_aliases[pio_set_id]
+    import re
+    result = pio_set_id
+    result = re.sub(r'pt5gg$', '.5gg', result)
+    result = re.sub(r'pt5$', '.5', result)
+    tg_match = re.match(r'^(sv|swsh|sm)(\d+)tg$', result)
+    if tg_match:
+        return f"{tg_match.group(1)}{tg_match.group(2).zfill(2)}"
+    sv_match = re.match(r'^(swsh)(\d+)sv$', result)
+    if sv_match:
+        return f"{sv_match.group(1)}{sv_match.group(2).zfill(2)}"
+    gg_match = re.match(r'^(sv|swsh|sm)([\d.]+)gg$', result)
+    if gg_match:
+        return f"{gg_match.group(1)}{gg_match.group(2)}"
+    def _pad_single_digit(m):
+        prefix = m.group(1)
+        digits = m.group(2)
+        if len(digits) == 1:
+            return f"{prefix}0{digits}"
+        return m.group(0)
+    result = re.sub(r'^(sv|swsh|sm|bw|xy|ex|dp|hgss|base)(\d+)', _pad_single_digit, result)
+    if result in reverse_aliases:
+        return reverse_aliases[result]
+    return result
+
+
+def fetch_supplementary_pokemontcgio_cards(
+    existing_cards: list[dict[str, Any]],
+    *,
+    api_key: str | None = None,
+) -> list[dict[str, Any]]:
+    clean_key = pio_resolve_api_key(api_key)
+    if not clean_key:
+        print("pokemontcgio supplementary fetch skipped: no API key")
+        return []
+
+    existing_ids: set[str] = set()
+    for card in existing_cards:
+        existing_ids.add(f"{card['set_id']}|{card['card_number']}")
+
+    try:
+        sets_payload = pio_api_get_json("/sets", params={"pageSize": "500"}, api_key=clean_key)
+    except Exception as exc:
+        print(f"pokemontcgio supplementary fetch failed: {exc}")
+        return []
+    if not isinstance(sets_payload, dict):
+        return []
+    pio_sets = [s for s in (sets_payload.get("data") or []) if isinstance(s, dict)]
+    print(f"pokemontcgio listed {len(pio_sets)} sets")
+
+    reverse_aliases: dict[str, str] = {}
+    for our_id, aliases in POKEMONTCGIO_SET_ID_ALIASES.items():
+        for alias in aliases:
+            reverse_aliases[alias] = our_id
+
+    existing_set_ids = {card["set_id"] for card in existing_cards}
+
+    def _resolve_our_set_id(pio_set_id_raw: str) -> str | None:
+        candidate = _pio_set_id_to_ours(pio_set_id_raw)
+        if candidate in existing_set_ids:
+            return candidate
+        import re
+        unpadded = re.sub(r'^(sv|swsh|sm|bw|xy|ex|dp|hgss|base)0+(\d)', r'\1\2', candidate)
+        if unpadded in existing_set_ids:
+            return unpadded
+        return candidate
+
+    sets_with_gaps: list[dict[str, Any]] = []
+    for pio_set in pio_sets:
+        pio_set_id = str(pio_set.get("id") or "").strip()
+        if not pio_set_id:
+            continue
+        our_set_id = _resolve_our_set_id(pio_set_id)
+        if our_set_id not in existing_set_ids:
+            pio_count = int(pio_set.get("total") or 0)
+            sets_with_gaps.append({
+                "pio_set_id": pio_set_id,
+                "our_set_id": our_set_id,
+                "pio_count": pio_count,
+                "our_count": 0,
+                "gap": pio_count,
+                "set_name": str(pio_set.get("name") or pio_set_id),
+            })
+            continue
+        our_count = sum(1 for c in existing_cards if c["set_id"] == our_set_id)
+        pio_count = int(pio_set.get("total") or 0)
+        if pio_count > our_count:
+            sets_with_gaps.append({
+                "pio_set_id": pio_set_id,
+                "our_set_id": our_set_id,
+                "pio_count": pio_count,
+                "our_count": our_count,
+                "gap": pio_count - our_count,
+                "set_name": str(pio_set.get("name") or pio_set_id),
+            })
+
+    sets_entirely_missing = [s for s in sets_with_gaps if s["our_count"] == 0]
+    sets_partially_missing = [s for s in sets_with_gaps if s["our_count"] > 0]
+    print(
+        f"pokemontcgio gaps: {len(sets_entirely_missing)} entirely missing sets, "
+        f"{len(sets_partially_missing)} partial sets with {sum(s['gap'] for s in sets_partially_missing)} estimated missing cards"
+    )
+
+    supplementary: list[dict[str, Any]] = []
+
+    for gap_set in sets_entirely_missing + sets_partially_missing:
+        pio_set_id = gap_set["pio_set_id"]
+        our_set_id = gap_set["our_set_id"]
+        page = 1
+        while True:
+            try:
+                payload = pio_api_get_json(
+                    "/cards",
+                    params={
+                        "q": f'set.id:"{pio_set_id}"',
+                        "page": str(page),
+                        "pageSize": "250",
+                        "select": "id,number,name,set,hp,rarity,images,artist,supertype,subtypes,types",
+                    },
+                    api_key=clean_key,
+                )
+            except Exception as exc:
+                print(f"pokemontcgio fetch failed for set {pio_set_id}: {exc}")
+                break
+            if not isinstance(payload, dict):
+                break
+            batch = payload.get("data")
+            if not isinstance(batch, list) or not batch:
+                break
+            for pio_card in batch:
+                if not isinstance(pio_card, dict):
+                    continue
+                pio_number = str(pio_card.get("number") or "").strip()
+                if not pio_number:
+                    continue
+                combo = f"{our_set_id}|{pio_number}"
+                if combo in existing_ids:
+                    continue
+
+                image_data = pio_card.get("images") or {}
+                image_url = str((image_data.get("large") or "")).strip()
+                image_url_low = str((image_data.get("small") or "")).strip() or None
+
+                card_id = f"pokemon:en:{our_set_id}:{pio_number}"
+                hp_raw = str(pio_card.get("hp") or "").strip()
+                types_raw = pio_card.get("types")
+
+                record: dict[str, Any] = {
+                    "id": card_id,
+                    "locale": "en",
+                    "upstream_source": "pokemontcgio",
+                    "upstream_id": pio_card.get("id", ""),
+                    "set_id": our_set_id,
+                    "set_name": gap_set["set_name"],
+                    "card_number": pio_number,
+                    "name": str(pio_card.get("name") or card_id).strip(),
+                    "rarity": str(pio_card.get("rarity") or "Unknown").strip() or "Unknown",
+                    "image_url": image_url,
+                    "image_url_low": image_url_low,
+                    "equivalence_key": f"pokemon:pokemontcgio:{pio_card.get('id', '')}",
+                    "illustrator": str(pio_card.get("artist") or "").strip() or None,
+                    "hp": hp_raw or None,
+                    "types": types_raw,
+                }
+                supplementary.append(record)
+                existing_ids.add(combo)
+
+            if len(batch) < 250:
+                break
+            page += 1
+
+    print(f"pokemontcgio supplementary: {len(supplementary)} new cards")
+    return supplementary
 
 
 @dataclass(frozen=True)
@@ -1225,6 +1408,7 @@ def build_embeddings_db(
     limit: int | None,
     min_row_count: int,
     seed_db: Path | None,
+    pokemontcgio_api_key: str | None,
     summary_json: Path | None,
     missing_images_json: Path | None,
 ) -> dict[str, Any]:
@@ -1238,8 +1422,15 @@ def build_embeddings_db(
     cards, listed_counts = fetch_all_card_records(locales, limit=limit)
     if not cards:
         raise RuntimeError("No cards were returned from the API")
+
+    supplementary_cards = fetch_supplementary_pokemontcgio_cards(
+        cards, api_key=pokemontcgio_api_key,
+    )
+    cards.extend(supplementary_cards)
+
     summary["total_remote_cards"] = len(cards)
     summary["listed_counts"] = listed_counts
+    summary["supplementary_pokemontcgio_cards"] = len(supplementary_cards)
 
     detailed_counts: dict[str, int] = {}
     for card in cards:
@@ -1450,6 +1641,11 @@ def main() -> int:
         help="Optional existing embeddings.db to reuse float embeddings for unchanged cards; only missing cards are embedded.",
     )
     parser.add_argument(
+        "--pokemontcgio-api-key",
+        default=os.environ.get("POKEMONTCG_API_KEY", ""),
+        help="PokemonTCG.io API key for supplementary card fetch. Defaults to POKEMONTCG_API_KEY env var.",
+    )
+    parser.add_argument(
         "--detail-cache",
         default="build/tcgdex-detail-cache.jsonl",
         help="Path to local card-detail response cache (avoids re-fetching on reruns)",
@@ -1481,6 +1677,7 @@ def main() -> int:
         limit=args.limit,
         min_row_count=args.min_row_count,
         seed_db=Path(args.seed_db).resolve() if args.seed_db else None,
+        pokemontcgio_api_key=args.pokemontcgio_api_key or None,
         summary_json=Path(args.summary_json).resolve() if args.summary_json else None,
         missing_images_json=Path(args.missing_images_json).resolve() if args.missing_images_json else None,
     )

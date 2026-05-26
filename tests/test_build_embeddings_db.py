@@ -348,6 +348,84 @@ class InsertEmbeddingsTests(unittest.TestCase):
             self.assertEqual("Mewtwo Updated", name)
             self.assertEqual(build_embeddings_db.VARIANT_K, embedding_count)
 
+    def test_fetch_supplementary_skips_without_api_key(self) -> None:
+        result = build_embeddings_db.fetch_supplementary_pokemontcgio_cards(
+            [], api_key="",
+        )
+        self.assertEqual([], result)
+
+    def test_fetch_supplementary_deduplicates_by_set_and_number(self) -> None:
+        existing = [
+            {
+                "id": "pokemon:en:sm2:60",
+                "set_id": "sm2",
+                "card_number": "60",
+                "locale": "en",
+                "name": "Tapu Lele-GX",
+            },
+        ]
+        sets_payload = {
+            "data": [
+                {"id": "sm2", "name": "Guardians Rising", "total": 2, "printedTotal": 2},
+            ],
+        }
+        cards_payload = {
+            "totalCount": 2,
+            "data": [
+                {
+                    "id": "sm2-60",
+                    "number": "60",
+                    "name": "Tapu Lele-GX",
+                    "set": {"id": "sm2", "name": "Guardians Rising"},
+                    "rarity": "Rare Holo GX",
+                    "images": {"large": "https://example.com/sm2-60.png", "small": "https://example.com/sm2-60-sm.png"},
+                    "artist": "5ban Graphics",
+                    "hp": "170",
+                    "supertype": "Pokémon",
+                    "types": ["Psychic"],
+                },
+                {
+                    "id": "sm2-60a",
+                    "number": "60a",
+                    "name": "Tapu Lele-GX",
+                    "set": {"id": "sm2", "name": "Guardians Rising"},
+                    "rarity": "Rare Ultra",
+                    "images": {"large": "https://example.com/sm2-60a.png"},
+                    "artist": "5ban Graphics",
+                    "hp": "170",
+                    "supertype": "Pokémon",
+                    "types": ["Psychic"],
+                },
+            ],
+        }
+
+        call_count = [0]
+        def fake_api_get_json(path, *, params=None, **kwargs):
+            call_count[0] += 1
+            if "/sets" in path:
+                return sets_payload
+            return cards_payload
+
+        with mock.patch.object(
+            build_embeddings_db,
+            "pio_api_get_json",
+            side_effect=fake_api_get_json,
+        ), mock.patch.object(
+            build_embeddings_db,
+            "pio_resolve_api_key",
+            return_value="fake-key",
+        ):
+            result = build_embeddings_db.fetch_supplementary_pokemontcgio_cards(
+                existing, api_key="fake-key",
+            )
+
+        self.assertEqual(1, len(result))
+        self.assertEqual("pokemon:en:sm2:60a", result[0]["id"])
+        self.assertEqual("sm2", result[0]["set_id"])
+        self.assertEqual("60a", result[0]["card_number"])
+        self.assertEqual("pokemontcgio", result[0]["upstream_source"])
+        self.assertEqual("https://example.com/sm2-60a.png", result[0]["image_url"])
+
 
 class ImageFallbackTests(unittest.TestCase):
     @staticmethod
