@@ -1126,13 +1126,25 @@ def ensure_images(
     if pending:
         print(f"downloading {len(pending)} new images to {cache_dir}")
 
+        pending_by_id = {card["id"]: (card, image_path) for card, image_path in pending}
+
         def task(item: tuple[dict[str, Any], Path]) -> tuple[str, str | None]:
             card, image_path = item
             try:
                 download_binary(image_url_for_card(card), image_path)
                 return card["id"], None
-            except Exception as exc:  # pragma: no cover - network failure path
-                return card["id"], str(exc)
+            except Exception as exc:
+                card_id = card["id"]
+                fallback_entry = fallback_manifest.get(card_id)
+                if fallback_entry:
+                    fallback_url = fallback_entry.get("url")
+                    if fallback_url:
+                        try:
+                            download_binary(fallback_url, image_path)
+                            return card_id, None
+                        except Exception:
+                            pass
+                return card_id, str(exc)
 
         completed = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=download_workers) as executor:
