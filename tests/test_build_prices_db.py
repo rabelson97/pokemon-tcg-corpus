@@ -4,6 +4,7 @@ import datetime as dt
 import sqlite3
 import sys
 import tempfile
+import urllib.error
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -18,6 +19,51 @@ import build_prices_db  # noqa: E402
 
 
 class BuildPricesDbTests(unittest.TestCase):
+    def test_fetch_set_scoped_pokemontcgio_cards_avoids_global_catalog_query(self) -> None:
+        english_cards = [
+            {"set_id": "sv01", "card_number": "001"},
+            {"set_id": "sv01", "card_number": "002"},
+        ]
+        payload = {
+            "data": [
+                {"id": "sv01-1", "number": "001", "set": {"id": "sv01"}},
+                {"id": "sv01-2", "number": "002", "set": {"id": "sv01"}},
+            ],
+            "totalCount": 2,
+        }
+
+        with mock.patch.object(build_prices_db, "pokemontcgio_api_get_json", return_value=payload) as mock_get:
+            cards = build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
+
+        self.assertEqual(["sv01-1", "sv01-2"], [card["id"] for card in cards])
+        queries = [call.kwargs["params"]["q"] for call in mock_get.call_args_list]
+        self.assertIn("set.id:sv01", queries)
+        self.assertNotIn("set.id:*", queries)
+        self.assertTrue(all(query.startswith("set.id:") for query in queries))
+
+    def test_fetch_set_scoped_pokemontcgio_cards_skips_unknown_provider_sets(self) -> None:
+        english_cards = [{"set_id": "unknown", "card_number": "001"}]
+        not_found = urllib.error.HTTPError(
+            url="https://api.pokemontcg.io/v2/cards",
+            code=404,
+            msg="Not Found",
+            hdrs=None,
+            fp=None,
+        )
+
+        with mock.patch.object(build_prices_db, "pokemontcgio_api_get_json", side_effect=not_found):
+            cards = build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
+
+        self.assertEqual([], cards)
+
+    def test_fetch_set_scoped_pokemontcgio_cards_skips_transient_provider_errors(self) -> None:
+        english_cards = [{"set_id": "sv01", "card_number": "001"}]
+
+        with mock.patch.object(build_prices_db, "pokemontcgio_api_get_json", side_effect=TimeoutError("timed out")):
+            cards = build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
+
+        self.assertEqual([], cards)
+
     def test_extract_price_rows_supports_pokemontcgio_tcgplayer_shape(self) -> None:
         rows = build_prices_db.extract_price_rows_from_selected_sources(
             "pokemon:en:sv01:001",

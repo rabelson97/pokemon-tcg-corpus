@@ -8,11 +8,12 @@ import json
 import os
 import re
 import sqlite3
+import urllib.error
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from pokemontcgio_api import API_KEY_ENV_VARS, fetch_card_by_id, fetch_english_cards, search_card_by_set_and_number
+from pokemontcgio_api import API_KEY_ENV_VARS, api_get_json as pokemontcgio_api_get_json, fetch_card_by_id, search_card_by_set_and_number
 from poketrace_api import POKETRACE_API_KEY_ENV_VAR
 from ppt_api import PPT_API_KEY_ENV_VAR
 from tcgdex_api import fetch_all_card_records, parse_locales
@@ -403,6 +404,77 @@ def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> li
         if matched is not None:
             fetched.append(matched)
     return fetched
+
+
+def fetch_set_scoped_pokemontcgio_cards(
+    english_cards: list[dict[str, Any]],
+    *,
+    page_size: int = 50,
+    timeout: int = 12,
+    retries: int = 2,
+) -> list[dict[str, Any]]:
+    set_ids = sorted(
+        {
+            candidate_set_id
+            for card in english_cards
+            for candidate_set_id in alias_set_ids_for_pokemontcgio(
+                str(card.get("set_id") or "").strip(),
+                str(card.get("card_number") or "").strip(),
+            )
+            if candidate_set_id
+        }
+    )
+    fetched_by_id: dict[str, dict[str, Any]] = {}
+    for set_id in set_ids:
+        page = 1
+        total_count: int | None = None
+        while True:
+            try:
+                payload = pokemontcgio_api_get_json(
+                    "/cards",
+                    params={
+                        "q": f"set.id:{set_id}",
+                        "page": str(page),
+                        "pageSize": str(page_size),
+                        "select": "id,number,set,tcgplayer",
+                    },
+                    timeout=timeout,
+                    retries=retries,
+                )
+            except urllib.error.HTTPError as error:
+                if error.code in {400, 404, 429, 500, 502, 503, 504}:
+                    print(f"pokemontcgio set={set_id} skipped status={error.code}")
+                    break
+                raise
+            except (urllib.error.URLError, TimeoutError, OSError) as error:
+                print(f"pokemontcgio set={set_id} skipped error={type(error).__name__}")
+                break
+            if not isinstance(payload, dict):
+                raise RuntimeError("Unexpected PokemonTCG.io cards payload: expected object")
+            batch = payload.get("data")
+            if not isinstance(batch, list):
+                raise RuntimeError("Unexpected PokemonTCG.io cards payload: missing data list")
+            if total_count is None:
+                raw_total_count = payload.get("totalCount")
+                if isinstance(raw_total_count, int):
+                    total_count = raw_total_count
+            for card in batch:
+                if isinstance(card, dict):
+                    card_id = str(card.get("id") or "").strip()
+                    if card_id:
+                        fetched_by_id.setdefault(card_id, card)
+            print(
+                f"pokemontcgio set={set_id} page={page} batch={len(batch)} total_so_far={len(fetched_by_id)}"
+                + (f" set_total={total_count}" if total_count is not None else "")
+            )
+            if not batch:
+                break
+            if total_count is not None and page * page_size >= total_count:
+                break
+            if len(batch) < page_size:
+                break
+            page += 1
+    return list(fetched_by_id.values())
 
 
 def select_price_sources(
@@ -1060,7 +1132,7 @@ def build_prices_db(
         elif reuse_existing_tcgplayer_date:
             pokemontcgio_cards = []
         else:
-            pokemontcgio_cards = fetch_english_cards()
+            pokemontcgio_cards = fetch_set_scoped_pokemontcgio_cards(english_cards)
         pokemontcgio_index = build_pokemontcgio_index(pokemontcgio_cards)
         if allow_fallback_queries:
             poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
