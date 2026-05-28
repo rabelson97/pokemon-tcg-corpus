@@ -129,7 +129,7 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual("cardmarket", rows[0][3])
         self.assertEqual(1, rows[0][-1])
 
-    def test_select_price_sources_prefers_pokemontcgio_for_english_cards(self) -> None:
+    def test_select_price_sources_prefers_tcgdex_tcgplayer_for_english_cards(self) -> None:
         summary = {
             "transport_counts": {"cardmarket": {"tcgdex": 0}, "tcgplayer": {"pokemontcgio": 0}},
             "pokemontcgio": {
@@ -192,9 +192,117 @@ class BuildPricesDbTests(unittest.TestCase):
         )
 
         rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], selected)
+        self.assertEqual("2026-04-05T12:34:56.000Z", rows[0][7])
+        self.assertEqual(1, summary["transport_counts"]["tcgplayer"]["tcgdex"])
+        self.assertNotIn("cardmarket", selected)
+
+    def test_select_price_sources_falls_back_to_pokemontcgio_when_tcgdex_stale(self) -> None:
+        summary = {
+            "transport_counts": {"cardmarket": {"tcgdex": 0}, "tcgplayer": {"pokemontcgio": 0}},
+            "pokemontcgio": {
+                "english_cards_considered": 0,
+                "english_cards_with_match": 0,
+                "english_cards_without_match": 0,
+                "english_cards_with_tcgplayer": 0,
+                "english_cards_without_tcgplayer": 0,
+                "stale_tcgplayer_rows": 0,
+                "stale_reasons": {},
+            },
+        }
+        card = {
+            "id": "pokemon:en:swsh1:1",
+            "locale": "en",
+            "set_id": "swsh1",
+            "card_number": "1",
+            "pricing": {
+                "tcgplayer": {
+                    "updated": "2026-03-01T00:00:00.000Z",
+                    "unit": "USD",
+                    "normal": {
+                        "lowPrice": 999.0,
+                        "marketPrice": 999.0,
+                        "highPrice": 999.0,
+                    },
+                },
+            },
+        }
+        pokemontcgio_index = {
+            ("swsh1", "1"): {
+                "tcgplayer": {
+                    "updatedAt": "2026/04/06",
+                    "prices": {
+                        "holofoil": {
+                            "low": 1.25,
+                            "mid": 2.5,
+                            "high": 4.0,
+                            "market": 2.2,
+                            "directLow": 2.1,
+                        }
+                    },
+                }
+            }
+        }
+
+        selected = build_prices_db.select_price_sources(
+            card,
+            pokemontcgio_index=pokemontcgio_index,
+            max_pokemontcgio_age_days=14,
+            now=dt.datetime(2026, 4, 6, tzinfo=dt.timezone.utc),
+            summary=summary,
+        )
+
+        rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], selected)
         self.assertEqual("2026/04/06", rows[0][7])
         self.assertEqual(1, summary["transport_counts"]["tcgplayer"]["pokemontcgio"])
-        self.assertNotIn("cardmarket", selected)
+
+    def test_select_price_sources_falls_back_to_pokemontcgio_when_tcgdex_missing(self) -> None:
+        summary = {
+            "transport_counts": {"cardmarket": {"tcgdex": 0}, "tcgplayer": {"pokemontcgio": 0}},
+            "pokemontcgio": {
+                "english_cards_considered": 0,
+                "english_cards_with_match": 0,
+                "english_cards_without_match": 0,
+                "english_cards_with_tcgplayer": 0,
+                "english_cards_without_tcgplayer": 0,
+                "stale_tcgplayer_rows": 0,
+                "stale_reasons": {},
+            },
+        }
+        card = {
+            "id": "pokemon:en:swsh1:1",
+            "locale": "en",
+            "set_id": "swsh1",
+            "card_number": "1",
+            "pricing": {},
+        }
+        pokemontcgio_index = {
+            ("swsh1", "1"): {
+                "tcgplayer": {
+                    "updatedAt": "2026/04/06",
+                    "prices": {
+                        "holofoil": {
+                            "low": 1.25,
+                            "mid": 2.5,
+                            "high": 4.0,
+                            "market": 2.2,
+                            "directLow": 2.1,
+                        }
+                    },
+                }
+            }
+        }
+
+        selected = build_prices_db.select_price_sources(
+            card,
+            pokemontcgio_index=pokemontcgio_index,
+            max_pokemontcgio_age_days=14,
+            now=dt.datetime(2026, 4, 6, tzinfo=dt.timezone.utc),
+            summary=summary,
+        )
+
+        rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], selected)
+        self.assertEqual("2026/04/06", rows[0][7])
+        self.assertEqual(1, summary["transport_counts"]["tcgplayer"]["pokemontcgio"])
 
     def test_select_price_sources_skips_stale_pokemontcgio_prices(self) -> None:
         summary = {

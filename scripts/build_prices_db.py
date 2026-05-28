@@ -61,16 +61,28 @@ CARDMARKET_NUMERIC_KEYS = [
 ]
 
 POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
-    # PokemonTCG.io uses a compact set id for Champion's Path instead of the
-    # TCGdex-style half-set id.
     "swsh3.5": ["swsh35"],
-    # PokemonTCG.io uses a compact set id for Shining Fates instead of the
-    # TCGdex-style half-set id.
     "swsh4.5": ["swsh45"],
-    # Black Bolt and White Flare are split English SV10.5 sets in TCGdex /
-    # CardHawk, but PokemonTCG.io publishes them as separate provider sets.
     "sv10.5b": ["zsv10pt5"],
     "sv10.5w": ["rsv10pt5"],
+    "sm3.5": ["sm35"],
+    "sm7.5": ["sm75"],
+    "swsh10.5": ["swsh12pt5"],
+    "hgssp": ["hsp"],
+    "fut2020": ["fut20"],
+    "lc": ["base6"],
+    "me02.5": ["me2pt5"],
+    "2011bw": ["mcd11"],
+    "2012bw": ["mcd12"],
+    "2014xy": ["mcd14"],
+    "2015xy": ["mcd15"],
+    "2016xy": ["mcd16"],
+    "2017sm": ["mcd17"],
+    "2018sm": ["mcd18"],
+    "2019sm": ["mcd19"],
+    "2021swsh": ["mcd21"],
+    "2022swsh": ["mcd22"],
+    "cel25": ["cel25c"],
 }
 
 
@@ -500,13 +512,31 @@ def select_price_sources(
 
     summary["pokemontcgio"]["english_cards_considered"] += 1
     identity_audit = ensure_identity_audit(summary)
-    matched_card, matched_key, attempted_keys = find_pokemontcgio_card_match(
-        pokemontcgio_index,
-        set_id=str(card.get("set_id") or "").strip(),
-        card_number=str(card.get("card_number") or "").strip(),
-    )
     resolution_reason: str | None = None
     tcgplayer_resolved = False
+
+    tcgdex_tcgplayer = pricing.get("tcgplayer")
+    if isinstance(tcgdex_tcgplayer, dict):
+        normalized_tcgplayer, updated_at = normalize_tcgplayer_payload(tcgdex_tcgplayer)
+        if normalized_tcgplayer is not None and updated_at is not None:
+            try:
+                is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
+            except ValueError:
+                is_fresh = False
+            if is_fresh:
+                selected_sources["tcgplayer"] = normalized_tcgplayer
+                increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "tcgdex")
+                tcgplayer_resolved = True
+                summary["tcgdex_tcgplayer_fresh"] = summary.get("tcgdex_tcgplayer_fresh", 0) + 1
+
+    if not tcgplayer_resolved:
+        matched_card, matched_key, attempted_keys = find_pokemontcgio_card_match(
+            pokemontcgio_index,
+            set_id=str(card.get("set_id") or "").strip(),
+            card_number=str(card.get("card_number") or "").strip(),
+        )
+    else:
+        matched_card, matched_key, attempted_keys = None, None, []
     if matched_card is not None:
         summary["pokemontcgio"]["english_cards_with_match"] += 1
         if matched_key is not None and attempted_keys and matched_key != attempted_keys[0]:
@@ -1200,12 +1230,13 @@ def build_prices_db(
         now = dt.datetime.now(dt.timezone.utc)
         build_metadata: dict[str, Any] = {
             "transport_counts": defaultdict(lambda: defaultdict(int)),
-            "pokemontcgio": {
-                "api_key_env_vars": list(API_KEY_ENV_VARS),
-                "api_key_configured": any(bool(os.environ.get(env_var, "").strip()) for env_var in API_KEY_ENV_VARS),
-                "english_cards_fetched": len(pokemontcgio_cards),
-                "english_unique_match_keys": len(pokemontcgio_index),
-                "english_cards_considered": 0,
+        "tcgdex_tcgplayer_fresh": 0,
+        "pokemontcgio": {
+            "api_key_env_vars": list(API_KEY_ENV_VARS),
+            "api_key_configured": any(bool(os.environ.get(env_var, "").strip()) for env_var in API_KEY_ENV_VARS),
+            "english_cards_fetched": len(pokemontcgio_cards),
+            "english_unique_match_keys": len(pokemontcgio_index),
+            "english_cards_considered": 0,
                 "english_cards_with_match": 0,
                 "english_cards_without_match": 0,
                 "english_cards_with_tcgplayer": 0,
