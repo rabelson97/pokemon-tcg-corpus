@@ -163,6 +163,7 @@ jobs:
           test "$(sqlite3 embeddings.db 'SELECT MIN(c) FROM (SELECT COUNT(*) AS c FROM embeddings_int8 GROUP BY card_id);')" = "$variant_k"
           test "$(sqlite3 embeddings.db 'SELECT MAX(c) FROM (SELECT COUNT(*) AS c FROM embeddings_int8 GROUP BY card_id);')" = "$variant_k"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM cards WHERE image_url LIKE 'file:%' OR image_url_low LIKE 'file:%' OR image_url LIKE '%/home/runner/%' OR image_url_low LIKE '%/home/runner/%';")" = "0"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM cards WHERE image_url IS NULL OR trim(image_url) = '';")" = "0"
           echo "int8_count=$int8_count"
           # every card must carry exactly K variants
           test "$(sqlite3 embeddings.db 'SELECT MIN(c) FROM (SELECT COUNT(*) AS c FROM embeddings GROUP BY card_id);')" = "$variant_k"

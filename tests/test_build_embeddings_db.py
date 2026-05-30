@@ -516,7 +516,7 @@ class ImageFallbackTests(unittest.TestCase):
             self.assertEqual("https://example.com/mep-023.png", card["image_url"])
             self.assertEqual({"pokemon:en:mep:023": "web_search_unverified:cached"}, image_sources)
 
-    def test_cached_image_without_public_url_is_ready_for_embedding(self) -> None:
+    def test_cached_image_without_public_url_is_rejected_for_release_metadata(self) -> None:
         card = self._missing_image_card()
 
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -524,7 +524,7 @@ class ImageFallbackTests(unittest.TestCase):
             image_path = cache_dir / f"{tcgdex_api.sanitize_card_id(str(card['id']))}.img"
             self._write_probe_image("unused", image_path)
 
-            with mock.patch.object(build_embeddings_db, "resolve_fallback_image") as resolve_mock:
+            with mock.patch.object(build_embeddings_db, "resolve_fallback_image", return_value=None) as resolve_mock:
                 ready, skipped, _seconds, image_sources = build_embeddings_db.ensure_images(
                     [card],
                     cache_dir,
@@ -532,11 +532,11 @@ class ImageFallbackTests(unittest.TestCase):
                     allow_web_image_fallback=False,
                 )
 
-            resolve_mock.assert_not_called()
-            self.assertEqual([], skipped)
-            self.assertEqual(1, len(ready))
-            self.assertIsNone(card["image_url"])
-            self.assertEqual({"pokemon:en:mep:023": "local_cache_without_public_url"}, image_sources)
+            resolve_mock.assert_called_once()
+            self.assertEqual([], ready)
+            self.assertEqual(1, len(skipped))
+            self.assertEqual("missing_image_url", skipped[0].reason)
+            self.assertEqual({}, image_sources)
 
     def test_file_url_fallback_manifest_is_ignored(self) -> None:
         card = self._missing_image_card()

@@ -8,7 +8,9 @@ import json
 import os
 import re
 import sqlite3
+import time
 import urllib.error
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -59,6 +61,126 @@ CARDMARKET_NUMERIC_KEYS = [
     "averageSellPrice",
     "trendPrice",
 ]
+USD_PRICE_SOURCE_NAMES = ("tcgplayer", "pokemonpricetracker", "poketrace", "pricecharting", "pkmngg")
+
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+# Curated, explicit set mappings for missing cards on pkmn.gg
+EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
+    "mep": ("mega-evolution", "me-black-star-promos"),
+    "smp": ("sun-moon", "sm-black-star-promos"),
+    "svp": ("scarlet-violet", "scarlet-violet-black-star-promos"),
+    "cel25": ("sword-shield", "celebrations"),
+    "swshp": ("sword-shield", "swsh-black-star-promos"),
+    "sve": ("scarlet-violet", "scarlet-violet-energy-2023"),
+    "bog": ("other", "best-of-game"),
+    "2023sv": ("other", "mcdonalds-collection-2023"),
+    "2024sv": ("other", "mcdonalds-collection-2025"),
+    "2022swsh": ("other", "mcdonalds-collection-2022"),
+    "sm7.5": ("sun-moon", "dragon-majesty"),
+    "sm3.5": ("sun-moon", "shining-legends"),
+    "sm6": ("sun-moon", "forbidden-light"),
+    "tk-xy-w": ("xy", "xy-trainer-kit-wigglytuff"),
+    "tk-xy-sy": ("xy", "xy-trainer-kit-sylveon"),
+    "tk-bw-z": ("black-white", "black-white-trainer-kit-zoroark"),
+    "tk-xy-b": ("xy", "xy-trainer-kit-bisharp"),
+    "tk-xy-latia": ("xy", "xy-trainer-kit-latias"),
+    "tk-xy-latio": ("xy", "xy-trainer-kit-latios"),
+    "tk-xy-n": ("xy", "xy-trainer-kit-noivern"),
+    "tk-xy-p": ("xy", "xy-trainer-kit-pikachu-libre"),
+    "tk-xy-su": ("xy", "xy-trainer-kit-suicune"),
+    "tk-bw-e": ("black-white", "black-white-trainer-kit-excadrill"),
+    "tk-sm-r": ("sun-moon", "sun-moon-trainer-kit-alolan-raichu"),
+    "tk-sm-l": ("sun-moon", "sun-moon-trainer-kit-lycanroc"),
+    "tk-dp-m": ("diamond-pearl", "dp-trainer-kit-manaphy"),
+    "tk-dp-l": ("diamond-pearl", "dp-trainer-kit-lucario"),
+    "ecard2": ("e-card", "aquapolis"),
+    "ecard3": ("e-card", "skyridge"),
+    
+    # mfb ("My First Battle") maps to multiple decks
+    "mfb": [
+        ("other", "my-first-battle-bulbasaur"),
+        ("other", "my-first-battle-charmander"),
+        ("other", "my-first-battle-pikachu"),
+        ("other", "my-first-battle-squirtle")
+    ]
+}
+
+
+def normalize_name(name: str) -> str:
+    text = str(name or "").lower()
+    text = text.replace("’", "'").replace("‘", "'").replace("–", "-").replace("—", "-")
+    return re.sub(r"[^a-z0-9]", "", text)
+
+
+def normalize_number(num: str) -> str:
+    text = str(num or "").strip().upper()
+    text = text.lstrip("0")
+    if not text:
+        return "0"
+    return text
+
+
+def fetch_pkmngg_set_cards(series: str, slug: str) -> list[dict[str, Any]]:
+    url = f"https://www.pkmn.gg/series/{series}/{slug}"
+    headers = {"User-Agent": USER_AGENT}
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        time.sleep(0.5)  # rate limit safety
+        with urllib.request.urlopen(req, timeout=30) as res:
+            html = res.read().decode("utf-8", errors="replace")
+        
+        match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html)
+        if not match:
+            return []
+            
+        data = json.loads(match.group(1))
+        cards = data.get("props", {}).get("pageProps", {}).get("cardData", [])
+        if isinstance(cards, list):
+            return [c for c in cards if isinstance(c, dict)]
+        return []
+    except Exception:
+        return []
+
+
+def match_card_in_candidates(local_card: dict[str, Any], candidates: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, str]:
+    loc_name_norm = normalize_name(local_card["name"])
+    loc_num_norm = normalize_number(local_card["card_number"])
+    
+    matches = []
+    for cand in candidates:
+        cand_name_norm = normalize_name(cand.get("name") or "")
+        cand_num_norm = normalize_number(cand.get("number") or "")
+        cand_num_disp_norm = normalize_number(cand.get("numberDisplay") or "")
+        
+        if cand_name_norm != loc_name_norm:
+            continue
+            
+        if loc_num_norm == cand_num_norm or loc_num_norm == cand_num_disp_norm:
+            matches.append(cand)
+            
+    if len(matches) == 1:
+        return matches[0], "exact_match"
+        
+    if len(matches) > 1:
+        name_lower = local_card["name"].lower()
+        if "energy" in name_lower or name_lower in ("potion", "switch"):
+            return matches[0], "duplicate_identical_allowed"
+        return None, f"ambiguous_matches: {len(matches)}"
+        
+    name_only_matches = [
+        c for c in candidates
+        if normalize_name(c.get("name") or "") == loc_name_norm
+    ]
+    if len(name_only_matches) == 1:
+        return name_only_matches[0], "name_only_match"
+        
+    if len(name_only_matches) > 1:
+        name_lower = local_card["name"].lower()
+        if local_card["set_id"] == "mfb" or "energy" in name_lower or name_lower in ("potion", "switch", "charmander", "pikachu", "squirtle", "bulbasaur"):
+            return name_only_matches[0], "name_only_duplicate_allowed"
+        
+    return None, "no_match"
 
 POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "swsh3.5": ["swsh35"],
@@ -456,11 +578,13 @@ def fetch_set_scoped_pokemontcgio_cards(
             except urllib.error.HTTPError as error:
                 if error.code in {400, 404, 429, 500, 502, 503, 504}:
                     print(f"pokemontcgio set={set_id} skipped status={error.code}")
-                    break
+                    if error.code in {400, 404}:
+                        break
+                    raise RuntimeError(f"PokemonTCG.io set fetch failed for set={set_id} status={error.code}") from error
                 raise
             except (urllib.error.URLError, TimeoutError, OSError) as error:
                 print(f"pokemontcgio set={set_id} skipped error={type(error).__name__}")
-                break
+                raise RuntimeError(f"PokemonTCG.io set fetch failed for set={set_id}: {error}") from error
             if not isinstance(payload, dict):
                 raise RuntimeError("Unexpected PokemonTCG.io cards payload: expected object")
             batch = payload.get("data")
@@ -487,6 +611,47 @@ def fetch_set_scoped_pokemontcgio_cards(
                 break
             page += 1
     return list(fetched_by_id.values())
+
+
+def load_cards_from_embeddings_db(db_path: Path) -> list[dict[str, Any]]:
+    if not db_path.exists():
+        raise RuntimeError(f"Card universe embeddings DB not found: {db_path}")
+    with sqlite3.connect(db_path) as connection:
+        card_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cards);").fetchall()}
+        if not {"id", "locale", "upstream_id", "set_name", "card_number", "name", "rarity"}.issubset(card_columns):
+            raise RuntimeError(f"Embeddings DB cards table is missing required columns: {db_path}")
+        set_column = "set_id" if "set_id" in card_columns else "set_code" if "set_code" in card_columns else None
+        if set_column is None:
+            raise RuntimeError(f"Embeddings DB cards table is missing set_id/set_code: {db_path}")
+        hp_select = "hp" if "hp" in card_columns else "NULL AS hp"
+        types_select = "types" if "types" in card_columns else "NULL AS types"
+        rows = connection.execute(
+            f"""
+            SELECT id, locale, upstream_id, {set_column} AS set_id, set_name, card_number,
+                   name, rarity, {hp_select}, {types_select}
+            FROM cards
+            ORDER BY id;
+            """
+        ).fetchall()
+
+    cards: list[dict[str, Any]] = []
+    for row in rows:
+        cards.append(
+            {
+                "id": str(row[0]),
+                "locale": str(row[1]),
+                "upstream_id": str(row[2]),
+                "set_id": str(row[3]),
+                "set_name": str(row[4]),
+                "card_number": str(row[5]),
+                "name": str(row[6]),
+                "rarity": str(row[7]),
+                "hp": str(row[8]) if row[8] is not None else None,
+                "types": str(row[9]).split(",") if row[9] else [],
+                "pricing": {},
+            }
+        )
+    return cards
 
 
 def select_price_sources(
@@ -518,12 +683,14 @@ def select_price_sources(
     tcgdex_tcgplayer = pricing.get("tcgplayer")
     if isinstance(tcgdex_tcgplayer, dict):
         normalized_tcgplayer, updated_at = normalize_tcgplayer_payload(tcgdex_tcgplayer)
-        if normalized_tcgplayer is not None and updated_at is not None:
-            try:
-                is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
-            except ValueError:
-                is_fresh = False
-            if is_fresh:
+        if normalized_tcgplayer is not None:
+            is_fresh = False
+            if updated_at is not None:
+                try:
+                    is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
+                except ValueError:
+                    is_fresh = False
+            if updated_at is None or is_fresh:
                 selected_sources["tcgplayer"] = normalized_tcgplayer
                 increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "tcgdex")
                 tcgplayer_resolved = True
@@ -544,18 +711,20 @@ def select_price_sources(
         tcgplayer_payload = matched_card.get("tcgplayer")
         if isinstance(tcgplayer_payload, dict):
             normalized_tcgplayer, updated_at = normalize_tcgplayer_payload(tcgplayer_payload)
-            if normalized_tcgplayer is not None and updated_at is not None:
+            if normalized_tcgplayer is not None:
                 invalid_updated_at = False
-                try:
-                    is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
-                except ValueError:
-                    is_fresh = False
-                    invalid_updated_at = True
-                    summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
-                    increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "invalid_updated_at")
-                    identity_audit["stale_or_missing_tcgplayer"] += 1
-                    resolution_reason = "pokemontcgio_tcgplayer_invalid_updated_at"
-                if is_fresh:
+                is_fresh = False
+                if updated_at is not None:
+                    try:
+                        is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
+                    except ValueError:
+                        is_fresh = False
+                        invalid_updated_at = True
+                        summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
+                        increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "invalid_updated_at")
+                        identity_audit["stale_or_missing_tcgplayer"] += 1
+                        resolution_reason = "pokemontcgio_tcgplayer_invalid_updated_at"
+                if updated_at is None or is_fresh:
                     selected_sources["tcgplayer"] = normalized_tcgplayer
                     summary["pokemontcgio"]["english_cards_with_tcgplayer"] += 1
                     increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "pokemontcgio")
@@ -570,11 +739,6 @@ def select_price_sources(
                 summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
                 identity_audit["stale_or_missing_tcgplayer"] += 1
                 resolution_reason = "pokemontcgio_tcgplayer_without_numeric_prices"
-            elif updated_at is None:
-                summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
-                increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "missing_updated_at")
-                identity_audit["stale_or_missing_tcgplayer"] += 1
-                resolution_reason = "pokemontcgio_tcgplayer_missing_updated_at"
         else:
             summary["pokemontcgio"]["english_cards_without_tcgplayer"] += 1
             identity_audit["stale_or_missing_tcgplayer"] += 1
@@ -797,22 +961,26 @@ def extract_price_rows_from_selected_sources(
 ) -> list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]:
     rows: list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]] = []
 
-    tcgplayer = selected_sources.get("tcgplayer")
-    if isinstance(tcgplayer, dict):
-        variant = tcgplayer["selected_variant"]
+    for source_key in USD_PRICE_SOURCE_NAMES:
+        source = selected_sources.get(source_key)
+        if not isinstance(source, dict):
+            continue
+        variant = source["selected_variant"]
+        source_name = str(source.get("source_name") or source_key)
         rows.append(
             (
                 card_id,
                 "US",
-                str(tcgplayer.get("unit") or "USD"),
-                "tcgplayer",
+                str(source.get("unit") or "USD"),
+                source_name,
                 first_number(variant, ["lowPrice", "low"]),
                 first_number(variant, ["marketPrice", "market", "midPrice", "mid", "directLowPrice", "directLow", "averageSellPrice"]),
                 first_number(variant, ["highPrice", "high"]),
-                str(tcgplayer.get("updated") or "").strip() or None,
+                str(source.get("updated") or "").strip() or None,
                 1,
             )
         )
+        break
 
     cardmarket = selected_sources.get("cardmarket")
     if isinstance(cardmarket, dict):
@@ -934,6 +1102,7 @@ def try_fallback_providers(
             if cached_card is not None:
                 result = ppt_api.extract_usd_price(cached_card)
                 if result is not None:
+                    result["source_name"] = "pokemonpricetracker"
                     increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "ppt_bulk")
                     fallback_summary["ppt_bulk_hits"] += 1
                     return result
@@ -954,6 +1123,7 @@ def try_fallback_providers(
             if ppt_card is not None:
                 result = ppt_api.extract_usd_price(ppt_card)
                 if result is not None:
+                    result["source_name"] = "pokemonpricetracker"
                     increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "ppt")
                     fallback_summary["ppt_hits"] += 1
                     return result
@@ -979,6 +1149,7 @@ def try_fallback_providers(
                 if pt_card is not None:
                     result = poketrace_api.extract_usd_price(pt_card)
                     if result is not None:
+                        result["source_name"] = "poketrace"
                         increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "poketrace")
                         fallback_summary["poketrace_hits"] += 1
                         return result
@@ -1134,8 +1305,16 @@ def build_prices_db(
     max_fallback_cards: int | None = None,
     seed_db_path: Path | None = None,
     reuse_existing_tcgplayer_date: str | None = None,
+    card_universe_db_path: Path | None = None,
+    require_full_usd_coverage: bool = False,
 ) -> dict[str, Any]:
-    cards, _ = fetch_all_card_records(locales, limit=limit)
+    if card_universe_db_path is not None:
+        cards = load_cards_from_embeddings_db(card_universe_db_path)
+        if limit is not None:
+            cards = cards[:limit]
+        cards = [card for card in cards if str(card.get("locale") or "") in set(locales)]
+    else:
+        cards, _ = fetch_all_card_records(locales, limit=limit)
     existing_rows_by_card_id: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]] = {}
     reusable_existing_tcgplayer_rows: dict[str, list[tuple[str, str, str, str, float | None, float | None, float | None, str | None, int]]] = {}
     if seed_db_path is not None and seed_db_path.exists():
@@ -1147,6 +1326,7 @@ def build_prices_db(
             )
     pokemontcgio_cards: list[dict[str, Any]] = []
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]] = {}
+    pkmngg_set_cache: dict[str, list[dict[str, Any]]] = {}
     poketrace_set_slugs: dict[str, str] = {}
     ppt_set_cache: dict[str, dict[str, dict[str, Any]]] = {}
     allow_fallback_queries = max_fallback_cards is None or max_fallback_cards > 0
@@ -1309,7 +1489,52 @@ def build_prices_db(
                     now=now,
                     summary=build_metadata,
                 )
-                if locale == "en" and "tcgplayer" not in selected_sources and has_fallback_providers:
+                if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES):
+                    set_id = str(card.get("set_id") or "").strip()
+                    if set_id in EXPLICIT_SET_MAPPINGS:
+                        mapping = EXPLICIT_SET_MAPPINGS[set_id]
+                        candidates = []
+                        if isinstance(mapping, list):
+                            for series, slug in mapping:
+                                cache_key = f"{series}/{slug}"
+                                if cache_key not in pkmngg_set_cache:
+                                    print(f"fetching pkmn.gg set {cache_key}...")
+                                    pkmngg_set_cache[cache_key] = fetch_pkmngg_set_cards(series, slug)
+                                candidates.extend(pkmngg_set_cache[cache_key])
+                        else:
+                            series, slug = mapping
+                            cache_key = f"{series}/{slug}"
+                            if cache_key not in pkmngg_set_cache:
+                                print(f"fetching pkmn.gg set {cache_key}...")
+                                pkmngg_set_cache[cache_key] = fetch_pkmngg_set_cards(series, slug)
+                            candidates = pkmngg_set_cache[cache_key]
+
+                        match, reason = match_card_in_candidates(card, candidates)
+                        if match:
+                            variant_map = match.get("variantMap") or {}
+                            market_price = None
+                            for v_key in ["normal", "reverse-holo", "holo", "reverse"] + list(variant_map.keys()):
+                                v_data = variant_map.get(v_key)
+                                if isinstance(v_data, dict):
+                                    p = v_data.get("price")
+                                    if isinstance(p, (int, float)) and p > 0:
+                                        market_price = float(p)
+                                        break
+                            if market_price is not None:
+                                selected_sources["pkmngg"] = {
+                                    "unit": "USD",
+                                    "updated": now.strftime("%Y/%m/%d %H:%M:%S"),
+                                    "source_name": "pkmngg",
+                                    "selected_variant": {
+                                        "marketPrice": market_price,
+                                        "lowPrice": None,
+                                        "highPrice": None
+                                    }
+                                }
+                                increment_counter(build_metadata["transport_counts"].setdefault("tcgplayer", {}), "pkmngg")
+                                build_metadata["fallback_providers"]["pkmngg_hits"] = build_metadata["fallback_providers"].get("pkmngg_hits", 0) + 1
+
+                if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES) and has_fallback_providers:
                     if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:
                         build_metadata["fallback_providers"]["english_cards_skipped_due_to_budget"] += 1
                     else:
@@ -1331,10 +1556,10 @@ def build_prices_db(
                             summary=build_metadata,
                         )
                         if fallback_result is not None:
-                            selected_sources["tcgplayer"] = fallback_result
+                            selected_sources[str(fallback_result.get("source_name") or "tcgplayer")] = fallback_result
 
                 extracted = extract_price_rows_from_selected_sources(card_id, selected_sources)
-            if locale == "en" and not any(row[3] == "tcgplayer" and row[2] == "USD" for row in extracted):
+            if locale == "en" and not any(row[2] == "USD" and row[3] in USD_PRICE_SOURCE_NAMES for row in extracted):
                 identity_audit = ensure_identity_audit(build_metadata)
                 identity_audit["english_cards_without_usd"] += 1
                 work = build_metadata.get("_identity_audit_work") or {}
@@ -1355,6 +1580,33 @@ def build_prices_db(
         identity_audit["price_rows_without_cardhawk_card_id"] = len(orphan_price_row_card_ids)
         if orphan_price_row_card_ids:
             identity_audit["price_rows_without_cardhawk_card_id_samples"] = orphan_price_row_card_ids[:MAX_IDENTITY_AUDIT_SAMPLE_GAPS]
+
+        if require_full_usd_coverage:
+            missing_usd_card_ids = sorted(
+                card_id
+                for card_id in fetched_card_ids
+                if not any(row[0] == card_id and row[2] == "USD" and row[3] in USD_PRICE_SOURCE_NAMES for row in rows)
+            )
+            if missing_usd_card_ids:
+                identity_audit["required_usd_coverage_missing"] = len(missing_usd_card_ids)
+                identity_audit["required_usd_coverage_missing_samples"] = missing_usd_card_ids[:MAX_IDENTITY_AUDIT_SAMPLE_GAPS]
+                if summary_json is not None:
+                    write_summary_json(
+                        summary_json,
+                        {
+                            "status": "blocked_incomplete_usd_coverage",
+                            "locales": locales,
+                            "cards_total": len(cards),
+                            "missing_usd_count": len(missing_usd_card_ids),
+                            "missing_usd_samples": missing_usd_card_ids[:MAX_IDENTITY_AUDIT_SAMPLE_GAPS],
+                            "identity_audit": dict(identity_audit),
+                        },
+                    )
+                raise RuntimeError(
+                    "Refusing to publish incomplete prices.db: "
+                    f"{len(missing_usd_card_ids)} cards in the CardHawk universe are missing USD rows. "
+                    f"Samples: {missing_usd_card_ids[:MAX_IDENTITY_AUDIT_SAMPLE_GAPS]}"
+                )
 
         connection.executemany(
             """
@@ -1415,6 +1667,8 @@ def build_prices_db(
         "fallback_providers": dict(build_metadata["fallback_providers"]),
         "seed_reuse": dict(build_metadata["seed_reuse"]),
         "identity_audit": identity_audit_summary,
+        "card_universe_db": str(card_universe_db_path) if card_universe_db_path is not None else None,
+        "require_full_usd_coverage": require_full_usd_coverage,
     }
     if summary_json is not None:
         write_summary_json(summary_json, summary)
@@ -1468,6 +1722,12 @@ def main() -> int:
     parser.add_argument("--max-fallback-cards", type=int, help="Optional cap on English cards that may query fallback USD providers")
     parser.add_argument("--seed-db", help="Optional existing prices.db to reuse rows from during a rebuild")
     parser.add_argument("--reuse-existing-tcgplayer-date", help="Reuse existing tcgplayer rows whose updated_at starts with this date prefix, e.g. 2026/04/10")
+    parser.add_argument("--card-universe-db", help="Optional embeddings.db whose cards table defines the pricing universe")
+    parser.add_argument(
+        "--require-full-usd-coverage",
+        action="store_true",
+        help="Fail the build unless every card in the selected universe has a USD price row",
+    )
     args = parser.parse_args()
 
     summary_json = Path(args.summary_json).resolve() if args.summary_json else None
@@ -1493,6 +1753,8 @@ def main() -> int:
         max_fallback_cards=args.max_fallback_cards,
         seed_db_path=Path(args.seed_db).resolve() if args.seed_db else None,
         reuse_existing_tcgplayer_date=args.reuse_existing_tcgplayer_date,
+        card_universe_db_path=Path(args.card_universe_db).resolve() if args.card_universe_db else None,
+        require_full_usd_coverage=args.require_full_usd_coverage,
     )
     return 0
 

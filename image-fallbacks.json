@@ -487,25 +487,197 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd22/10_hires.png"
   },
+  "pokemon:en:2022swsh:11": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/11_hires.png"
+  },
+  "pokemon:en:2022swsh:12": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/12_hires.png"
+  },
+  "pokemon:en:2022swsh:13": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/13_hires.png"
+  },
   "pokemon:en:2022swsh:14": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd22/14_hires.png"
+  },
+  "pokemon:en:2022swsh:15": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/15_hires.png"
+  },
+  "pokemon:en:2022swsh:2": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/2_hires.png"
   },
   "pokemon:en:2022swsh:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd22/3_hires.png"
   },
+  "pokemon:en:2022swsh:4": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/4_hires.png"
+  },
+  "pokemon:en:2022swsh:5": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/5_hires.png"
+  },
+  "pokemon:en:2022swsh:6": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/6_hires.png"
+  },
   "pokemon:en:2022swsh:7": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd22/7_hires.png"
+  },
+  "pokemon:en:2022swsh:8": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/8_hires.png"
+  },
+  "pokemon:en:2022swsh:9": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/mcd22/9_hires.png"
+  },
+  "pokemon:en:2023sv:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-001v2.png?signature=b8fd4f102f353272993987fbb3deaf4ff77e4ff6e0fdb9dc9c831c09eb64ff5c"
+  },
+  "pokemon:en:2023sv:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-010v2.png?signature=14fdc98809861e71f80575516bca02ada12423a0fd93212f930d3b52a73cf965"
+  },
+  "pokemon:en:2023sv:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-011v2.png?signature=2fbed05292db8a1a090da76dc3c60a32552dd129c73ea116b8fbf1e149ed9ae0"
+  },
+  "pokemon:en:2023sv:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-012v2.png?signature=7fc310509949ac6f8e0830158e0ee87731e7a924412a46b4398afb255cf13834"
+  },
+  "pokemon:en:2023sv:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-013v1.webp?signature=72303c9a11d0176969c4dbdc6d6ae0d3306b1f5af54ab087cc9e3fd0fb39cfbe"
+  },
+  "pokemon:en:2023sv:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-014v2.png?signature=0513063ace664fc1569e4d20f631b8af47df3e35791d6565443c277b1b08ce56"
+  },
+  "pokemon:en:2023sv:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-015v2.png?signature=b6ea413f963212c2d42946abb385525238a117d242f839d8551722955c634268"
+  },
+  "pokemon:en:2023sv:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-002v2.png?signature=1842560f2c03e504e5315762040a6273402d1a463686f275ed4533171d06714b"
+  },
+  "pokemon:en:2023sv:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-003v2.png?signature=8249c6b8b902c44509547f248bc7b4b4f28f61241065c45191674e224460f5c2"
+  },
+  "pokemon:en:2023sv:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-004v2.png?signature=b11442d43e5559af975422c51e56882de1439113ed7497cca22e0f986900b77b"
+  },
+  "pokemon:en:2023sv:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-005v2.png?signature=1c3248ebed0ba08d60e4d73d792789927c7196248165a5c3b0310db316a80bed"
+  },
+  "pokemon:en:2023sv:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-006v2.png?signature=2e59b7593047c333930109d306f4f3b56fbdcdecd7489c5b45ef6018d83ef00f"
+  },
+  "pokemon:en:2023sv:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-007v2.png?signature=5baf052cbf5f47887711fdbc45373e2ffa2985b0fef333f9b524a54f10d4413e"
+  },
+  "pokemon:en:2023sv:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-008v2.png?signature=043dd15ef11e311ff661ad78e917d01c00bb5e453878da5242fe8287c70029e8"
+  },
+  "pokemon:en:2023sv:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd23/mcd23-009v2.png?signature=c5af204fcc306b70afc766c3e1177c14428b8282932b8324a17cb04a6be66e3c"
+  },
+  "pokemon:en:2024sv:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-001v788.png?signature=74de40fec4b6b87e0b6503277b87f2224ae8d0ca314102440579fddf8baf8e60"
+  },
+  "pokemon:en:2024sv:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-010v37.png?signature=5acab00cfd46456d1f4b6747fae8796286b459e5ddbe708294f21eac7d4d321f"
+  },
+  "pokemon:en:2024sv:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-011v729.png?signature=9ca6eee1b4f8b0f71ec10e9e40842fc5c24d3a942dc7a9bcba9611c06913384e"
+  },
+  "pokemon:en:2024sv:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-012v919.png?signature=d228a5a7f6917ce3c347d3571d74cc79a10057a2aa1298ff6b5fe1613513d39d"
+  },
+  "pokemon:en:2024sv:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-013v888.png?signature=9bd907bc7b6028e2ebe8dba7c8b1b2c9e64e6df1cb3f665be108de5dc951bc03"
+  },
+  "pokemon:en:2024sv:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-014v73.png?signature=9ef44453eb7fb7823ce098b5835939e67c4f0eeeff5c7f4cb6fc3ec0c34fa155"
+  },
+  "pokemon:en:2024sv:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-015v143.png?signature=dfca7122e54a08d705392dea143b931a1b858d90c120eae0afd739c34c3690fb"
+  },
+  "pokemon:en:2024sv:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-002v833.png?signature=f6ad12f2d9b7573e038a0d293edbb9e6b0d5d8ab875debd103b0b923e89105ad"
+  },
+  "pokemon:en:2024sv:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-003v443.png?signature=15f7349161a14014d97284b3985aa9ab5ed872dabd17bcb190fee9252a074789"
+  },
+  "pokemon:en:2024sv:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-004v965.png?signature=ecd2b927661c3324b87f20ea2d70a101ad96664d45041993498c4ec095de0b78"
+  },
+  "pokemon:en:2024sv:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-005v610.png?signature=1b17e77d7ef7d77f2bb18511a281ccbee0f8c64c4f97b934e518ccbca8a110d4"
+  },
+  "pokemon:en:2024sv:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-006v923.png?signature=119073b7eda648483739743ac6519ebc6a3d09a03422b32fa536e498d65d8a55"
+  },
+  "pokemon:en:2024sv:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-007v576.png?signature=ffd64d0bf809506e284d2d890e3a53c9068b84b1faa8fd5b585e7594596bf34c"
+  },
+  "pokemon:en:2024sv:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-008v717.png?signature=d86574887c85ae30858bed85b61349e7d1504e69b35723d9d397bbb15f337768"
+  },
+  "pokemon:en:2024sv:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/mcd24/mcd24-009v356.png?signature=12580cf2005863441a0b55938694cea839e3ee39487091c4e6b18a8617e0ec2b"
   },
   "pokemon:en:bog:1": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/bp/1_hires.png"
   },
+  "pokemon:en:bog:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/bp/bp-002.png?signature=d9d5831bb5a3e6f3892847d56377a23509ec5562131e6476243ad562694a6777"
+  },
   "pokemon:en:bog:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/bp/3_hires.png"
+  },
+  "pokemon:en:bog:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/bp/bp-004.png?signature=86ea6f5e21f8a376f3af7411203b291f51e5ddca4c30cae29ee4ea3f890985bb"
+  },
+  "pokemon:en:bog:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/images/cards/bp/bp-005.png?signature=6dcbff94837d7651bf25a3956f28ba2f4273aba82e1c3483b06df0d43ab395d9"
   },
   "pokemon:en:bog:6": {
     "source": "pokemontcgio_name_artist_hp",
@@ -515,13 +687,173 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/bp/7_hires.png"
   },
+  "pokemon:en:bog:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/bp/bp-008.png?signature=19b52415e4cefa62e0f3a4f165326f422d8ff57c04fed9fba48213730966f25b"
+  },
+  "pokemon:en:bog:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/bp/bp-009.png?signature=4a5bc6a2fd58f6f723bf32afe543a81feeaae78e5390f543a9dbef4cda5bcd82"
+  },
   "pokemon:en:bwp:BW96": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/bwp/BW96_hires.png"
   },
+  "pokemon:en:cel25:107A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/107_A_hires.png"
+  },
+  "pokemon:en:cel25:109A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/109_A_hires.png"
+  },
+  "pokemon:en:cel25:113A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/113_A_hires.png"
+  },
+  "pokemon:en:cel25:114A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/114_A_hires.png"
+  },
+  "pokemon:en:cel25:145A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/145_A_hires.png"
+  },
+  "pokemon:en:cel25:15A1": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/15_A_hires.png"
+  },
+  "pokemon:en:cel25:20A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/20_A_hires.png"
+  },
+  "pokemon:en:cel25:24A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/24_A_hires.png"
+  },
   "pokemon:en:cel25:25": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/cel25/25_hires.png"
+  },
+  "pokemon:en:cel25:2A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/2_A_hires.png"
+  },
+  "pokemon:en:cel25:4A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/4_A_hires.png"
+  },
+  "pokemon:en:cel25:54A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/54_A_hires.png"
+  },
+  "pokemon:en:cel25:60A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/60_A_hires.png"
+  },
+  "pokemon:en:cel25:66A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/66_A_hires.png"
+  },
+  "pokemon:en:cel25:73A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/73_A_hires.png"
+  },
+  "pokemon:en:cel25:76A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/76_A_hires.png"
+  },
+  "pokemon:en:cel25:86A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/86_A_hires.png"
+  },
+  "pokemon:en:cel25:88A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/88_A_hires.png"
+  },
+  "pokemon:en:cel25:8A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/8_A_hires.png"
+  },
+  "pokemon:en:cel25:93A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/93_A_hires.png"
+  },
+  "pokemon:en:cel25:97A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/97_A_hires.png"
+  },
+  "pokemon:en:cel25:9A": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/cel25c/9_A_hires.png"
+  },
+  "pokemon:en:ecard2:103a": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/103_hires.png"
+  },
+  "pokemon:en:ecard2:103b": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/ecard2/ecard2-103-porygonv777.webp?signature=3ff35a3841d875f2b21f00b4ef5772bee7347cf05bcc120e2435932f36270096"
+  },
+  "pokemon:en:ecard2:50a": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/50_hires.png"
+  },
+  "pokemon:en:ecard2:50b": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/ecard2/ecard2-050.png?signature=14352ec46bec27548bcea0b5e5877172ff1e77bfbdfa2d43814fc32a12fbab5c"
+  },
+  "pokemon:en:ecard2:74a": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/74_hires.png"
+  },
+  "pokemon:en:ecard2:74b": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/ecard2/ecard2-074.png?signature=152fabdde2c61d1d073696b9deaaff98d5b5a1ca94c0036a41246fc947326d58"
+  },
+  "pokemon:en:ecard2:95a": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/95_hires.png"
+  },
+  "pokemon:en:ecard2:95b": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/ecard2/ecard2-095.png?signature=0bd7605a89d66258c2cd78b69254641b3e9d3ed54220bd49a0ce10a579d35e40"
+  },
+  "pokemon:en:ecard2:H01": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H1_hires.png"
+  },
+  "pokemon:en:ecard2:H02": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H2_hires.png"
+  },
+  "pokemon:en:ecard2:H03": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H3_hires.png"
+  },
+  "pokemon:en:ecard2:H04": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H4_hires.png"
+  },
+  "pokemon:en:ecard2:H05": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H5_hires.png"
+  },
+  "pokemon:en:ecard2:H06": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H6_hires.png"
+  },
+  "pokemon:en:ecard2:H07": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H7_hires.png"
+  },
+  "pokemon:en:ecard2:H08": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H8_hires.png"
+  },
+  "pokemon:en:ecard2:H09": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard2/H9_hires.png"
   },
   "pokemon:en:ecard2:H10": {
     "source": "pokemontcgio_name_artist_hp",
@@ -615,6 +947,42 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/ecard2/H32_hires.png"
   },
+  "pokemon:en:ecard3:H01": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H1_hires.png"
+  },
+  "pokemon:en:ecard3:H02": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H2_hires.png"
+  },
+  "pokemon:en:ecard3:H03": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H3_hires.png"
+  },
+  "pokemon:en:ecard3:H04": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H4_hires.png"
+  },
+  "pokemon:en:ecard3:H05": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H5_hires.png"
+  },
+  "pokemon:en:ecard3:H06": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H6_hires.png"
+  },
+  "pokemon:en:ecard3:H07": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H7_hires.png"
+  },
+  "pokemon:en:ecard3:H08": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H8_hires.png"
+  },
+  "pokemon:en:ecard3:H09": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/ecard3/H9_hires.png"
+  },
   "pokemon:en:ecard3:H10": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/ecard3/H10_hires.png"
@@ -650,6 +1018,10 @@
   "pokemon:en:ecard3:H18": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/ecard3/H18_hires.png"
+  },
+  "pokemon:en:ecard3:H19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/ecard3/ecard3-H019.png?signature=d9f827f4fcbfb8222a4a3201bb02de837de2fa170e16b536d053d12380e18907"
   },
   "pokemon:en:ecard3:H20": {
     "source": "pokemontcgio_name_artist_hp",
@@ -835,6 +1207,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/hsp/HGSS25_hires.png"
   },
+  "pokemon:en:hsp:HGSS18": {
+    "source": "pkmncards_verified",
+    "url": "https://pkmncards.com/wp-content/uploads/tropical-tidal-wave-heartgold-soulsilver-promos-hgss18-1.png"
+  },
   "pokemon:en:mee:001": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/1_hires.png"
@@ -867,6 +1243,334 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/8_hires.png"
   },
+  "pokemon:en:mep:001": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-001v139.png?signature=6671e0aec5db54405e6b9d43f50d62fb954488fdbe97ea1a91f2ffc02b3caa31"
+  },
+  "pokemon:en:mep:002": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-002v446.png?signature=8575784701178d4ba1e26c0ef0635898d9c445787c29deefe30a02afe20da074"
+  },
+  "pokemon:en:mep:003": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-003v902.png?signature=097b3e6cb016793f17e2afe179a4871e7ca8ac829a73c8b22b40edbe6ea8605e"
+  },
+  "pokemon:en:mep:004": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-004v183.png?signature=1676755ad6684e712ff8144fe11607dd2e0cd35d9fbdd3ec3068bb8f78296675"
+  },
+  "pokemon:en:mep:005": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-005v535.png?signature=80ef8afebe2777210b4bbf2f5c28e5d1314e56de59351d124c9271c91327798e"
+  },
+  "pokemon:en:mep:006": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-006v74.png?signature=d56a81c54aa855eeedf6bf47f73bdaa074e5a197211a43ef9c59bbc2b220a728"
+  },
+  "pokemon:en:mep:007": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-007v21.png?signature=ef7e1a0e27a3983e31ddeed188fbd883d9f3320f884d4b32b123662ae2c761dd"
+  },
+  "pokemon:en:mep:008": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-008v120.png?signature=80227fc0584a205fcb848e1d11d31613397d62b4a2f5f2e4a9c0e148fee32439"
+  },
+  "pokemon:en:mep:009": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-009v558.png?signature=669bd6db6f7f33e3e96b4610982c10ee890154402008bb1787699da85d070bac"
+  },
+  "pokemon:en:mep:010": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-010v576.png?signature=c52632edb14a2f117f0b8d860e8c7d3eea71c268a2ec06b05dc1fc1184deeeeb"
+  },
+  "pokemon:en:mep:011": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-011v728.png?signature=e1f1ffa9225a141cebd5810aaadb11dee644c52cf06382adf164177d2257a2b8"
+  },
+  "pokemon:en:mep:012": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-012.png?signature=9ea26009b575c1c3d86f922983a2765cdc0d181203db1ce4e4fde96028c8d888"
+  },
+  "pokemon:en:mep:013": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-013.png?signature=7334f579c6e4544dc98e0e62464b90005b5f3c0a45b35529e91af49733936134"
+  },
+  "pokemon:en:mep:014": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-014.png?signature=c20fb862ece8e757a60b8ff2869ed027986647ab1387cb4e50dbe688d83dd48d"
+  },
+  "pokemon:en:mep:015": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-015.png?signature=601f91436a44eb4d737aa3ac7ef28778e9613bc2b6dd3713d622a1276276491f"
+  },
+  "pokemon:en:mep:016": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-016.png?signature=ecda8b9bec807113a69c81199c603bfb71b479eadaa3c04fbbdc699499e90be0"
+  },
+  "pokemon:en:mep:017": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-017.png?signature=aad6bd448b29a43ffea48a9519bf6f8bf275f334139b5c11d810a6bcd903a9e8"
+  },
+  "pokemon:en:mep:018": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-018.png?signature=33529b6005122c89373a66ef77cce98a5fb7c510692d4811dc10cef27f140d9d"
+  },
+  "pokemon:en:mep:019": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-019.png?signature=c527f32b57f7396597a9026786b5754296ab6183f474b9cd6898018c273e7b3b"
+  },
+  "pokemon:en:mep:020": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-020.png?signature=b8e1e6c73d2550a794cfff1729014dddcf863b0a409758d45c98e4ccb6656f3c"
+  },
+  "pokemon:en:mep:021": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-021.png?signature=bd3b0d96f04edd7ddf9de04ebc9089cf4b9e42675888f9edb7532957ca854f49"
+  },
+  "pokemon:en:mep:022": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-022.png?signature=c6895dc25a2f52daf61e7ae0877e489f16bf240ee922b312abc70dd03e6f6100"
+  },
+  "pokemon:en:mep:023": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-023.png?signature=225cbc8e28fecb14a3e325bab3afba4fb1918fd829c5549d05b67330882fd912"
+  },
+  "pokemon:en:mep:024": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-024.png?signature=c46bdc0d3e3595cedb6d7ffe028b75644724b9b11bcfc1c04a5737b3c9918c16"
+  },
+  "pokemon:en:mep:025": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-025.png?signature=76485f1926f4b24ce81bc80f94546f9d495b8e1565ec26e60967e3481165038d"
+  },
+  "pokemon:en:mep:026": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-026.png?signature=64b311c0b154de81def565bcbb185d4bafcfdcc12e1b7021ae3df174674b603f"
+  },
+  "pokemon:en:mep:027": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-027.png?signature=497117befd0fa5dc346d92b8f3a4131c7bd25bb40d59a0d3aec3e165f576b234"
+  },
+  "pokemon:en:mep:028": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-028v741.png?signature=8ef869c607ffffaab529aba7d056f9f827f99b5b2855d9f126d68cac7bb826a1"
+  },
+  "pokemon:en:mep:029": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-029v330.jpeg?signature=fad404e23e0a82e889ecc76a29389e0bbe1005ad321734c11f7e035a3201d0c4"
+  },
+  "pokemon:en:mep:030": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-030v269.png?signature=b1121450b6d6262fe51a2704d5355dc34932df63e7baceac01217e2d70011d1b"
+  },
+  "pokemon:en:mep:031": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-031v671.webp?signature=767fb544cb83e88be5a3a1a6d14f85ebd97386148fc27ebf152bad026fa65c3b"
+  },
+  "pokemon:en:mep:032": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-032v453.png?signature=c5e2460db8c1c626419ba8dc7613ac80133a2a33e9c68162af394f06d33801ed"
+  },
+  "pokemon:en:mep:033": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-033v304.png?signature=2b3591d2cbeb6b6cec13a57a3091a77f515b1767f167dee31e0cc627d560c060"
+  },
+  "pokemon:en:mep:034": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-034v621.jpeg?signature=d6bd7bc34724677c5691b97222d2e51454b30a3d0fec923612410ae8dd0ed8f0"
+  },
+  "pokemon:en:mep:035": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-035v599.jpeg?signature=11103285ed3305a29483cd1a8260874141f81c081cc83a56d52e06537dbe0295"
+  },
+  "pokemon:en:mep:036": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-036v357.jpeg?signature=57759763fd15b4628c6547dcfab14026fb3fe3b3461c55f575009ca81f5b4b06"
+  },
+  "pokemon:en:mep:037": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-037v721.png?signature=601c70f94d795e47094b7ed21792b944c4d858728359e7ad8eff54b2940510b6"
+  },
+  "pokemon:en:mep:038": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-038v780.png?signature=e1ef0b71c3b47a34c5d1953c318ebff988d7572ad1f95a0e5b294c62ef3fdd9b"
+  },
+  "pokemon:en:mep:039": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-039v495.png?signature=a0e2d23f1a5e181e894cddd7f0ac57d74f9ee2fdc6667e8d4fe54b5de27301ea"
+  },
+  "pokemon:en:mep:040": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-040v971.png?signature=92a29bba5322d2063abe13a966c71dd06a1a9562f2dc276df8ef7ec3269efefd"
+  },
+  "pokemon:en:mep:041": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-041v150.png?signature=e4b30a61226ad5f902ae1981331f99f753cfb7087613bd3036304ed36a7b801d"
+  },
+  "pokemon:en:mep:042": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-042v781.png?signature=4c1b401d062dea195a7073844f871dbfada4983e9b20d94ed8d05e4c7f48fc0b"
+  },
+  "pokemon:en:mep:043": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-043v84.png?signature=852525c0141000f568b5924b1f33d265dd16b04f3bfdf1e711f643ce138c8041"
+  },
+  "pokemon:en:mep:044": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-044v581.png?signature=1039b012f9b1d828945c13b5886a427f8eeb8044f1d7567d94243070e081b7b0"
+  },
+  "pokemon:en:mep:045": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-045v315.png?signature=cbd6ddb786287127f79216a793cf891d7c8b8c42ade1db08b1f07878d56986d4"
+  },
+  "pokemon:en:mep:064": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-064v229.webp?signature=444ab92637ead9b1dbe41abbc8d9002edd64865b4ffcec910955974e4c5268dd"
+  },
+  "pokemon:en:mep:065": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-065v506.webp?signature=b78f2aead5c9252e4a2af194452d7f3474ba7d6cc44cfabab25e6598ce743da1"
+  },
+  "pokemon:en:mep:066": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-066v322.webp?signature=4c23c434c54ddf581a7992f7bd123ff914528c4520594eba100dfa484cd9be75"
+  },
+  "pokemon:en:mep:067": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-067v808.webp?signature=5e5a9e559e399429935eea7b82f7b054098b68257f11ea455572f9c6b78d9811"
+  },
+  "pokemon:en:mep:068": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-068v314.png?signature=4d28889b25f3ea1e93900e8d9eb06d9214743b239983c43c7b7cfa01dc2341b0"
+  },
+  "pokemon:en:mep:069": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-069v125.webp?signature=702d340da005416ce268f45488010cfc74e509f036fa6af4a20507a9438090c6"
+  },
+  "pokemon:en:mep:070": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-070v674.png?signature=93fde6e70c08aeaf5aa676e019fd335a0d87ed438e28c89e5107efeb8528fb40"
+  },
+  "pokemon:en:mfb:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-001v330.png?signature=11e0409ddde32ac0e67243ec7453538537d937ffaa079306e01019813a96be30"
+  },
+  "pokemon:en:mfb:10": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-004v886.png?signature=f1fcfcb4bc1af06abf92802488021b597bca7f9baacccedda7fbef7e9bcb7815"
+  },
+  "pokemon:en:mfb:11": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-005v421.png?signature=87e1bbb9f1d4e3a7aba29084a5ee0d9e8a6cfe48190a075c19cbdbbd9bf74d0c"
+  },
+  "pokemon:en:mfb:12": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-006v898.png?signature=8319ac4912f203b7dbbfd91438c08544304c68f571902d4470b42ab521446a52"
+  },
+  "pokemon:en:mfb:13": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-007v921.png?signature=7e604b342be1d50b64bcf1c49cfd7f414c6596d81a18e3c461defd204b49004b"
+  },
+  "pokemon:en:mfb:14": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-008v280.png?signature=6af39e75605e0150d66b58c63750bd1a6365ed33dfca076d25d71445d0b137fe"
+  },
+  "pokemon:en:mfb:15": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-009v993.png?signature=5fe82daa72433410f868d35e1a1859f796c0bf17325361f5fa867adb8ba9b4c3"
+  },
+  "pokemon:en:mfb:17": {
+    "source": "pkmngg_name_only_duplicate_allowed",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-001v961.png?signature=d2076cf6ae880345b7ff1a4dee192455260690b3f75db0e17ef69cbd70a0f9a0"
+  },
+  "pokemon:en:mfb:18": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-004v453.png?signature=9b382375d2950f36dc899e1387c59c115c09c9d56cdcf0a17bd0f0f71ee5f70f"
+  },
+  "pokemon:en:mfb:19": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-005v713.png?signature=d32b3d978f323e0df062465bc5813d426dd060f1d3e2f5d331fd35968793199c"
+  },
+  "pokemon:en:mfb:2": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-004v759.png?signature=077ae493bd7e30e9c550f0cd3b8b992505b062e9ab6148c37860d92a241a5410"
+  },
+  "pokemon:en:mfb:20": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-006v182.png?signature=600951e6b5de524e439b9aa600bc051981ef9f33f07a000ae7d9b8e156414871"
+  },
+  "pokemon:en:mfb:21": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-007v745.png?signature=f90547fca5b056291ca6900d2703dc50d5bbadb3c1b55c368bb7df3f88f5d995"
+  },
+  "pokemon:en:mfb:22": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-008v356.png?signature=47e70ad0ecb01d1fc82325bcaa19afc7b3985fa024d13bfcc0b996a95ebf32b9"
+  },
+  "pokemon:en:mfb:23": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatp/myfirbatp-009v391.png?signature=7e040be683a0f9aca2e6fdc15afb6c9bab98528efcb20bc0fd28cce5f055b325"
+  },
+  "pokemon:en:mfb:25": {
+    "source": "pkmngg_name_only_duplicate_allowed",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-001v161.png?signature=b637bc50b1f5063e1cbaabe9cbc53d3834b6b136d5c7adc6a05c0dfa43f3979c"
+  },
+  "pokemon:en:mfb:26": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-004v860.png?signature=ba98f6d84f796969af073e11adf698506e2ec2b023ca010b5b8113fe86f37674"
+  },
+  "pokemon:en:mfb:27": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-005v696.png?signature=c5598e459149b27c70011fd476bb6926c9e78c9ae487fee69a868e00477d8fec"
+  },
+  "pokemon:en:mfb:28": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-006v533.png?signature=e3fe683433b50580b37779dc65f41c4f7346fe01930b73a2342a58913bdb2ec8"
+  },
+  "pokemon:en:mfb:29": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-007v796.png?signature=cc5bf0fa53e729a5181ca7d90afba06892b5918824c9fdf6049a92483cc6e825"
+  },
+  "pokemon:en:mfb:3": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-005v646.png?signature=2c1233a543a678efb8272c4a715fde1d4f598ba72d1f31b35868b63e766da4a8"
+  },
+  "pokemon:en:mfb:30": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-008v772.png?signature=f6ebb546974850b6942008efe1a0f771418637c65b098a4fca43341f901e4b6a"
+  },
+  "pokemon:en:mfb:31": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbats/myfirbats-009v217.png?signature=99c27f4ed98d586269b8cc083b77693d235ad0fb5d6766076bffae7c7e11d0df"
+  },
+  "pokemon:en:mfb:33": {
+    "source": "pkmngg_name_only_duplicate_allowed",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-010v502.png?signature=0fca4c468b7b5aa053fcb1b9e44b4124a7456a65db7e8c889c61eaca6ec4de0d"
+  },
+  "pokemon:en:mfb:34": {
+    "source": "pkmngg_name_only_duplicate_allowed",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-011v490.png?signature=ca24743282f75918d82433465b71d6cdaef17b57610fd6523e349d9192e46723"
+  },
+  "pokemon:en:mfb:4": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-006v458.png?signature=83426da33cf73ef034ec842ca9cb91618e3e2c797cb2e7b1d2b81c24b2d9cbbd"
+  },
+  "pokemon:en:mfb:5": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-007v511.png?signature=33e1d7d5c0a912aa8d44aaf2b9ffe1b963c89fd298f0433f8a783ca35a0b1b50"
+  },
+  "pokemon:en:mfb:6": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-008v633.png?signature=72ec928e977d3a3733c106b0b6c6ab4216dd470c43be9635c78ceeab9176e584"
+  },
+  "pokemon:en:mfb:7": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatb/myfirbatb-009v390.png?signature=8e9ca7062686c23302d2dc8b8f0e32a9a88a6d3aeb6906e04cea3606e4d10e2b"
+  },
+  "pokemon:en:mfb:9": {
+    "source": "pkmngg_name_only_duplicate_allowed",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/myfirbatc/myfirbatc-001v174.png?signature=94ac4157a2930caeb9fbcc602798bb5fb8660b1f1cce57262018ce3cc96422cc"
+  },
   "pokemon:en:pl2:84": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/pl2/84_hires.png"
@@ -886,6 +1590,10 @@
   "pokemon:en:sm3.5:1": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/1_hires.png"
+  },
+  "pokemon:en:sm3.5:10": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/10_hires.png"
   },
   "pokemon:en:sm3.5:11": {
     "source": "pokemontcgio_name_artist_hp",
@@ -963,6 +1671,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/28_hires.png"
   },
+  "pokemon:en:sm3.5:29": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/29_hires.png"
+  },
   "pokemon:en:sm3.5:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/3_hires.png"
@@ -1002,6 +1714,10 @@
   "pokemon:en:sm3.5:38": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/38_hires.png"
+  },
+  "pokemon:en:sm3.5:39": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/39_hires.png"
   },
   "pokemon:en:sm3.5:4": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1063,6 +1779,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/52_hires.png"
   },
+  "pokemon:en:sm3.5:53": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/53_hires.png"
+  },
   "pokemon:en:sm3.5:54": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/54_hires.png"
@@ -1115,6 +1835,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/65_hires.png"
   },
+  "pokemon:en:sm3.5:66": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/66_hires.png"
+  },
   "pokemon:en:sm3.5:67": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/67_hires.png"
@@ -1135,9 +1859,37 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/70_hires.png"
   },
+  "pokemon:en:sm3.5:71": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/71_hires.png"
+  },
+  "pokemon:en:sm3.5:72": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/72_hires.png"
+  },
   "pokemon:en:sm3.5:73": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/73_hires.png"
+  },
+  "pokemon:en:sm3.5:74": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/74_hires.png"
+  },
+  "pokemon:en:sm3.5:75": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/75_hires.png"
+  },
+  "pokemon:en:sm3.5:76": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/76_hires.png"
+  },
+  "pokemon:en:sm3.5:77": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/77_hires.png"
+  },
+  "pokemon:en:sm3.5:78": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm35/78_hires.png"
   },
   "pokemon:en:sm3.5:8": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1147,6 +1899,30 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm35/9_hires.png"
   },
+  "pokemon:en:sm6:122": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm6/122_hires.png"
+  },
+  "pokemon:en:sm6:126": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm6/126_hires.png"
+  },
+  "pokemon:en:sm6:134": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm6/134_hires.png"
+  },
+  "pokemon:en:sm6:140": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm6/140_hires.png"
+  },
+  "pokemon:en:sm6:82": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm6/82_hires.png"
+  },
+  "pokemon:en:sm6:90": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm6/90_hires.png"
+  },
   "pokemon:en:sm7.5:1": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/1_hires.png"
@@ -1154,6 +1930,10 @@
   "pokemon:en:sm7.5:10": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/10_hires.png"
+  },
+  "pokemon:en:sm7.5:11": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/11_hires.png"
   },
   "pokemon:en:sm7.5:12": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1178,6 +1958,14 @@
   "pokemon:en:sm7.5:17": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/17_hires.png"
+  },
+  "pokemon:en:sm7.5:18": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/18_hires.png"
+  },
+  "pokemon:en:sm7.5:19": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/19_hires.png"
   },
   "pokemon:en:sm7.5:2": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1219,6 +2007,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/28_hires.png"
   },
+  "pokemon:en:sm7.5:29": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/29_hires.png"
+  },
   "pokemon:en:sm7.5:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/3_hires.png"
@@ -1251,6 +2043,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/36_hires.png"
   },
+  "pokemon:en:sm7.5:37": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/37_hires.png"
+  },
   "pokemon:en:sm7.5:38": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/38_hires.png"
@@ -1267,6 +2063,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/40_hires.png"
   },
+  "pokemon:en:sm7.5:41": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/41_hires.png"
+  },
   "pokemon:en:sm7.5:42": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/42_hires.png"
@@ -1274,6 +2074,10 @@
   "pokemon:en:sm7.5:43": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/43_hires.png"
+  },
+  "pokemon:en:sm7.5:44": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/44_hires.png"
   },
   "pokemon:en:sm7.5:45": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1286,6 +2090,10 @@
   "pokemon:en:sm7.5:47": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/47_hires.png"
+  },
+  "pokemon:en:sm7.5:48": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/48_hires.png"
   },
   "pokemon:en:sm7.5:49": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1327,6 +2135,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/57_hires.png"
   },
+  "pokemon:en:sm7.5:58": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/58_hires.png"
+  },
   "pokemon:en:sm7.5:59": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/59_hires.png"
@@ -1355,6 +2167,26 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/64_hires.png"
   },
+  "pokemon:en:sm7.5:65": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/65_hires.png"
+  },
+  "pokemon:en:sm7.5:66": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/66_hires.png"
+  },
+  "pokemon:en:sm7.5:67": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/67_hires.png"
+  },
+  "pokemon:en:sm7.5:68": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/68_hires.png"
+  },
+  "pokemon:en:sm7.5:69": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/69_hires.png"
+  },
   "pokemon:en:sm7.5:7": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/7_hires.png"
@@ -1362,6 +2194,26 @@
   "pokemon:en:sm7.5:70": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/70_hires.png"
+  },
+  "pokemon:en:sm7.5:71": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/71_hires.png"
+  },
+  "pokemon:en:sm7.5:72": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/72_hires.png"
+  },
+  "pokemon:en:sm7.5:73": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/73_hires.png"
+  },
+  "pokemon:en:sm7.5:74": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/74_hires.png"
+  },
+  "pokemon:en:sm7.5:75": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/75_hires.png"
   },
   "pokemon:en:sm7.5:76": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1371,6 +2223,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/77_hires.png"
   },
+  "pokemon:en:sm7.5:78": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/sm75/78_hires.png"
+  },
   "pokemon:en:sm7.5:8": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/8_hires.png"
@@ -1378,6 +2234,10 @@
   "pokemon:en:sm7.5:9": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sm75/9_hires.png"
+  },
+  "pokemon:en:smp:SM125": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM125_hires.png"
   },
   "pokemon:en:smp:SM135": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1390,6 +2250,34 @@
   "pokemon:en:smp:SM144": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM144_hires.png"
+  },
+  "pokemon:en:smp:SM146": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM146_hires.png"
+  },
+  "pokemon:en:smp:SM147": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM147_hires.png"
+  },
+  "pokemon:en:smp:SM155": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM155_hires.png"
+  },
+  "pokemon:en:smp:SM156": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM156_hires.png"
+  },
+  "pokemon:en:smp:SM167": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM167_hires.png"
+  },
+  "pokemon:en:smp:SM168": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM168_hires.png"
+  },
+  "pokemon:en:smp:SM169": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM169_hires.png"
   },
   "pokemon:en:smp:SM170": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1427,13 +2315,45 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM186_hires.png"
   },
+  "pokemon:en:smp:SM188": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM188_hires.png"
+  },
+  "pokemon:en:smp:SM189": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM189_hires.png"
+  },
   "pokemon:en:smp:SM190": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM190_hires.png"
   },
+  "pokemon:en:smp:SM191": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM191_hires.png"
+  },
+  "pokemon:en:smp:SM192": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM192_hires.png"
+  },
+  "pokemon:en:smp:SM193": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM193_hires.png"
+  },
   "pokemon:en:smp:SM194": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM194_hires.png"
+  },
+  "pokemon:en:smp:SM195": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM195_hires.png"
+  },
+  "pokemon:en:smp:SM196": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM196_hires.png"
+  },
+  "pokemon:en:smp:SM197": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM197_hires.png"
   },
   "pokemon:en:smp:SM198": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1491,9 +2411,25 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM228_hires.png"
   },
+  "pokemon:en:smp:SM229": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM229_hires.png"
+  },
+  "pokemon:en:smp:SM230": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM230_hires.png"
+  },
   "pokemon:en:smp:SM231": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM231_hires.png"
+  },
+  "pokemon:en:smp:SM232": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM232_hires.png"
+  },
+  "pokemon:en:smp:SM233": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM233_hires.png"
   },
   "pokemon:en:smp:SM234": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1503,6 +2439,10 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM235_hires.png"
   },
+  "pokemon:en:smp:SM236": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM236_hires.png"
+  },
   "pokemon:en:smp:SM237": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM237_hires.png"
@@ -1510,6 +2450,22 @@
   "pokemon:en:smp:SM238": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM238_hires.png"
+  },
+  "pokemon:en:smp:SM239": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM239_hires.png"
+  },
+  "pokemon:en:smp:SM240": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM240_hires.png"
+  },
+  "pokemon:en:smp:SM241": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM241_hires.png"
+  },
+  "pokemon:en:smp:SM242": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM242_hires.png"
   },
   "pokemon:en:smp:SM243": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1519,9 +2475,29 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM244_hires.png"
   },
+  "pokemon:en:smp:SM245": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM245_hires.png"
+  },
+  "pokemon:en:smp:SM246": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM246_hires.png"
+  },
+  "pokemon:en:smp:SM247": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM247_hires.png"
+  },
+  "pokemon:en:smp:SM248": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM248_hires.png"
+  },
   "pokemon:en:smp:SM89": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/smp/SM89_hires.png"
+  },
+  "pokemon:en:smp:SM90": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/smp/SM90_hires.png"
   },
   "pokemon:en:smp:SM93": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1599,6 +2575,26 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/svp/102_hires.png"
   },
+  "pokemon:en:svp:175": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-175v671.png?signature=73d16aeded72c295311b461017b44dc3e9cd34c9ecac36477ea3d496fda46c57"
+  },
+  "pokemon:en:svp:176": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-176v956.png?signature=9b9a7ab96c8537fecea098c11acf84b704400ff4a28298f9a596e8b04861ab51"
+  },
+  "pokemon:en:svp:190": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-190v778.png?signature=4bbf3a8fd4d3c1c49a9fc42945693bb40ee7c6c7208abd702f4c5985531d11ef"
+  },
+  "pokemon:en:svp:191": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-191v993.png?signature=ffe9af5038634030aaa061ed718c01ccecef0a87b122e3c63d66a6483df4bce8"
+  },
+  "pokemon:en:svp:192": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-192v380.png?signature=9d8491854d4889767290d27195a850f004f0d38ea0296cd20971fb73282bca4d"
+  },
   "pokemon:en:svp:196": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/svp/196_hires.png"
@@ -1623,9 +2619,97 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/svp/203_hires.png"
   },
+  "pokemon:en:svp:204": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-204v574.webp?signature=7390833c5fdbe0fee097e1c3eb3d684d25272c34f295ad82947f17a526bae94d"
+  },
+  "pokemon:en:svp:205": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-205v892.png?signature=5d04d4f3f2b02080b907faea178922f44c6cc16a8434f8ce452f162711a4a3ea"
+  },
+  "pokemon:en:svp:208": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-208v713.jpeg?signature=17d25bcabe7fb33344ea734805716755b61c03d90151f1ff810a140f3595ba4e"
+  },
+  "pokemon:en:svp:209": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-209v495.png?signature=e4e7eccc1d4790b8565af552dbd1835648cb39e0559b43f38f25b1f7c671ade8"
+  },
+  "pokemon:en:svp:210": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-210v141.png?signature=eb92e96ef00b16c82cf0cfc02a48a792f31c495915b0246a96c1da453f8b354a"
+  },
+  "pokemon:en:svp:211": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-211v949.jpeg?signature=809f145706ee4a5fd195abe4e187fb0b5b9efdcc42f3933370b59b217cf02038"
+  },
+  "pokemon:en:svp:212": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-212v616.jpeg?signature=738a042b2c5e95f42d932ce22f0de40d9fcbf9c8d30f5a964d506484b553dea8"
+  },
+  "pokemon:en:svp:213": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-213v844.png?signature=9208d13e73463d75b805fa18322410fd19edbb92b82ac2d85869a200c698588a"
+  },
+  "pokemon:en:svp:214": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-214v25.png?signature=282840813c08c13a0970711022e4a458c3dbcf69a00d265ba61d10f0d2c177ce"
+  },
+  "pokemon:en:svp:215": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-215v696.png?signature=0822bb6d1bfd26ae708e21ba23c56b713b55a38dd3b839034948ddb9bf5ab57d"
+  },
+  "pokemon:en:svp:216": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-216v390.webp?signature=afda7fae5c3d01024842cc5ff34b9b36234f1842e07ef7624f4963a3171ff02f"
+  },
+  "pokemon:en:svp:217": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-217v941.webp?signature=565c20ebb5cacb2bb0491e29b751f018533b1514c9e72cb06d9650a662371576"
+  },
+  "pokemon:en:svp:218": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-218v393.webp?signature=3a67ff47d654ed70c7279b872ad3408e6e1f153d6d6824b0d46865a654d744b9"
+  },
+  "pokemon:en:svp:219": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-219v819.png?signature=073ecc31081a4d9fa99406aa4f7816484e6d1d61ef74846c515f50f1d4bb6481"
+  },
+  "pokemon:en:svp:220": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-220v960.png?signature=e4255b048f81b0980bff60132de5c9a2fa6a44dc9e49446a764e31a244588c14"
+  },
+  "pokemon:en:svp:221": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-221v302.png?signature=10896d60d5e93cf036d2ca361f4527ea31b13747bd3248c491fef246a588a1e6"
+  },
+  "pokemon:en:svp:222": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-222v913.png?signature=aeb43eeba8890444b79fbc6184ce75b3a60e92058f79b38958a218d55e508e57"
+  },
+  "pokemon:en:svp:223": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-223v93.png?signature=c7d866b6925bb0155cfb996de3ff470cf72cce065e2bb595e0bad2b230470301"
+  },
+  "pokemon:en:svp:224": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-224v312.jpeg?signature=f9f2f3ef2c61716cd8b7619de3ba5986c9d5419bfbe2e5fed2e5538b72953451"
+  },
+  "pokemon:en:svp:225": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-225v879.jpeg?signature=19c5ef8f3860c70a8e2f693d1347855a95d8f81fef9a02a6a30e22d61c7f445a"
+  },
+  "pokemon:en:svp:500": {
+    "source": "pkmngg_name_only_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/svp/svp-900v375.png?signature=8916cc4c764f35893061928976c00a4ce7ebf36d503baf0925d041a602d0c48f"
+  },
   "pokemon:en:swshp:SWSH074": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/swshp/SWSH074_hires.png"
+  },
+  "pokemon:en:swshp:SWSH075": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH075_hires.png"
   },
   "pokemon:en:swshp:SWSH177": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1635,21 +2719,389 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/swshp/SWSH251_hires.png"
   },
+  "pokemon:en:swshp:SWSH282": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH282_hires.png"
+  },
+  "pokemon:en:swshp:SWSH283": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH283_hires.png"
+  },
+  "pokemon:en:swshp:SWSH284": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH284_hires.png"
+  },
+  "pokemon:en:swshp:SWSH287": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH287_hires.png"
+  },
+  "pokemon:en:swshp:SWSH288": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH288_hires.png"
+  },
+  "pokemon:en:swshp:SWSH289": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH289_hires.png"
+  },
+  "pokemon:en:swshp:SWSH290": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH290_hires.png"
+  },
+  "pokemon:en:swshp:SWSH292": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH292_hires.png"
+  },
+  "pokemon:en:swshp:SWSH293": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH293_hires.png"
+  },
+  "pokemon:en:swshp:SWSH301": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/swshp/swshp-SWSH301v1.png?signature=e272e0a85805940db47e6014545cc742f06189b5bee76a72fa4d02dfd590f2a0"
+  },
+  "pokemon:en:swshp:SWSH302": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH302_hires.png"
+  },
+  "pokemon:en:swshp:SWSH306": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH306_hires.png"
+  },
+  "pokemon:en:swshp:SWSH307": {
+    "source": "pokemontcgio_set_number_name",
+    "url": "https://images.pokemontcg.io/swshp/SWSH307_hires.png"
+  },
+  "pokemon:en:tk-bw-e:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-001.png?signature=5afd334fcf92d7d1d48312f2d9b66e203255cfaeddfca711f8c5bfc4e06ec16b"
+  },
+  "pokemon:en:tk-bw-e:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-010.png?signature=d0a00a4df11a1cee3130554cf20d43745d4f983d30b2c9265923d19c65d234ba"
+  },
+  "pokemon:en:tk-bw-e:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-011.png?signature=17066eb4476a4e43bbe2caf9e96c6781f2d20240cab7fc5854d1fddf334a9e23"
+  },
   "pokemon:en:tk-bw-e:12": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd11/12_hires.png"
+  },
+  "pokemon:en:tk-bw-e:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-013.png?signature=931fd6270cf03c2051ca64c1371aa5b54a50d8dfd07d8162db1aacd9d01b02e7"
+  },
+  "pokemon:en:tk-bw-e:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-014.png?signature=48fd83f60c2005234af1f4f1d8e0cc304bfeb776bc3df2b71da2aa5c44135cd9"
+  },
+  "pokemon:en:tk-bw-e:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-015.png?signature=d453b2ff3075188aceedac2f44587a4fd5c6acc328b8b0f8878eb649bba72589"
+  },
+  "pokemon:en:tk-bw-e:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-016.png?signature=a5ac7f29becfb938425fc914ac74923921c7de984453a313917df09dcf0093eb"
+  },
+  "pokemon:en:tk-bw-e:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-017.png?signature=00ff22a5cc67f9d5b4e587e6951b82f51af138865a0cf72c664ebeee13733c9e"
+  },
+  "pokemon:en:tk-bw-e:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-018.png?signature=48b7e01323f5269c90ab68fc6791c2d28276a6294b75152b6628f55c3156c5a5"
+  },
+  "pokemon:en:tk-bw-e:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-019.png?signature=26ac2003082f67ec28b0b44e39afeb5d9993006af0d69a23cfdfaf12777c29c3"
+  },
+  "pokemon:en:tk-bw-e:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-002.png?signature=9134d1059d8cd8ef625edf943569fd186c7c4c6c9443f39d9f0059393ace57d1"
+  },
+  "pokemon:en:tk-bw-e:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-020.png?signature=dd82415fd54cb08dc6fbef93855021ae1979f5090a3fb922c4e3a59938707e62"
+  },
+  "pokemon:en:tk-bw-e:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-021.png?signature=9bf664d6a242a0ce54b734cbaee0628aaed86070532fa2c163685075f4a24865"
+  },
+  "pokemon:en:tk-bw-e:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-022.png?signature=3ffc4f3594401e63450eff045f5ba1ef34fdc32b7b37342095ff9c48592bc42f"
+  },
+  "pokemon:en:tk-bw-e:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-023.png?signature=c82c95ffc49cdd50755dfab6f94e90e0079b84aa3e993fbdf792ee013e11a31f"
+  },
+  "pokemon:en:tk-bw-e:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-024.png?signature=22911ffdf73ab0d6e42d387576f7ffaa939f9fe4fe448a9151b1bf28cd2fda9a"
+  },
+  "pokemon:en:tk-bw-e:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-025.png?signature=a461cac52bf484dbafa23de10189ed65941bad2e17527b50a5669fbe0dc8930f"
+  },
+  "pokemon:en:tk-bw-e:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-026.png?signature=1cbdba8a0253c9965cbe80916ab7d0f39ee48c46b06a5161ecf97fbfa9e870e6"
+  },
+  "pokemon:en:tk-bw-e:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-027.png?signature=3bff41b27409c441e2180163b8c3fcf0b89c40fdbaebfba26dc62b582aeae636"
+  },
+  "pokemon:en:tk-bw-e:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-028.png?signature=e8466636a88cc5d63b93b66fd67c6d5d517eb7d0afd01af8a01807693d2e3a70"
+  },
+  "pokemon:en:tk-bw-e:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-029.png?signature=dbbe47987058341909bb69c86470f944f9d264c0444332b8b18c9113584146b3"
+  },
+  "pokemon:en:tk-bw-e:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-003.png?signature=c131a9851b02ef316d7a671e2cbe1b534ee3a73f6332c6e5a9f4554d3999eb25"
+  },
+  "pokemon:en:tk-bw-e:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-030.png?signature=b62fde6478b2818606632c7273f88d2cb99707aee6dec077e3f88f5e82daa89b"
+  },
+  "pokemon:en:tk-bw-e:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-004.png?signature=d3471e57ea91bb90f2527229376e7a724f5ca2af4966987ba50bbbf450d6bde9"
+  },
+  "pokemon:en:tk-bw-e:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-005.png?signature=69800f3f5c52589ce2755e8c7a1f276414536e74d237ea4f1bb7cadc654fb5cd"
   },
   "pokemon:en:tk-bw-e:6": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/6_hires.png"
   },
+  "pokemon:en:tk-bw-e:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-007.png?signature=9699d82bc9d6467e3a254b5f0ebe3e670633751ff4686a7013d841da9b027a1e"
+  },
+  "pokemon:en:tk-bw-e:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-008.png?signature=f30fe5cf048a6e211a45536ecacb2585aa7a6b935f7ed8fa61d44ef01ecf3174"
+  },
+  "pokemon:en:tk-bw-e:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5b/tk5b-009.png?signature=dcd82a4e0949b63977d37fbfc3dd5f4fe017e392bc73d1d2d03ea0885e51c04c"
+  },
+  "pokemon:en:tk-bw-z:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-001.png?signature=e9dfe3458013a3c917315376922577d5c9bc3ed186f6738e16e342d352a48f72"
+  },
+  "pokemon:en:tk-bw-z:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-010.png?signature=ea16fcdb902efefb6b8a7d964df0e09c91d68f51d0549f142ed27653ad9479e3"
+  },
+  "pokemon:en:tk-bw-z:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-011.png?signature=c5a2e22e4dcb55ad112ae9bfcc496c67fe1ff823d614997f56c9ae5b1fc1cf64"
+  },
+  "pokemon:en:tk-bw-z:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-012.png?signature=6b71850965ca476f460440f2b967e89f14aefa8d72f6b91ff8849c1032bdd588"
+  },
+  "pokemon:en:tk-bw-z:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-013.png?signature=d310966c4fc313bcb7aaec4192a4e5ab9868faa3349bcbfc8ecbaca5ae9ec798"
+  },
+  "pokemon:en:tk-bw-z:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-014.png?signature=1da1d9cb2ce4edf6bf16774f308d13f382d638c0ee578c86a5df07a2693da04b"
+  },
+  "pokemon:en:tk-bw-z:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-015.png?signature=463c7d421f4971b24c63f9615260a1e19ada9788a80714472c81814027a9613a"
+  },
+  "pokemon:en:tk-bw-z:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-016.png?signature=c53aecff1efd9071f02a9980621d9681f33c1de99008c295d362dd0861f2fe0e"
+  },
+  "pokemon:en:tk-bw-z:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-017.png?signature=b786c24e8451eaa1710dc628fd640f4dba70679bbe6cbe081832746e2074d767"
+  },
+  "pokemon:en:tk-bw-z:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-018.png?signature=6bb194fc7c01474cce577b45102e1143f4f62f03d4781924cf581140d1dd90fd"
+  },
+  "pokemon:en:tk-bw-z:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-019.png?signature=027726fdb699a5d2286119338d2b730f5907b35bd8f3086b9519d5abff5bae32"
+  },
+  "pokemon:en:tk-bw-z:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-002.png?signature=a3c50065e99adce3a2203b87e8e92eac7f1d3d54ac7cde772bbc26d78dd779b1"
+  },
+  "pokemon:en:tk-bw-z:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-020.png?signature=5bfb5b6ae9c6cd60c44407ad0ecc3b1f096d07c9b7a4dc037adf5dedb03aeee9"
+  },
+  "pokemon:en:tk-bw-z:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-021.png?signature=a83af92bcd6dc794039e54a4cf625adfbc8be27ebfc197543f8f3e383318050d"
+  },
+  "pokemon:en:tk-bw-z:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-022.png?signature=c37d6f1716ff9258438a85a3148e3d92cedf5149628270737cea20e17f9b067f"
+  },
+  "pokemon:en:tk-bw-z:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-023.png?signature=b0b925db9e7f9a382bcc1b742a4bff84a198170b58715fb0e79cfd28ec59ab0f"
+  },
+  "pokemon:en:tk-bw-z:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-024.png?signature=b90bd17d2f667fe81e96e849b57f6079d312baa8657a48898c62c1ea03027193"
+  },
+  "pokemon:en:tk-bw-z:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-025.png?signature=91f9856fa1643e9c24de8e8181d59bc6d5fbac473b2b7a31833157f6ec3f08da"
+  },
+  "pokemon:en:tk-bw-z:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-026.png?signature=96d4f880e20b180876684c6c1452f7d8e4758f3b6706acc063fb23ba6750b3b5"
+  },
+  "pokemon:en:tk-bw-z:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-027.png?signature=777c2fc026787dd0c4b9659ffea5355537642c9db33043bea29a1302f14e90aa"
+  },
+  "pokemon:en:tk-bw-z:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-028.png?signature=86ebb370845aedfea16894cbad5a0010db9da454b0ad8b2511f35fde7804add3"
+  },
+  "pokemon:en:tk-bw-z:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-029.png?signature=fa3c53e0045b0e986f11665644f241d85c904b31837d86b6ecb2531cc86b151d"
+  },
+  "pokemon:en:tk-bw-z:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-003.png?signature=8a4457fd8546718ed53f1489d857e40b3276c2544ad53d576c513760e160b9a7"
+  },
+  "pokemon:en:tk-bw-z:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-030.png?signature=c1c576ebec1ac6489cc71b342806b52dfd9db5575939723ecdaf85b0148c8eaf"
+  },
+  "pokemon:en:tk-bw-z:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-004.png?signature=87d83d724f653b60bc78ece3a2ecda7b729f3a5ee90a77b750c971bf29571ff7"
+  },
+  "pokemon:en:tk-bw-z:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-005.png?signature=1336de2a6398ea14b3ac502e152f722cdead56dfa2e853b3b82d1a5d37580856"
+  },
+  "pokemon:en:tk-bw-z:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-006.png?signature=d996b5400fc845b3740264861666651cc13e05ff9fdc301b9562e36ba460b5e8"
+  },
   "pokemon:en:tk-bw-z:7": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/7_hires.png"
   },
+  "pokemon:en:tk-bw-z:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-008.png?signature=757b6f856a0353435020bb7014a8362b484cf7fd69972019d368562032279007"
+  },
+  "pokemon:en:tk-bw-z:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk5a/tk5a-009.png?signature=4f5f93de8d8f4a4ef2eac64f6b8032a92ebec4e4a106f87ada7434b62bd5626a"
+  },
+  "pokemon:en:tk-dp-l:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-001.jpg?signature=6fe5609d6bef05167409617747ba2971560fdbb60fb5b9798f511c4b191bcd76"
+  },
+  "pokemon:en:tk-dp-l:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-010.jpg?signature=261fc1f3d65aea7ad1622c14ae7a1ca7282ae73bc8b2a5f844b924a720f88de2"
+  },
+  "pokemon:en:tk-dp-l:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-011.jpg?signature=b505337e27887a8e84043a0001283bacde6fe2d97c74dae390032aa2580d46eb"
+  },
+  "pokemon:en:tk-dp-l:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-002.jpg?signature=f2a6f156451dcd380ec6afd2d5a41640bbd59ef74079d8987860d270846b1c21"
+  },
+  "pokemon:en:tk-dp-l:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-003.jpg?signature=0550e27a6f2e8b9053b2e22aa000649e7ce80d18a0c89f5d7b4d7816c4be9e81"
+  },
+  "pokemon:en:tk-dp-l:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-004.jpg?signature=10b45db9e1d9ae0c7670ef9195d5faf65ed38c9d206fddd9a2d20fc2cf34e8e0"
+  },
+  "pokemon:en:tk-dp-l:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-005.jpg?signature=3274027a1038c86ab50a63e6bc08263b89411a2787f307e0ba754d9a15352644"
+  },
+  "pokemon:en:tk-dp-l:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-006.jpg?signature=f08a621eade35ac2d4f33529eabbb5c6810b776ea9006e2f37c9286395275f6b"
+  },
+  "pokemon:en:tk-dp-l:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-007.jpg?signature=bfe37e0b62cfec3f13d04bcf1480f3b5ebc69e1438ef8e34c473f18b5406b2bc"
+  },
   "pokemon:en:tk-dp-l:8": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/tk2a/8_hires.png"
+  },
+  "pokemon:en:tk-dp-l:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3b/tk3b-009.jpg?signature=fd0a654cc40653a155cc8c3548408fc5f6d326343d3478da7e121dc447fb09be"
+  },
+  "pokemon:en:tk-dp-m:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-001v2.jpeg?signature=c01953fbb6c35b728604ca6bd550cc3ef486d92a986759d7be88688bb459b658"
+  },
+  "pokemon:en:tk-dp-m:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-010.jpg?signature=bf8cf1f93cb5a48cbeb1e204780e15dc55b9a1e4e0669a558a39ea08c9e7facc"
+  },
+  "pokemon:en:tk-dp-m:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-011.jpg?signature=223f4a6c3cf9984a2ecd393483b0863051a9df0288377f697dae3befbe429bc1"
+  },
+  "pokemon:en:tk-dp-m:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-012.jpg?signature=01b07c87b4c6b3703e6fcf2ecf3b2847be4ea2acac795e4daa1fa51e8f9d36a7"
+  },
+  "pokemon:en:tk-dp-m:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-002v2.jpeg?signature=c9f68cbbd4c858f4870912be45bb3b98bc743e62237e1ce6e90b2a48b70b3383"
+  },
+  "pokemon:en:tk-dp-m:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-003v2.jpeg?signature=844c7310a073b094e8f49422c6cc99881f54dd84ff53779bc9cb9efc6054dc88"
+  },
+  "pokemon:en:tk-dp-m:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-004.jpg?signature=d7a7413b9118319f43ce73cdcb5a12b883d4c83707e2bab4d90ebd0555775374"
+  },
+  "pokemon:en:tk-dp-m:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-005v2.jpeg?signature=0706ae463ffe53eb1db8f3c6a416587326ef45e9cfcdf2de9c7bbab0124d5eae"
+  },
+  "pokemon:en:tk-dp-m:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-006.jpg?signature=1b90845cfe9d689757d0275fd2cb3881cf0d3af22ac13ac8a058f8955ab4da14"
+  },
+  "pokemon:en:tk-dp-m:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-007v2.jpeg?signature=84a27b351311fd990a51f7312c49db98ba233fff5806054d28f6f031c500abaf"
+  },
+  "pokemon:en:tk-dp-m:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-008.jpg?signature=1d5312155011d885fe59ddee462dabeade2d3a6e8905b6f8a990b54436236100"
+  },
+  "pokemon:en:tk-dp-m:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk3a/tk3a-009.jpg?signature=93efc3b08f12085acd4e4bd8ac5892a52592b2c35c9b6dc32ddab83ec9f19960"
   },
   "pokemon:en:tk-ex-latia:1": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1831,29 +3283,1101 @@
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/mcd17/12_hires.png"
   },
+  "pokemon:en:tk-sm-l:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-013.png?signature=fb6044f93c67bda34d1bbb334cafc54bf7cfb3932477e9802a3f953466dff53f"
+  },
+  "pokemon:en:tk-sm-l:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-014.png?signature=0e14bd04a10563332847066d57def31b7d24902277dc7f856a7989fbd40aeca5"
+  },
+  "pokemon:en:tk-sm-l:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-015.png?signature=df066baea9ce6e533afa946d8e67aab13e1b5a156e79381a7960726eb7e9d674"
+  },
+  "pokemon:en:tk-sm-l:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-016.png?signature=9cd3f852ab49dbc2aa70c2353c5bba5ca739db80108962110b9368ff6dab825e"
+  },
+  "pokemon:en:tk-sm-l:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-018.png?signature=5e5e2b5fc6919f2e74aa0374faef5c37fb55807166509565ab46b7ad65838a93"
+  },
+  "pokemon:en:tk-sm-l:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-019.png?signature=b092daa8b247d800e43aad671b3e56f967ae67fa306da9f089112aadb801d673"
+  },
+  "pokemon:en:tk-sm-l:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-021.png?signature=fe58a8586ccac5ee5c2486c8265f8d4da074fca6d0530e113c11fa48b2790420"
+  },
+  "pokemon:en:tk-sm-l:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-022.png?signature=6e94ef950c88cab66d523633c113292458dae0faafaaffa62d4b96e610cfd5e4"
+  },
+  "pokemon:en:tk-sm-l:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-023.png?signature=5985b064102e53fd03b4555d20667e3bb471ae84da39619a5929194cd4680eb2"
+  },
+  "pokemon:en:tk-sm-l:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-025.png?signature=1009cc3c5c7246b7aa590842236293c7092b3e0ae218636ee5b5f57bdf30c4c3"
+  },
+  "pokemon:en:tk-sm-l:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-027.png?signature=18c548c6e9f3b1bece5ef5cefcf711aa6c23b83cf5455decb234944588b0807c"
+  },
+  "pokemon:en:tk-sm-l:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-029.png?signature=c740cc616341b0deb09a6055e921ac0cc149e0dd1b9245e0b9c925f720e7dc15"
+  },
+  "pokemon:en:tk-sm-l:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-030.png?signature=65a7667ea48fe1c714b35a5904f605d6678b1c077ad11198b184c6cc2db8800c"
+  },
+  "pokemon:en:tk-sm-l:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-004.png?signature=b331cbe743e0cec47b502f89fa67f58e970f04a324a2e90dd156dc346d439132"
+  },
+  "pokemon:en:tk-sm-l:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10a/tk10a-005.png?signature=a8c05c9e54c0481b03b8ee433d79b46ee496c70d799b48cbbe16f6e39b3639bd"
+  },
+  "pokemon:en:tk-sm-r:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-011.png?signature=920cab132006c229a7b632c875c6f43d1f3a963568cb6d4b3b75dd662b33b7e2"
+  },
+  "pokemon:en:tk-sm-r:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-013.png?signature=6450c1cb580a3e60ec51523941a2a283ac6fc61514fb290515ba016dca6f2833"
+  },
+  "pokemon:en:tk-sm-r:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-014.png?signature=934457db5747e37dcd4b6aa9eac9a611c5febed9b64d83bc441bd9c9c6420cc0"
+  },
+  "pokemon:en:tk-sm-r:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-015.png?signature=9aaacab4faa7b3ede2d3f874fb1deaef8d0faccadb5062dd3b6dfd365e274e3f"
+  },
+  "pokemon:en:tk-sm-r:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-016.png?signature=a104a06ada17bea5212b81250f4b34173647d6dbaf7b637b56d8fd0e218f24fb"
+  },
+  "pokemon:en:tk-sm-r:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-017.png?signature=7f942d8ae1e14ffc0ae43becb04f87a909208a5f751d29a26c880d6ac530256b"
+  },
+  "pokemon:en:tk-sm-r:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-018.png?signature=bbb45e77724b9b18e5243f254922ca47f83fcbeff51771bbbe0aff4e6240d74e"
+  },
+  "pokemon:en:tk-sm-r:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-019.png?signature=a7ef2a7422366726ff292bfc89d68ecd5609cfed5a1a4c4516d9ee2cfcd2cec5"
+  },
+  "pokemon:en:tk-sm-r:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-002.png?signature=b4e030ef256a1cd1b58f951cfbd8b9a6cdc11e877fbea0d028dcd75b3c968ab9"
+  },
+  "pokemon:en:tk-sm-r:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-020.png?signature=aec1b48eccbfe6cc36c1acb6bd48a135862426ddc1fec0c0e31aadc407e9fe44"
+  },
+  "pokemon:en:tk-sm-r:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-021.png?signature=7f478609923e967673a65fd2c63f566ee3b65b16d8afb1568d784fd43d026818"
+  },
+  "pokemon:en:tk-sm-r:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-022.png?signature=3a968eb277c28d28c13df1be09c4c6291bd3775d1bb795d082a06dc37189419d"
+  },
+  "pokemon:en:tk-sm-r:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-023.png?signature=3cbecf436ba81b8c1842b9e6eb67f2ecbc9ce423b4f1f7b6aa898538221f7fc0"
+  },
+  "pokemon:en:tk-sm-r:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-025.png?signature=f66535bdbde8c3b991fd248e6401ada72914cc9ec7eba1db60b05b05ed21ec4a"
+  },
+  "pokemon:en:tk-sm-r:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-026.png?signature=d3626f1b952cabaf9c90be76fd9c9f2f804968fa664a0fd7de5876f91e028757"
+  },
+  "pokemon:en:tk-sm-r:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-029.png?signature=6313ff7ff3954bc057da2c23a3f809b76db78849bbae1ebd3370625262e22a4b"
+  },
+  "pokemon:en:tk-sm-r:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-030.png?signature=89f3afd5603e21150aba05d85c497eb045af471a0d9121c74e644903e0b51391"
+  },
+  "pokemon:en:tk-sm-r:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-004.png?signature=7371c042931f361ec095f99d7e2f66dfaee7a8d150bb2317cfc1be4e97dded47"
+  },
+  "pokemon:en:tk-sm-r:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk10b/tk10b-006.png?signature=f759cd578cefb188a16d0a0c485b387eb22dea6cbd59852630f986e6459f064b"
+  },
+  "pokemon:en:tk-xy-b:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-001.png?signature=515047e8c6539b6f9d020dd8d8fb8e54aa3e42757ea34e5af2d5d3b09bc707f8"
+  },
+  "pokemon:en:tk-xy-b:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-010.png?signature=34e905600266ff7ff469247ce72bd976cf413b87d73703d065d1dfd9779ae630"
+  },
+  "pokemon:en:tk-xy-b:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-011.png?signature=13c7a0bc104c95bff1f2da587fc34ac68f93331efe1198a11089d9819cf32da7"
+  },
+  "pokemon:en:tk-xy-b:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-012.png?signature=af35094b034d90b76b8b98d710bfa873ef3406d995b10a04463543bb77191afb"
+  },
+  "pokemon:en:tk-xy-b:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-013.png?signature=928b88131e1ecbceaed71e1ade054d8212c990aad3fe43c94734f70c113dc59c"
+  },
+  "pokemon:en:tk-xy-b:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-014.png?signature=f33978c0cd431df0fd9a7f5fc97ee11ddd4ce570fb891f242d3f6107f0daa36c"
+  },
+  "pokemon:en:tk-xy-b:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-015.png?signature=436b3f79ae4cd230b0ded67fd861da48e1ba8e3325c89d4ce0e985943234a648"
+  },
+  "pokemon:en:tk-xy-b:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-016.png?signature=a22269e2e62b22a778f8425bbb48405aed405e13d54c466000c0e1a08c5eb761"
+  },
+  "pokemon:en:tk-xy-b:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-017.png?signature=dcdd734089e3ed07874c00d26e7f75a40d1ead4fa659509e266d86f027521e52"
+  },
+  "pokemon:en:tk-xy-b:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-018.png?signature=d63e4ddf429143713aaf15de4ba1cc81820d935a1977b0c6a42ac4b48321e9c8"
+  },
+  "pokemon:en:tk-xy-b:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-019.png?signature=85495656a73ec25f36ccaf23f467e55c3a80b1a85cfae6423911dcda7a5285dc"
+  },
+  "pokemon:en:tk-xy-b:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-002.png?signature=395b51e87facbbf7b9936da8c920bfe40347874eee0ca7746a6c6b43e95fe601"
+  },
+  "pokemon:en:tk-xy-b:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-020.png?signature=f238cc1ae0d3de904b867c805587fe888475006c5cafe8299adbb68509937c18"
+  },
+  "pokemon:en:tk-xy-b:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-021.png?signature=79d27f18f1ae0f8a4d5f267beccf978d542e2f4cd34a88c0df833b80bc0bc728"
+  },
+  "pokemon:en:tk-xy-b:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-022.png?signature=c41c1dae90566c4765048c0e27c8abb9c77954e7a05fa0efa54d89db1460d9a9"
+  },
+  "pokemon:en:tk-xy-b:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-023.png?signature=ab262584023fa066a33de5c2433b5fb2bfcd9d85d6b3e12513bf1a2f4af0c8fa"
+  },
+  "pokemon:en:tk-xy-b:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-024.png?signature=d504ee6fcd9538b51b557943dd52d40f7c7c0dd9a9b409cc9744dd33374dee7e"
+  },
+  "pokemon:en:tk-xy-b:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-025.png?signature=0162279624665a73ebfab73266b16f6c11f1c6bbfb705f8864b41861b96d6f85"
+  },
+  "pokemon:en:tk-xy-b:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-026.png?signature=c1f984a29f9ad102190bd99b309f3ee4d596cdc5e38bd3669aa4bf741cc75a0d"
+  },
+  "pokemon:en:tk-xy-b:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-027.png?signature=e73fddc4b65691eb1018cf5d6472d5b463b6a98bf5fa233802d23b392e337f0b"
+  },
+  "pokemon:en:tk-xy-b:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-028.png?signature=3065ad3d327a3ec40ef2e57cda17581f24b5882e319bc5cf8088354fb5414216"
+  },
+  "pokemon:en:tk-xy-b:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-029.png?signature=8251a9a29a3afba52d613c0c08055a31451dfcce2c65dec344923325cd365a88"
+  },
+  "pokemon:en:tk-xy-b:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-003.png?signature=c2d869e6fd6b66482ba8bf11fb0fb5f01c4dace1942c8dea90a34ed1bfbf96b8"
+  },
+  "pokemon:en:tk-xy-b:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-030.png?signature=08a6fc8adde34316fbbe48119046b1ddf92640dab99482a0f688dadb15a13842"
+  },
+  "pokemon:en:tk-xy-b:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-004.png?signature=cac6021f602e00a98367f909596f1ade8d8bd7f6b1ce119fa2339a459bb18d1f"
+  },
+  "pokemon:en:tk-xy-b:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-005.png?signature=7422c5bed93f368c2bad0545f3e99a8c0764d451c65daae0ebaaf61e391218ad"
+  },
+  "pokemon:en:tk-xy-b:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-006.png?signature=921c12da23fb7feb3894a1bfc1e4779896fd8e451c1ee65ebdd0a30fe31a44d7"
+  },
+  "pokemon:en:tk-xy-b:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-007.png?signature=4faa9ea4ded5cff8654793a197216dfc0be7f8d73076c7883fd334b07655dc52"
+  },
   "pokemon:en:tk-xy-b:8": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/8_hires.png"
+  },
+  "pokemon:en:tk-xy-b:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7a/tk7a-009.png?signature=6d3b3976ebc30502de7603921801cf26fca63fe91af743443c4251a203da6b4a"
   },
   "pokemon:en:tk-xy-latia:1": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/1_hires.png"
   },
+  "pokemon:en:tk-xy-latia:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-010.png?signature=5b215c24d9ae178c205ef24d3f9f0e10f75627d2389c846fcacd77cd79cb688c"
+  },
+  "pokemon:en:tk-xy-latia:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-011.png?signature=3d38328deb79d1d2d2025ba9f98305f37640cbdc80f7f1a11b748044432e45b0"
+  },
+  "pokemon:en:tk-xy-latia:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-012.png?signature=70d12beb383b23d97c5605fa7cd795a39fbc0170705b1aff50f6ccd7d820f44f"
+  },
+  "pokemon:en:tk-xy-latia:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-013.png?signature=9a3fa28c115c57a9193cb42859c41d017e8f42f526749885d3e0d8b92c537448"
+  },
+  "pokemon:en:tk-xy-latia:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-014.png?signature=af55245018b08fadbe2fe2e884e2143e5fe915ed776d7d83a3552c964a9fb32d"
+  },
+  "pokemon:en:tk-xy-latia:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-015.png?signature=438ebd30849ef5930fa69b625bebb26c10208da05eb5e843621835de91519949"
+  },
+  "pokemon:en:tk-xy-latia:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-016.png?signature=faa5536f5da5c75865a5c1defc177d79851b5ca20ce9a5ec1eb45b446a7ee312"
+  },
+  "pokemon:en:tk-xy-latia:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-017.png?signature=72407c7d964059990aaed671a0567f3d814c62b16845592ddef71235398258ce"
+  },
+  "pokemon:en:tk-xy-latia:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-018.png?signature=d82fa70ab5650f8cb7ecad003d80e81de252a2ef741fc83e2f0b76e22f540de3"
+  },
+  "pokemon:en:tk-xy-latia:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-019.png?signature=e765a17972998658369a79f7ddc55b4f4d2da6c66ff9a705397422d273c43543"
+  },
+  "pokemon:en:tk-xy-latia:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-002.png?signature=b3def182b91156d258ae1a703d17cf89bdc3baa7a44262e2369f70d27c771a31"
+  },
+  "pokemon:en:tk-xy-latia:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-020.png?signature=30c2e056a57910fa9cc3c6dc344212c0a3b1d09aa7f51079623daf9e9fe4f7b4"
+  },
+  "pokemon:en:tk-xy-latia:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-021.png?signature=1422d55cbed33987ee2b94277c73a805be8a17087ca966e6e006836079ede541"
+  },
+  "pokemon:en:tk-xy-latia:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-022.png?signature=1bac4edfea3f8fe81d9bb1bb20918324607c64d454a80a6679c937382b62401a"
+  },
+  "pokemon:en:tk-xy-latia:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-023.png?signature=fa1e4895d9ac4dad7aa5768659e42265080ab2a894bbd4bad8f770f9e547a098"
+  },
+  "pokemon:en:tk-xy-latia:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-024.png?signature=b70adb6f9ca5b6a95eb395d727cc0a1dc993cf1239c238a32427f77985fa000d"
+  },
+  "pokemon:en:tk-xy-latia:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-025.png?signature=ff9dc82e7f22fb9321bd5b521a9332dee0103bbc01a4b7b3384a7b912f8f6c98"
+  },
+  "pokemon:en:tk-xy-latia:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-026.png?signature=6a68b55f9ef553041d4f6287027c5415ae6330a11aa23d3581a2589589ce30fa"
+  },
+  "pokemon:en:tk-xy-latia:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-027.png?signature=89d0113e7713fcc4a60fb7114fe726a90a38fd29c33cba94f0d8c7238da0d824"
+  },
+  "pokemon:en:tk-xy-latia:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-028.png?signature=86786ee1fe018c327d3461a51763263da5c182dc36f95415cd64568c2744413e"
+  },
+  "pokemon:en:tk-xy-latia:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-029.png?signature=afbe26dae17ac65d008a6bd188bbbfbc1e452b97e3fe3ea64d6c2da3fd08462f"
+  },
+  "pokemon:en:tk-xy-latia:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-003.png?signature=a2ef1d884856269953b90ca1ce417f27c628d6616dd3dfc23d86a6b3106d50f8"
+  },
+  "pokemon:en:tk-xy-latia:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-030.png?signature=8eb6874535bff3dcb770b288da2222928cf7b024f911a9ecc01efd2a3bf92e47"
+  },
+  "pokemon:en:tk-xy-latia:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-004.png?signature=27c47b4c3ecd80375167d94e414a9d78dff252201e5d5cca5e0dd167da5d41f2"
+  },
+  "pokemon:en:tk-xy-latia:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-005.png?signature=d0576b7ed7a0cbac0fbd5851233c00d8e6f3d7dc366478c21c295c63274d62e9"
+  },
+  "pokemon:en:tk-xy-latia:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-006.png?signature=a2140e4c171917366917f85f8bc692bdb3476d29714fc22f69a33effb2f93847"
+  },
+  "pokemon:en:tk-xy-latia:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-007.png?signature=5f8ac7107331852265d86ab5acb849b6eb902054e23a4f758e12ad898a20dc8d"
+  },
+  "pokemon:en:tk-xy-latia:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-008.png?signature=d82d39b79a8b56e7c3f77c7bf20b65ae68441bc010299633d32a9e054c3832d0"
+  },
+  "pokemon:en:tk-xy-latia:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8b/tk8b-009.png?signature=1408ba0fb880881e3fd73c62f27986af468b8fc0ba7720e3118da1d0a3704e2a"
+  },
+  "pokemon:en:tk-xy-latio:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-001.png?signature=7ddaaaf2d5e7db86c8a7c5a0388a62ef28656a85169b988f6a63ce19ca85cc18"
+  },
+  "pokemon:en:tk-xy-latio:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-010.png?signature=dfdb5c041536207de9728d1942604997098021c59ff8186248c7d143c54f2680"
+  },
+  "pokemon:en:tk-xy-latio:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-011.png?signature=bc123a63492b5d93336e03a848b31160855319968cf82dca59262677f074dbcb"
+  },
+  "pokemon:en:tk-xy-latio:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-012.png?signature=e650c56f19177695c2375e9cb690659751e10a076a370bf78ee683ab9104eff4"
+  },
+  "pokemon:en:tk-xy-latio:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-013.png?signature=a2fcd80f809f8e25ffcf77b47ff78313b09d53de30c21e0b88ba7350b93d2e57"
+  },
+  "pokemon:en:tk-xy-latio:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-014.png?signature=97e530bdf32f43233fe197af4197b7bdccf1fe9a1bae099db510e490eef3331f"
+  },
+  "pokemon:en:tk-xy-latio:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-015.png?signature=54756e88f0cf9885afaa83793201574111731f371b65e49bf5a3b3750878c2cf"
+  },
+  "pokemon:en:tk-xy-latio:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-016.png?signature=fd60d6e5e97ebd445ebe4e136403fb6bbd3e897839e9e8adf7be0ea546605833"
+  },
+  "pokemon:en:tk-xy-latio:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-017.png?signature=151cd20bd70ed705bc5404c413cec975dd56584e708a9171d7fb5d1c4ee55ab9"
+  },
+  "pokemon:en:tk-xy-latio:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-018.png?signature=df03e95805aa12d7a4094096efe86a49dd6fbbd77455a25a7de24b3b5b052fcd"
+  },
+  "pokemon:en:tk-xy-latio:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-019.png?signature=42244714cd7559a6e1f21c1e38ded3c086790c00625329464f5c7c7148c0fd80"
+  },
+  "pokemon:en:tk-xy-latio:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-002.png?signature=864103f939d164065dec0146e6a7d888cabd16fb4dd74fe647bd2be421e580b8"
+  },
+  "pokemon:en:tk-xy-latio:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-020.png?signature=820ccd24d7a3b095c053b319d117f33a734703a655c1530e744ca5590490f33d"
+  },
+  "pokemon:en:tk-xy-latio:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-021.png?signature=99a4ae6525ef115340ffd000cc91fea6a66fda2b1d8b7266b56d7cbdad274d67"
+  },
+  "pokemon:en:tk-xy-latio:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-022.png?signature=7ac533efc1954757b50a565f12c038fc03a065bb406d1f66c898d72894d9ebd7"
+  },
+  "pokemon:en:tk-xy-latio:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-023.png?signature=f8df03dd108873067c61091ad64b3961dab9bfd4e94e68e30282107f46c8becd"
+  },
+  "pokemon:en:tk-xy-latio:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-024.png?signature=a8c19afe23cebf8e75c0d49166fb56e3c882d22881e74853016e41f58ebf8343"
+  },
+  "pokemon:en:tk-xy-latio:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-025.png?signature=e26359a6cdb68a588e9e80314d4b886d1f0eeadccf317e576f6b187febee86c8"
+  },
+  "pokemon:en:tk-xy-latio:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-026.png?signature=9fb0b374a2ca862b4a0d64cc5032cb4d1ce96d45634a908dff2486621f32b2a5"
+  },
+  "pokemon:en:tk-xy-latio:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-027.png?signature=f0a28692da539335983e3aacc851b17fe06832dafd88d6c3ee9d43d9e27a555e"
+  },
+  "pokemon:en:tk-xy-latio:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-028.png?signature=21ecdc404b0301f9cdcb0379d4179a515979bd5b524e27f75fff39353427cadc"
+  },
+  "pokemon:en:tk-xy-latio:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-029.png?signature=e6c53cab770656a9b2944943511037bc7c1c526983adb46741221ccfb7310051"
+  },
+  "pokemon:en:tk-xy-latio:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-003.png?signature=4115ed3044b8d242ffc39392dcf9828e6f4cc1929135769b7d57ec9d34bc6e4d"
+  },
+  "pokemon:en:tk-xy-latio:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-030.png?signature=e4c2619e8435b9f9ee7368ffc61dc83c84639eab29407a34f35eda0b0be488d7"
+  },
+  "pokemon:en:tk-xy-latio:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-004.png?signature=e1002d24df5a49cb1d9b7f99ddee47170e9330c4543ef8472317d5042c365505"
+  },
+  "pokemon:en:tk-xy-latio:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-005.png?signature=9e42ae59f37cdcbbc421ba5406aa8a6c39a98122634af856120a6ef98da4f483"
+  },
   "pokemon:en:tk-xy-latio:6": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/6_hires.png"
+  },
+  "pokemon:en:tk-xy-latio:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-007.png?signature=c8592bd4a382ce3d20fd825b00d14fb649833e7955476a0b4eabf3666da34540"
+  },
+  "pokemon:en:tk-xy-latio:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-008.png?signature=bdc3e6b43b076901b508e3fb3f571800e467d09fd218db20e50558c64cf474c1"
+  },
+  "pokemon:en:tk-xy-latio:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk8a/tk8a-009.png?signature=d3ea33285848ed9d897dd9ae43529a54f08dc1e1a625a1e47e312e4506bd216d"
+  },
+  "pokemon:en:tk-xy-n:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-001.png?signature=c850bfadbb2e2419e844d69cf1cdf79cae2f87a77370a51c853ff6e7ed1dc387"
+  },
+  "pokemon:en:tk-xy-n:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-010.png?signature=861324869cc94582997042bf48f66b02e130925ce3f0615942790bd9dcfce8d2"
+  },
+  "pokemon:en:tk-xy-n:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-011.png?signature=9b279303a7f44922e671e3d07bbaa84e0f9d5d0fe1f6b3706f5ea78cd1c19779"
+  },
+  "pokemon:en:tk-xy-n:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-012.png?signature=7c5b4ce2ce3c861665efd02705ef989902500eec28e2738987d412ea4a696674"
+  },
+  "pokemon:en:tk-xy-n:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-013.png?signature=faaf6e746a59ae4b3ade9860ee4e7249cfb95c87175096cc1f8bb9d4d92a6bbc"
+  },
+  "pokemon:en:tk-xy-n:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-014.png?signature=53d58c6f0cb68a90718049e93fb3f24b7a4e472004814281f2a178ed5682c487"
+  },
+  "pokemon:en:tk-xy-n:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-015.png?signature=561067d4843fe556d3a3a40506d70d73063d121ef2f7abb4e0323cbdebe26ba6"
+  },
+  "pokemon:en:tk-xy-n:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-016.png?signature=4b3fa95d280760342ade06205718ff5bc1ea266c3b68c078e1314a5eb680f03b"
+  },
+  "pokemon:en:tk-xy-n:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-017.png?signature=3347b836ddc5335b578e430a590d5386d53b5b55d3f93a11326c8725c4ab4228"
+  },
+  "pokemon:en:tk-xy-n:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-018.png?signature=1ee8a28a563515535b89ff91ea7dae70cd67450943eb587cb7e621e1dd2f2be9"
+  },
+  "pokemon:en:tk-xy-n:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-019.png?signature=dca350186b45243d5f3f51a9b5e433ce84e0318adccd080ba8215d3af5913595"
+  },
+  "pokemon:en:tk-xy-n:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-002.png?signature=384081843657694f0aad7999385fc6c46b4f56c09d034f1fda6ee23eceff6e59"
+  },
+  "pokemon:en:tk-xy-n:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-020.png?signature=693e51f8576dac0034bada03eb792d4ef4489ce481545fcb53e5697b088e7b8c"
+  },
+  "pokemon:en:tk-xy-n:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-021.png?signature=b8833ba197c57bc8d09487c1aacbfb85e74ecb5a608ecfd58f90a41410ffe346"
+  },
+  "pokemon:en:tk-xy-n:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-022.png?signature=8f6cadfa10f61436ad2e51816203e3cf27ac9b5f8f07fcdeddb8a7a7505f87b1"
+  },
+  "pokemon:en:tk-xy-n:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-023.png?signature=39046ae9e1c4d89e3bb3aa3f18e3f616d7ff007a5f37d99f1c957c5dcfb5abc1"
+  },
+  "pokemon:en:tk-xy-n:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-024.png?signature=71a2c3de66d7ed159e9d1a9b5e73718b23b7bfca7bbc8610c45b2059372a47ec"
+  },
+  "pokemon:en:tk-xy-n:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-025.png?signature=9f6f6bd3b804f00007a23b5c2c4adbbcd30b077144a93ae470a69db5232d05b5"
+  },
+  "pokemon:en:tk-xy-n:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-026.png?signature=08b0e3bd594f1e9567a827e7770fa4bab544a8094c17f5e47bdacdfe13f7b509"
+  },
+  "pokemon:en:tk-xy-n:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-027.png?signature=f609a7b4c7119e71a58768bfe9256c3cb462a9072c03c619dbc512f217b5abc6"
+  },
+  "pokemon:en:tk-xy-n:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-028.png?signature=ebd582d756d30bd164b56051af3bcbb063c327c87fc5517e12fc129d4a17b965"
+  },
+  "pokemon:en:tk-xy-n:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-029.png?signature=6e702d025d08ec6bbb6c177c8231587f54d6f7aa702ac53d8fc7671f0c14395f"
+  },
+  "pokemon:en:tk-xy-n:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-003.png?signature=b5d1be77899a7874fb4919d63deb0ef3935736d711f95a4775d57ea49330d733"
+  },
+  "pokemon:en:tk-xy-n:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-030.png?signature=87931dbefb8628fff74058aa451687136e3c1627e711cc7059b78a0bc32825d8"
+  },
+  "pokemon:en:tk-xy-n:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-004.png?signature=22a7f678e9437485b2665314a1a03221c08746565d8e6cf17ab2011bd4b1b9d7"
   },
   "pokemon:en:tk-xy-n:5": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/5_hires.png"
   },
+  "pokemon:en:tk-xy-n:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-006.png?signature=c559ee346cb56fdc9af6e2cef1121b8e1ba38002148be7ade49dd1d38e616220"
+  },
+  "pokemon:en:tk-xy-n:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-007.png?signature=ad910babaddcb149e16b85cb94bccf2b8129c46f4e07284b55df940e4d5c06eb"
+  },
+  "pokemon:en:tk-xy-n:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-008.png?signature=bf324afb0b6c90cc23c0b90eed41e9fbb40c73e81764b8322dfa75acbd923035"
+  },
+  "pokemon:en:tk-xy-n:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6a/tk6a-009.png?signature=2d0a163aaa1a7e1c0aad6db134ffbbf9795ecd91035a81931293e298dcad1bc9"
+  },
+  "pokemon:en:tk-xy-p:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-001.png?signature=836a7d912e06a94dc028331b7bf7cb6b7077a56a5de8340a29063f2a38b37744"
+  },
   "pokemon:en:tk-xy-p:10": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/tk1b/10_hires.png"
   },
+  "pokemon:en:tk-xy-p:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-011.png?signature=3414291aad5ff4984d66e4a28f0192f3a02fc0859aeae772e08b6aaf0e5a0e89"
+  },
+  "pokemon:en:tk-xy-p:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-012.png?signature=c60b7023e996995ca81660f56d88e17b9030069e9d16a6815ea32349c472b57c"
+  },
+  "pokemon:en:tk-xy-p:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-013.png?signature=1401d8551422e14ab3f46a5a4eedff3408513d97cae3f3a8e8811c9017ceb13b"
+  },
+  "pokemon:en:tk-xy-p:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-014.png?signature=3506fff1bf3ee210ea3e9fb2f76384ca0b56bcc205f4bc6da3894fe95efffd7d"
+  },
+  "pokemon:en:tk-xy-p:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-015.png?signature=4f7c7f1a3e47caae1d2639e1458ac847bd890e50f6d99e0bf54fc7554a8b6100"
+  },
+  "pokemon:en:tk-xy-p:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-016.png?signature=ee0de857888fc11eafa746394b6969c71c1d4a3db8b165399dec8e6ef89cb886"
+  },
+  "pokemon:en:tk-xy-p:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-017.png?signature=66cc5956d46082e3667a9e79a9f03c1a71657101d23f26d49f067ab517617ff9"
+  },
+  "pokemon:en:tk-xy-p:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-018.png?signature=3fbcea50250a461bf33599621fb01984f51e50f1ce7a04bc5a14a88d12aee89c"
+  },
+  "pokemon:en:tk-xy-p:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-019.png?signature=0e31a78e628e0b354a19e433526f37d6697e9a676def9b8b52e23fc4cca7210b"
+  },
+  "pokemon:en:tk-xy-p:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-002.png?signature=78b26c9258e3768fd12494eb18a2b8e9709ee518d983a763a01c54943165b642"
+  },
+  "pokemon:en:tk-xy-p:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-020.png?signature=6e3cafb1e3e06e6d16694b2229276f78340e6a80323710cfd23ef04ff257b4b4"
+  },
+  "pokemon:en:tk-xy-p:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-021.png?signature=aed52c6ab1e5e3ac785cbb3bbf48678abb75a043ab07816047b9afbf137a2c91"
+  },
+  "pokemon:en:tk-xy-p:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-022.png?signature=a659a72566c0b4c59671f964cbb28f96c86fee7f4afd70e20d6fb99e63ba89d5"
+  },
+  "pokemon:en:tk-xy-p:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-023.png?signature=a37a42e5d7f78c6239b04c8964f37dd07e87a59469b1374d982e8130e5aa6c35"
+  },
+  "pokemon:en:tk-xy-p:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-024.png?signature=70df38c7a6bab5c452f2e59b96808b8f321a582e67d677eec4bb5ed28d79b2c5"
+  },
+  "pokemon:en:tk-xy-p:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-025.png?signature=21ab72fa9855a60e347a276896a974173bb038cf40e074c34ac981bb1359208d"
+  },
+  "pokemon:en:tk-xy-p:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-026.png?signature=796c0faa981a57bd86d83be2c3c1971436280d7c4922b8f0a2e18cca960a276e"
+  },
+  "pokemon:en:tk-xy-p:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-027.png?signature=056816aa5c8a9955f3789d0ccb225a6396d44e1c249ab7cef84c16393943689c"
+  },
+  "pokemon:en:tk-xy-p:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-028.png?signature=6efea953ccf79474f8f1f6239e67876633eb450cae137d14ad9622b3defba489"
+  },
+  "pokemon:en:tk-xy-p:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-029.png?signature=dc5798e9306256ae13f33aa8848ef88d4452660443ba2ac6bc56cac830f0881e"
+  },
+  "pokemon:en:tk-xy-p:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-003.png?signature=47db1732940409f1923be58ade6fb25ad48bcf7208965764c3f1e55da63e64ff"
+  },
+  "pokemon:en:tk-xy-p:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-030.png?signature=d24454b8cff9f0021cb9a8d2b268ab66007e5cdfb76d888f0f22aacab5335294"
+  },
+  "pokemon:en:tk-xy-p:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-004.png?signature=35c2b0c8c365ef8f60dcd59740f1a22744375adf5008f28650afbc9379746d2b"
+  },
+  "pokemon:en:tk-xy-p:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-005.png?signature=13da009d07c75355d0aca3a235c1faf1b7cd7c471f2ebe72ddd256ff38944300"
+  },
+  "pokemon:en:tk-xy-p:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-006.png?signature=054037e3dd7e4593d64cf5378c295a70263b83b8dfeba216bc06a81fe30dcfc4"
+  },
+  "pokemon:en:tk-xy-p:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-007.png?signature=af8c0854bdaeb0a08938848c10334222b213bd6aee3a2b755f1279de7786165a"
+  },
+  "pokemon:en:tk-xy-p:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-008.png?signature=5126b441a9d8fbe23f42aed55f4910e56bd85657c13d0da4aa53e0d5abcaf454"
+  },
+  "pokemon:en:tk-xy-p:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9a/tk9a-009.png?signature=242696d4bf3c30d359d6e51cac1a4395096df41bab61a89b15d332dfe9c14e7f"
+  },
+  "pokemon:en:tk-xy-su:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-001.png?signature=97b006c857114d63705478c240ada6d3bb86aa3d68c2ad7f853b0247d986f9ab"
+  },
+  "pokemon:en:tk-xy-su:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-010.png?signature=ac07239d7ba7062f3b01fdc88caee8c6619c79b9c6adb74bfc9583d1ed96ce40"
+  },
+  "pokemon:en:tk-xy-su:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-011.png?signature=948fc78bf84bd0c1b06e04a5a209473d0506e6b721c29fc35b18ff9633140a1e"
+  },
+  "pokemon:en:tk-xy-su:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-012.png?signature=4c84a2b0aa342531a7f81307726dcba527b61c858ff506745977bb2a560c2309"
+  },
+  "pokemon:en:tk-xy-su:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-013.png?signature=bcb00c5551b80059f21762739a520ca03770e7c8b74872060461b62c65c0261f"
+  },
+  "pokemon:en:tk-xy-su:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-014.png?signature=17bb325f0c8b669211055afcb0445a07d1cd49318c3291f1b0946e76724e0fb5"
+  },
+  "pokemon:en:tk-xy-su:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-015.png?signature=9fe49661d2bee6cd40ab9a10ed07c2afaedfa3f517744158bd8e74b75482cab3"
+  },
+  "pokemon:en:tk-xy-su:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-016.png?signature=34c402d9ba6fb87a8d6b834219042d5d8f32cf17f1154f5bb07ac601526aeeb1"
+  },
+  "pokemon:en:tk-xy-su:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-017.png?signature=d581c7fd1c7452a6114d6f866c3fff92ba3d31d57e334e6769ee055a3bfb011e"
+  },
+  "pokemon:en:tk-xy-su:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-018.png?signature=a324934ee273fce377f363cc8883581ed58a6d5a6bd3446b351732dc8cccabcf"
+  },
+  "pokemon:en:tk-xy-su:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-019.png?signature=eb7ec3c15996928281231b633f78f7574fda8c4b397cf106ee8df63bebcefdb9"
+  },
+  "pokemon:en:tk-xy-su:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-002.png?signature=7d8cfea2326eae49d309d4f1c4241443e497cb6f1553cb9bfae0fb932ce41669"
+  },
+  "pokemon:en:tk-xy-su:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-020.png?signature=bb77371970fd0e96098af3d57d186de6149cd3864783a70d25b86d5181396160"
+  },
+  "pokemon:en:tk-xy-su:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-021.png?signature=072d732a928f3e78930aadb4a26a40f41c422decc1a05e054efee63e49b2e67d"
+  },
+  "pokemon:en:tk-xy-su:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-022.png?signature=c19bc6af2e559d87f80149dcfd46bf5539d803010115000a9852af7edae77c46"
+  },
+  "pokemon:en:tk-xy-su:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-023.png?signature=fc626eb0ef3a8e25436e4b18226d7c5c5a75587232ba70cc78fa07b4a8bdd6bb"
+  },
+  "pokemon:en:tk-xy-su:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-024.png?signature=5cd406373fab1bbe724894b23c3c225247a42685819eb3ea779e586a9d5d8584"
+  },
+  "pokemon:en:tk-xy-su:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-025.png?signature=6e736e34cd023f10d672452f54822f5532fa0d02520da315401232dec88b3206"
+  },
+  "pokemon:en:tk-xy-su:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-026.png?signature=5a9c3fb475b0b5c2e6118f2f3dd4828e18886efc626d4414642f63ef3036eef0"
+  },
+  "pokemon:en:tk-xy-su:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-027.png?signature=c20306d5fc5d208a39b18551f5159f4c1aa65ad783add5c8e385dcdba5186c7a"
+  },
+  "pokemon:en:tk-xy-su:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-028.png?signature=9a9168e101fdd0e000e238f1721a38c1abdbf8b7fac6808a8d51c7f330952c8e"
+  },
+  "pokemon:en:tk-xy-su:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-029.png?signature=b52b10e70e6fbc5bf188b8dcd431861b8d432ad309db36a06e356428b05d323a"
+  },
   "pokemon:en:tk-xy-su:3": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/sve/3_hires.png"
+  },
+  "pokemon:en:tk-xy-su:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-030.png?signature=b52b93916e122d4cdc9ef0d4f4e11aa790a9e228fba574a2eb3134fd3ede2223"
+  },
+  "pokemon:en:tk-xy-su:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-004.png?signature=1c4bfe2e30c417c7a84207d895b0deb17fd9160e82d38f9ddfa3df278c79eedf"
+  },
+  "pokemon:en:tk-xy-su:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-005.png?signature=d9e34dc5534782ef0fd17511fe3c8d7e9b9333dea06790b989caa4b89fe004fe"
+  },
+  "pokemon:en:tk-xy-su:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-006.png?signature=56ceb62e99b34d7883561a860cb08d838b12221b771a2da59b7b2b7d338fdb65"
+  },
+  "pokemon:en:tk-xy-su:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-007.png?signature=d05394ad09c033c0c1bab7a78ee3f55d6a6af05d210964d8d7a4a645ddcb62c0"
+  },
+  "pokemon:en:tk-xy-su:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-008.png?signature=d5dea8e63755e10b0b743753e4b7aa816b76649c439a988f36630f93c43ab762"
+  },
+  "pokemon:en:tk-xy-su:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk9b/tk9b-009.png?signature=73a877575832e5d30b7d438a0373464b02e7b5787b72a0b11cd75ba3fb220637"
+  },
+  "pokemon:en:tk-xy-sy:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-001.png?signature=38555d9cb1f9eb5f13707706c69202fe9a48653b47965099037cbc3d280ab8d0"
+  },
+  "pokemon:en:tk-xy-sy:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-010.png?signature=9fc75c6233de4c0b38f1ea33eb5927d6e072ca37c63ca5aedeb36b4af111af04"
+  },
+  "pokemon:en:tk-xy-sy:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-011.png?signature=5c8cab25e16456fbc975d5ebab60e3ffdfce0ed9583e839e1615095ecca603f9"
+  },
+  "pokemon:en:tk-xy-sy:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-012.png?signature=146b25a9a67c517bb3ac947153007cb1fdd876d6c47877e2be72b4b008545926"
+  },
+  "pokemon:en:tk-xy-sy:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-013.png?signature=6a550f5eb193aee77a9a29d6bf08f65888c43dfad00804dd6f86b853e01f97e2"
+  },
+  "pokemon:en:tk-xy-sy:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-014.png?signature=c51fa9a7673ff3da085c04c3e741ba341417c97859dfe03045beef82819fa7ab"
+  },
+  "pokemon:en:tk-xy-sy:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-015.png?signature=cb3dc86a125a51025f1cf39a75c0579fc21cca5b66c7f394ff9bdc14a2761d2c"
+  },
+  "pokemon:en:tk-xy-sy:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-016.png?signature=9f9c690c288bc26f1e0de7f3cde9cd63e5779762390dcd82a2c28542be207a64"
+  },
+  "pokemon:en:tk-xy-sy:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-017.png?signature=4f70d852a903bfa72f643e2a9639a30481bf215009984f1b2e852e184783c5ee"
+  },
+  "pokemon:en:tk-xy-sy:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-018.png?signature=6ab1122936e55d5143bc53dbbb40f3133ce851bfda78210c82bd1ba21e5ef35a"
+  },
+  "pokemon:en:tk-xy-sy:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-019.png?signature=8b6aaf02d93a760e8cb824f035275384bfb74a4037bd552dbe3c3f082676b863"
+  },
+  "pokemon:en:tk-xy-sy:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-002.png?signature=752b04303fae8406a4f46ddccae58e54d0c305a53ec816ce5568f91a22d8e6dd"
+  },
+  "pokemon:en:tk-xy-sy:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-020.png?signature=f7631da9de6e0538ec15b0724dbe82872b6831ec9ed43a6a5256bad23281a41b"
+  },
+  "pokemon:en:tk-xy-sy:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-021.png?signature=79a579fe153b9a1ff24f89b9baa65e69c84ee17e05a8899fcc3a53b01ebd2444"
+  },
+  "pokemon:en:tk-xy-sy:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-022.png?signature=4b08752162dfd9481ee36f1934d0be5fdf0b43d69fd7edf9b4527abf155fcb01"
+  },
+  "pokemon:en:tk-xy-sy:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-023.png?signature=8cd65c8e588142d5294b0e9b041055619b04d5d7c52b0868c8ea6124fbbc7872"
+  },
+  "pokemon:en:tk-xy-sy:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-024.png?signature=4340314b12bd5c68e9c80bde0122d1e7456255329097d915f9084a607f78e8ad"
+  },
+  "pokemon:en:tk-xy-sy:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-025.png?signature=9f400c68cd964cad6a8c2fdec1733d14848f438308e8686d92b532a7d2d71c58"
+  },
+  "pokemon:en:tk-xy-sy:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-026.png?signature=45c0fef778054dab4567face983ae768e7bcd6427bbad961b290a2d81849734b"
+  },
+  "pokemon:en:tk-xy-sy:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-027.png?signature=c3ed39522ecd2f662297e1d1a36e01723396f69f7f49602461788028f90f32a4"
+  },
+  "pokemon:en:tk-xy-sy:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-028.png?signature=b0f0a2083ff74863ece3b58384cb7e2eb1d4d0153c3e55e67d9bcf116588cb6b"
+  },
+  "pokemon:en:tk-xy-sy:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-029.png?signature=97fd0eb8689355925ab63bf17ab229c38c6551c5713b9481802baf069244fde5"
+  },
+  "pokemon:en:tk-xy-sy:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-003.png?signature=fbc123e6cf6a6b591ab66e82a56de0681edc2a2c7ffeaa25dda80d65db3f07c3"
+  },
+  "pokemon:en:tk-xy-sy:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-030.png?signature=dc8bb28fa00cfacfc6a90128992fc7dd59bc586f8c1965a7bf93cd22f4992222"
+  },
+  "pokemon:en:tk-xy-sy:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-004.png?signature=789936853826720ea5faef635a110043d90b7815b1286659bba602a79bd89c0a"
+  },
+  "pokemon:en:tk-xy-sy:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-005.png?signature=c62498bb483dafe16e68a9b6dd11ac6b70d55f0d06a3c3f4921c85b7565a10b8"
+  },
+  "pokemon:en:tk-xy-sy:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-006.png?signature=cff3f41b33cff774fdde5b5bd03086a811a46485e4335c0ce7a7a23ca80abe00"
+  },
+  "pokemon:en:tk-xy-sy:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-007.png?signature=8d735dea4425ba8d7e8606090daba13f4a5d6c1359c8acb33fdb20d3013c1557"
+  },
+  "pokemon:en:tk-xy-sy:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-008.png?signature=1bb17c09d2cc713ebfab72b339e2d9d8c10670dc50c98b1ccd77e65b134987f5"
+  },
+  "pokemon:en:tk-xy-sy:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk6b/tk6b-009.png?signature=05d705de07e17ca3f82bf7416480481279772acb3a599c8c7e88fb296591ba00"
+  },
+  "pokemon:en:tk-xy-w:1": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-001.png?signature=b5d0fe184db82eb9b3298cd03e53c89135788387d277ea9dacdd145763a8364a"
+  },
+  "pokemon:en:tk-xy-w:10": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-010.png?signature=7eab8103883776c059f9c180ae9ceff385afc17210fee40c6b46c31f8c1bfd1d"
+  },
+  "pokemon:en:tk-xy-w:11": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-011.png?signature=4fbfc488107de6187fa93ac99c9c688d214bc48aa085c42aa818bd78eea96068"
+  },
+  "pokemon:en:tk-xy-w:12": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-012.png?signature=d5e2a77d576a7d6fb86f193e8b79218662b93859b3d5cf66344f14d47a88dc35"
+  },
+  "pokemon:en:tk-xy-w:13": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-013.png?signature=d86f887010e4d2761e73877053aaf3bcb5a9f84b9f959a7b93acc4de5506cfc8"
+  },
+  "pokemon:en:tk-xy-w:14": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-014.png?signature=c71fd902ec0ba42a81d61de992417efcd3ab3e5abc25c7b5320a6d8f78738572"
+  },
+  "pokemon:en:tk-xy-w:15": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-015.png?signature=0dbf3797937d631cfcc00bbc18d7e5425dc328482b39196f8d6355fede893fbf"
+  },
+  "pokemon:en:tk-xy-w:16": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-016.png?signature=b5194611ad9736e999499e1314df4fbba962261cab2f6c1e145e8ac716aefd18"
+  },
+  "pokemon:en:tk-xy-w:17": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-017.png?signature=c4ec206c8a5e26e9c1ff67c346eb41eaf51d1c327a96228edb0982ef38128fb9"
+  },
+  "pokemon:en:tk-xy-w:18": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-018.png?signature=f16697ab34a1705e48cd95d3a46592785fc36766faed49c3fa65290f748e085b"
+  },
+  "pokemon:en:tk-xy-w:19": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-019.png?signature=d23c73e6ed9ef7001f5928bc0b86be68b0fa42c2c90193fd13ebe6c1902068e2"
+  },
+  "pokemon:en:tk-xy-w:2": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-002.png?signature=56fcd558d340ef27c785d3b80bc9aeffbbaeab6da150b510f412ef22920aa9fe"
+  },
+  "pokemon:en:tk-xy-w:20": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-020.png?signature=89efc770a807a5abe0d380f45fce11c70d516e2834300e56ed56044bc5589e62"
+  },
+  "pokemon:en:tk-xy-w:21": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-021.png?signature=56dadbb117d127866801fc62ccf0c39626b6130b827465dd1d5050f7e29b2ab5"
+  },
+  "pokemon:en:tk-xy-w:22": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-022.png?signature=4b8bc3b5182caf3053da80ff6245c9ba316b2a100a23c9b6bc8fabc8d9090764"
+  },
+  "pokemon:en:tk-xy-w:23": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-023.png?signature=4b4bb9f1339f216e769be806744b8f9ae8f4e49f7c010ddfac3d3607880b5b9f"
+  },
+  "pokemon:en:tk-xy-w:24": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-024.png?signature=82d2bc96ebcc2d687a90eac804d3995cce1a59881ca0358bb1df72b717c789fb"
+  },
+  "pokemon:en:tk-xy-w:25": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-025.png?signature=bd263b6208f8b51373f4728c9fc6d5bf487a0f19889e1760f16fd7ae2c4191a5"
+  },
+  "pokemon:en:tk-xy-w:26": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-026.png?signature=1641a6df5b9e439eda524eca7513771ea31ed1a5bbc22e2f4b4078edab40bbf7"
+  },
+  "pokemon:en:tk-xy-w:27": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-027.png?signature=31cca8873ce0e5a7025ed079a8d21cb2cc7ad641f7461fea4d48166f813af11f"
+  },
+  "pokemon:en:tk-xy-w:28": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-028.png?signature=35783b689228edb6eb632acf7042e64488d2f3dd7e3541101c147af6a2c5e64c"
+  },
+  "pokemon:en:tk-xy-w:29": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-029.png?signature=264cccada026c9fac066f1825f13ece84fc3730a6079395d333312ff5d7909f6"
+  },
+  "pokemon:en:tk-xy-w:3": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-003.png?signature=ac5c498af34d128d3b3556177ff4336fd1a2cbfde2cc9fc665fa462f06433c77"
+  },
+  "pokemon:en:tk-xy-w:30": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-030.png?signature=65242642d5227bcb1c08f703784fc912dcbfba8e2bb083e97300940666ffc22c"
+  },
+  "pokemon:en:tk-xy-w:4": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-004.png?signature=e916466ced8861b6527a0cdaacfee6981875f929065129e49f5c7065c4cb4161"
+  },
+  "pokemon:en:tk-xy-w:5": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-005.png?signature=a61bfa2bd7ea5ed6f66acfa4865653be821abb6dbe2ad2fdca28f066fee82fe1"
+  },
+  "pokemon:en:tk-xy-w:6": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-006.png?signature=c941f4f8ca95763d0ebeafa55072931a3d83a7569f67db197c9575673b3119e5"
+  },
+  "pokemon:en:tk-xy-w:7": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-007.png?signature=c7e962e55ad41d619c9fd34d012c74033e406d94ae04987f6d05b6ed217b644b"
+  },
+  "pokemon:en:tk-xy-w:8": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-008.png?signature=9df2e527bd9bae706059b9bd745eb1a2419c9a6ec40bafb896b9334b77a44246"
+  },
+  "pokemon:en:tk-xy-w:9": {
+    "source": "pkmngg_exact_match",
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/tk7b/tk7b-009.png?signature=90e67301a7078d31e96abbc075825956a1cd86efa876c535de368bcbf53f683e"
   },
   "pokemon:en:xy8:146a": {
     "source": "pokemontcgio_name_artist_hp",
@@ -1890,9 +4414,5 @@
   "pokemon:en:xyp:XY68": {
     "source": "pokemontcgio_name_artist_hp",
     "url": "https://images.pokemontcg.io/xyp/XY68_hires.png"
-  },
-  "pokemon:en:hsp:HGSS18": {
-    "source": "pkmncards_verified",
-    "url": "https://pkmncards.com/wp-content/uploads/tropical-tidal-wave-heartgold-soulsilver-promos-hgss18-1.png"
   }
 }

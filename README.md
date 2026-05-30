@@ -47,11 +47,11 @@ Workflow notes:
 
 - The embeddings workflow uses the promoted ONNX embedder at [models/card_embedder.onnx](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.onnx).
 - The embeddings build applies the same crop inset, resize, and normalization contract that downstream CardHawk runtime code expects from this embedder family.
-- The embeddings workflow is a fresh locale-first rebuild from TCGdex, not an incremental extension of the old English-only corpus.
+- The embeddings workflow is monotonic by default: it starts from the live English card listing, adds verified supplementary cards, and carries forward cards from the previous `embeddings-latest` seed DB unless they are explicitly excluded.
 - The current automated release workflows publish the supported locale set: `en` and `ja`.
 - The embeddings workflow requires a promoted production model manifest at [models/card_embedder.manifest.json](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/models/card_embedder.manifest.json). Release builds must not use ad hoc exports directly from `training/exports/`.
 - TCGdex card payloads expose an asset base URL in `image`; the builders normalize that to the final localized binary art path at `.../high.webp`.
-- Some upstream cards still have no localized art URL. Manifest and embeddings builds skip those rows explicitly and report the skipped counts and reasons by locale.
+- Every scan-eligible published card must have a public HTTPS `image_url`. A local cached image can avoid re-downloading bytes for embedding, but it is not sufficient for release metadata; missing public URLs block publishing and produce a missing-image report.
 - The prices workflow writes `prices-build-summary.json` with a per-locale source coverage audit, provider transport diagnostics, and a deterministic content hash, then skips release upload when that hash matches the current `prices-latest` asset.
 - The prices workflow can use the existing `POKEMONTCG_API_KEY` secret for higher-rate US price fetches while keeping the published SQLite contract unchanged.
 - The April 2026 English USD provider audit and deterministic gap sample live in [docs/english_price_provider_comparison.md](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/docs/english_price_provider_comparison.md) and were generated with [scripts/build_english_price_gap_sample.py](/Users/rabelson/Documents/GitHub/pokemon-tcg-corpus/scripts/build_english_price_gap_sample.py).
@@ -123,7 +123,7 @@ SQLite database with:
 - Price row contract: exactly one `is_primary = 1` row for each `card_id` present in `prices`, with `cardmarket` promoted to primary when `tcgplayer` is missing
 - Prices build audit: per locale, the builder reports cards with `tcgplayer`, cards with `cardmarket`, cards with both, cards with neither, and which source ended up primary
 - Prices build metadata: `prices-build-summary.json` also records provider transport counts plus PokemonTCG.io fetch/match/staleness diagnostics so release audits can distinguish source selection from database shape
-- Prices release workflow: `.github/workflows/prices.yml` builds `prices-latest` with `--max-fallback-cards 0`, so the full corpus rebuild stays bounded, skips fallback-provider network calls entirely, and depends only on the primary PokemonTCG.io matcher for English USD rows. Manual same-day reruns reuse existing same-day `tcgplayer` rows from the published `prices.db` and only query cards still missing USD; scheduled daily runs still refresh the full price set. PPT and PokeTrace remain available for targeted runs and diagnostics.
+- Prices release workflow: `.github/workflows/prices.yml` builds `prices-latest` against the current `embeddings-latest` cards table rather than an independent live listing. It requires every English card in that universe to have a primary USD row before publishing, reuses same-day rows on manual reruns, and keeps the previous release if providers are incomplete or unavailable. Fallback USD providers are source-labeled in `source_name` instead of being published as Cardmarket/EUR substitutions.
 - The app currently uses local retrieval and local price lookup after a stable match. This repo is not the place to document app-only thresholds or UI behavior.
 
 ## Training

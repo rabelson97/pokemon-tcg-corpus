@@ -34,6 +34,16 @@ jobs:
           [ -f existing-release/prices.db.zip ] || exit 0
           unzip -jo existing-release/prices.db.zip -d existing-release
 
+      - name: Download current published embeddings database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p existing-release
+          gh release view embeddings-latest >/dev/null 2>&1 || exit 1
+          gh release download embeddings-latest --pattern embeddings.db.zip --dir existing-release
+          test -f existing-release/embeddings.db.zip
+          unzip -jo existing-release/embeddings.db.zip -d existing-release
+
       - name: Resolve build mode
         env:
           GH_TOKEN: ${{ github.token }}
@@ -95,7 +105,8 @@ jobs:
             --summary-json prices-build-summary.json \
             --locales en \
             --min-row-count 10000 \
-            --max-fallback-cards 100 \
+            --card-universe-db existing-release/embeddings.db \
+            --require-full-usd-coverage \
             ${extra_args}
 
       - name: Validate prices database

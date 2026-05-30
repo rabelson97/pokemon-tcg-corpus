@@ -56,13 +56,12 @@ class BuildPricesDbTests(unittest.TestCase):
 
         self.assertEqual([], cards)
 
-    def test_fetch_set_scoped_pokemontcgio_cards_skips_transient_provider_errors(self) -> None:
+    def test_fetch_set_scoped_pokemontcgio_cards_fails_on_transient_provider_errors(self) -> None:
         english_cards = [{"set_id": "sv01", "card_number": "001"}]
 
         with mock.patch.object(build_prices_db, "pokemontcgio_api_get_json", side_effect=TimeoutError("timed out")):
-            cards = build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
-
-        self.assertEqual([], cards)
+            with self.assertRaises(RuntimeError):
+                build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
 
     def test_extract_price_rows_supports_pokemontcgio_tcgplayer_shape(self) -> None:
         rows = build_prices_db.extract_price_rows_from_selected_sources(
@@ -886,6 +885,117 @@ class BuildPricesDbTests(unittest.TestCase):
             summary=summary,
         )
         self.assertIn("cardmarket", selected)
+
+
+class PkmnggPriceSourceTests(unittest.TestCase):
+    def test_select_price_sources_falls_back_to_pkmngg(self) -> None:
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {},
+            "pokemontcgio": {
+                "english_cards_considered": 0,
+                "english_counts": 0,
+                "english_cards_with_match": 0,
+                "english_cards_without_match": 0,
+                "english_cards_with_tcgplayer": 0,
+                "english_cards_without_tcgplayer": 0,
+                "stale_tcgplayer_rows": 0,
+                "stale_reasons": {},
+            },
+        }
+        card = {
+            "id": "pokemon:en:sve:001",
+            "locale": "en",
+            "set_id": "sve",
+            "name": "Grass Energy",
+            "card_number": "001",
+            "pricing": {},
+        }
+        
+        # Mock fetch_pkmngg_set_cards to return fake NEXT_DATA pageProps cardData
+        fake_cards = [
+            {
+                "name": "Grass Energy",
+                "number": "001",
+                "variantMap": {
+                    "normal": {
+                        "price": 1.5,
+                        "tcgPlayerId": 12345
+                    }
+                }
+            }
+        ]
+        
+        pkmngg_set_cache = {}
+        
+        with mock.patch("build_prices_db.fetch_pkmngg_set_cards", return_value=fake_cards) as mock_fetch:
+            # First, check that select_price_sources returns empty (no pokemontcgio match)
+            selected = build_prices_db.select_price_sources(
+                card,
+                pokemontcgio_index={},
+                max_pokemontcgio_age_days=14,
+                now=dt.datetime(2026, 4, 10, tzinfo=dt.timezone.utc),
+                summary=summary,
+            )
+            
+            self.assertEqual({}, selected)
+            
+            # Now, simulate the dynamic build loop fallback block logic:
+            set_id = card["set_id"]
+            self.assertIn(set_id, build_prices_db.EXPLICIT_SET_MAPPINGS)
+            
+            mapping = build_prices_db.EXPLICIT_SET_MAPPINGS[set_id]
+            series, slug = mapping
+            cache_key = f"{series}/{slug}"
+            if cache_key not in pkmngg_set_cache:
+                pkmngg_set_cache[cache_key] = build_prices_db.fetch_pkmngg_set_cards(series, slug)
+                
+            candidates = pkmngg_set_cache[cache_key]
+            match, reason = build_prices_db.match_card_in_candidates(card, candidates)
+            self.assertIsNotNone(match)
+            self.assertEqual("exact_match", reason)
+            
+            variant_map = match.get("variantMap") or {}
+            market_price = None
+            for v_key in ["normal", "reverse-holo", "holo", "reverse"] + list(variant_map.keys()):
+                v_data = variant_map.get(v_key)
+                if isinstance(v_data, dict):
+                    p = v_data.get("price")
+                    if isinstance(p, (int, float)) and p > 0:
+                        market_price = float(p)
+                        break
+            
+            self.assertEqual(1.5, market_price)
+            
+            # Construct the pricing row structure
+            selected["pkmngg"] = {
+                "unit": "USD",
+                "updated": "2026/04/10 12:00:00",
+                "source_name": "pkmngg",
+                "selected_variant": {
+                    "marketPrice": market_price,
+                    "lowPrice": None,
+                    "highPrice": None
+                }
+            }
+            
+            # Verify rows extraction
+            rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], selected)
+            self.assertEqual(1, len(rows))
+            self.assertEqual(
+                (
+                    "pokemon:en:sve:001",
+                    "US",
+                    "USD",
+                    "pkmngg",
+                    None,
+                    1.5,
+                    None,
+                    "2026/04/10 12:00:00",
+                    1,
+                ),
+                rows[0]
+            )
 
 
 class PptApiTests(unittest.TestCase):

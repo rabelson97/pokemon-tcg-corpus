@@ -476,6 +476,59 @@ def recreate_int8_table(connection: sqlite3.Connection) -> None:
     connection.commit()
 
 
+def load_seed_card_records(seed_db: Path, locales: list[str]) -> list[dict[str, Any]]:
+    if not seed_db.exists():
+        return []
+    allowed_locales = set(locales)
+    with sqlite3.connect(seed_db) as connection:
+        card_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cards);").fetchall()}
+        required = {"id", "locale", "upstream_id", "set_name", "card_number", "name", "rarity", "image_url", "equivalence_key"}
+        if not required.issubset(card_columns):
+            return []
+        set_column = "set_id" if "set_id" in card_columns else "set_code" if "set_code" in card_columns else None
+        if set_column is None:
+            return []
+        image_low_select = "image_url_low" if "image_url_low" in card_columns else "NULL AS image_url_low"
+        hp_select = "hp" if "hp" in card_columns else "NULL AS hp"
+        types_select = "types" if "types" in card_columns else "NULL AS types"
+        rows = connection.execute(
+            f"""
+            SELECT id, locale, upstream_id, {set_column} AS set_id, set_name, card_number,
+                   name, rarity, image_url, {image_low_select}, equivalence_key, hp, {types_select}
+            FROM cards
+            ORDER BY id;
+            """
+        ).fetchall()
+
+    cards: list[dict[str, Any]] = []
+    for row in rows:
+        locale = str(row[1])
+        if locale not in allowed_locales:
+            continue
+        types_value = row[12]
+        cards.append(
+            {
+                "id": str(row[0]),
+                "locale": locale,
+                "upstream_source": "seed",
+                "upstream_id": str(row[2]),
+                "set_id": str(row[3]),
+                "set_name": str(row[4]),
+                "card_number": str(row[5]),
+                "name": str(row[6]),
+                "rarity": str(row[7]),
+                "image_url": str(row[8]) if row[8] is not None else "",
+                "image_url_low": str(row[9]) if row[9] is not None else None,
+                "equivalence_key": str(row[10]),
+                "pricing": {},
+                "illustrator": None,
+                "hp": str(row[11]) if row[11] is not None else None,
+                "types": str(types_value).split(",") if types_value else [],
+            }
+        )
+    return cards
+
+
 def sample_embedding_diagnostics(
     db_path: Path,
     *,
@@ -630,6 +683,18 @@ def validate_embeddings_db(
         )
         if local_url_count > 0:
             raise RuntimeError(f"Found {local_url_count} cards with local runner image URLs")
+
+        blank_image_url_count = int(
+            connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM cards
+                WHERE image_url IS NULL OR trim(image_url) = '';
+                """
+            ).fetchone()[0]
+        )
+        if blank_image_url_count > 0:
+            raise RuntimeError(f"Found {blank_image_url_count} cards without a public image_url")
 
     diagnostics = sample_embedding_diagnostics(db_path)
     sample_count = int(diagnostics["sample_count"])
@@ -1106,10 +1171,6 @@ def ensure_images(
             if cached_fallback:
                 card["image_url"] = cached_fallback["url"]
                 image_sources[card_id] = cached_fallback["source"] + ":cached"
-            elif cached_image_available:
-                # A cached image is sufficient for embedding even if no public display URL is known.
-                image_sources[card_id] = "local_cache_without_public_url"
-                continue
             else:
                 fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
                 if fallback:
@@ -1200,6 +1261,53 @@ def ensure_images(
         ready.append(DownloadedCard(card=card, image_path=image_path))
 
     return ready, skipped, time.perf_counter() - started, image_sources
+
+
+def preflight_image_urls(
+    cards: list[dict[str, Any]],
+    cache_dir: Path,
+    *,
+    allow_web_image_fallback: bool,
+) -> tuple[list[SkippedCard], dict[str, str]]:
+    """Resolve public display image URLs before seed embedding reuse.
+
+    A cached local image is useful for avoiding re-downloads, but it is not a
+    valid published display URL. The release DB must carry a public HTTPS URL
+    for every scan-eligible card, including cards whose embeddings are reused
+    from a seed DB.
+    """
+    fallback_manifest = load_fallback_manifest(cache_dir)
+    skipped: list[SkippedCard] = []
+    image_sources: dict[str, str] = {}
+
+    for card in cards:
+        card_id = str(card["id"])
+        image_url = public_image_url_or_none(card.get("image_url"))
+        card["image_url"] = image_url
+        card["image_url_low"] = public_image_url_or_none(card.get("image_url_low"))
+
+        if image_url:
+            image_sources[card_id] = "upstream"
+            continue
+
+        cached_fallback = fallback_manifest.get(card_id)
+        if cached_fallback:
+            card["image_url"] = cached_fallback["url"]
+            image_sources[card_id] = cached_fallback["source"] + ":cached"
+            continue
+
+        fallback = resolve_fallback_image(card, allow_web_image_fallback=allow_web_image_fallback)
+        if fallback:
+            card["image_url"] = fallback.url
+            image_sources[card_id] = fallback.source
+            fallback_manifest[card_id] = {"url": fallback.url, "source": fallback.source}
+            continue
+
+        skipped.append(SkippedCard(card_id=card_id, locale=card["locale"], reason="missing_image_url"))
+
+    if fallback_manifest:
+        write_fallback_manifest(cache_dir, fallback_manifest)
+    return skipped, image_sources
 
 
 def inspect_model_contract(connection: sqlite3.Connection) -> list[tuple[str, int, int]]:
@@ -1447,10 +1555,23 @@ def build_embeddings_db(
         cards, api_key=pokemontcgio_api_key,
     )
     cards.extend(supplementary_cards)
+    remote_card_count = len(cards)
 
-    summary["total_remote_cards"] = len(cards)
+    seed_carried_forward_cards = 0
+    if seed_db is not None:
+        known_card_ids = {str(card["id"]) for card in cards}
+        for seed_card in load_seed_card_records(seed_db, locales):
+            if str(seed_card["id"]) in known_card_ids:
+                continue
+            cards.append(seed_card)
+            known_card_ids.add(str(seed_card["id"]))
+            seed_carried_forward_cards += 1
+
+    summary["total_remote_cards"] = remote_card_count
+    summary["total_candidate_cards"] = len(cards)
     summary["listed_counts"] = listed_counts
     summary["supplementary_pokemontcgio_cards"] = len(supplementary_cards)
+    summary["seed_carried_forward_cards"] = seed_carried_forward_cards
 
     detailed_counts: dict[str, int] = {}
     for card in cards:
@@ -1469,6 +1590,43 @@ def build_embeddings_db(
     summary["scan_eligible_cards"] = len(eligible_cards)
     summary["excluded_cards"] = len(excluded_cards)
     summary["excluded_by_series"] = excluded_by_series
+
+    preflight_skipped_cards, preflight_image_sources = preflight_image_urls(
+        eligible_cards,
+        image_cache_dir,
+        allow_web_image_fallback=allow_web_image_fallback,
+    )
+    if preflight_skipped_cards and not allow_missing_images:
+        skipped_by_locale, skipped_reasons = skipped_cards_by_locale_and_reason(preflight_skipped_cards)
+        missing_report = build_missing_images_report(
+            preflight_skipped_cards,
+            eligible_cards,
+            image_cache_dir=image_cache_dir,
+            excluded_cards=excluded_cards,
+        )
+        write_json_file(missing_images_json, missing_report)
+        summary.update(
+            {
+                "status": "blocked_missing_public_image_urls",
+                "duration_seconds": round(time.perf_counter() - started, 3),
+                "processed_cards": 0,
+                "reused_seed_cards": 0,
+                "skipped_cards": len(preflight_skipped_cards),
+                "skipped_by_locale": skipped_by_locale,
+                "skipped_reasons": skipped_reasons,
+                "missing_images_report": str(missing_images_json) if missing_images_json is not None else None,
+                "allow_web_image_fallback": allow_web_image_fallback,
+                "allow_missing_images": allow_missing_images,
+                "output_db": str(output_db),
+            }
+        )
+        write_json_file(summary_json, summary)
+        raise RuntimeError(
+            "Refusing to build a partial scan corpus: "
+            f"{len(preflight_skipped_cards)} scan-eligible cards are missing public HTTPS image URLs. "
+            "Run the image-gap resolver, commit/update image-fallbacks.json, then rerun. "
+            + json.dumps(missing_report["cards"][:20], indent=2)
+        )
 
     output_db.parent.mkdir(parents=True, exist_ok=True)
     if output_db.exists():
@@ -1557,7 +1715,9 @@ def build_embeddings_db(
 
     image_source_counts: dict[str, int] = {}
     image_source_examples: list[dict[str, str]] = []
-    for card_id, source in sorted(image_sources.items()):
+    all_image_sources = dict(preflight_image_sources)
+    all_image_sources.update(image_sources)
+    for card_id, source in sorted(all_image_sources.items()):
         image_source_counts[source] = image_source_counts.get(source, 0) + 1
         if len(image_source_examples) < 20:
             image_source_examples.append({"card_id": card_id, "source": source})
