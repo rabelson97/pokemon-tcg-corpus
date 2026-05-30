@@ -1330,6 +1330,7 @@ def build_prices_db(
     poketrace_set_slugs: dict[str, str] = {}
     ppt_set_cache: dict[str, dict[str, dict[str, Any]]] = {}
     allow_fallback_queries = max_fallback_cards is None or max_fallback_cards > 0
+    now = dt.datetime.now(dt.timezone.utc)
     if "en" in locales:
         english_cards = [card for card in cards if str(card.get("locale") or "") == "en"]
         english_cards_needing_primary_refresh = [
@@ -1342,7 +1343,29 @@ def build_prices_db(
         elif reuse_existing_tcgplayer_date:
             pokemontcgio_cards = []
         else:
-            pokemontcgio_cards = fetch_set_scoped_pokemontcgio_cards(english_cards)
+            # Optimize: Only query PokemonTCG.io sets that have cards needing refresh and are not resolved by pkmn.gg fallbacks!
+            english_cards_needing_refresh = []
+            for card in english_cards:
+                tcgplayer_resolved = False
+                pricing = card.get("pricing") or {}
+                tcgdex_tcgplayer = pricing.get("tcgplayer")
+                if isinstance(tcgdex_tcgplayer, dict):
+                    normalized, updated_at = normalize_tcgplayer_payload(tcgdex_tcgplayer)
+                    if normalized is not None:
+                        is_fresh = False
+                        if updated_at is not None:
+                            try:
+                                is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
+                            except ValueError:
+                                is_fresh = False
+                        if updated_at is None or is_fresh:
+                            tcgplayer_resolved = True
+
+                set_id = str(card.get("set_id") or "").strip()
+                if not tcgplayer_resolved and set_id not in EXPLICIT_SET_MAPPINGS:
+                    english_cards_needing_refresh.append(card)
+
+            pokemontcgio_cards = fetch_set_scoped_pokemontcgio_cards(english_cards_needing_refresh)
         pokemontcgio_index = build_pokemontcgio_index(pokemontcgio_cards)
         if allow_fallback_queries:
             poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
