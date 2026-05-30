@@ -64,16 +64,80 @@ CARDMARKET_NUMERIC_KEYS = [
 USD_PRICE_SOURCE_NAMES = ("tcgplayer", "pokemonpricetracker", "poketrace", "pricecharting", "pkmngg")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+PKMNGG_SITEMAP_URL = "https://www.pkmn.gg/sitemap.xml"
+PKMNGG_VARIANT_PREFERENCE = (
+    "normal",
+    "holofoil",
+    "holo",
+    "reverseHolofoil",
+    "reverse-holo",
+    "reverse",
+    "1stEditionHolofoil",
+    "1stEdition",
+    "unlimitedHolofoil",
+    "unlimitedNormal",
+)
 
 # Curated, explicit set mappings for missing cards on pkmn.gg
 EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
+    "base1": ("base", "base"),
+    "basep": ("base", "wizards-black-star-promos"),
+    "base06": ("other", "legendary-collection"),
+    "lc": ("other", "legendary-collection"),
+    "bp": ("other", "best-of-game"),
+    "bog": ("other", "best-of-game"),
+    "me01": ("mega-evolution", "mega-evolution"),
+    "me02": ("mega-evolution", "phantasmal-flames"),
+    "me02.5": ("mega-evolution", "ascended-heroes"),
+    "me03": ("mega-evolution", "perfect-order"),
+    "me04": ("mega-evolution", "chaos-rising"),
     "mep": ("mega-evolution", "me-black-star-promos"),
+    "xyp": ("xy", "xy-black-star-promos"),
+    "dpp": ("diamond-pearl", "dp-black-star-promos"),
+    "np": ("np", "nintendo-black-star-promos"),
+    "fut2020": ("other", "pokemon-futsal-collection"),
+    "si1": ("other", "southern-islands"),
+    "si01": ("other", "southern-islands"),
+    "ru1": ("other", "pokemon-rumble"),
+    "ru01": ("other", "pokemon-rumble"),
+    "pop5": ("pop", "pop-series-5"),
+    "g1": ("xy", "generations"),
+    "dv1": ("black-white", "dragon-vault"),
+    "dc1": ("xy", "double-crisis"),
+    "sma": ("sun-moon", "shiny-vault"),
+    "sm115": ("sun-moon", "hidden-fates"),
     "smp": ("sun-moon", "sm-black-star-promos"),
     "svp": ("scarlet-violet", "scarlet-violet-black-star-promos"),
-    "cel25": ("sword-shield", "celebrations"),
+    "cel25": [
+        ("sword-shield", "celebrations"),
+        ("sword-shield", "celebrations-classic-collection"),
+    ],
     "swshp": ("sword-shield", "swsh-black-star-promos"),
+    "swsh9": [
+        ("sword-shield", "brilliant-stars"),
+        ("sword-shield", "brilliant-stars-trainer-gallery"),
+    ],
+    "swsh10": [
+        ("sword-shield", "astral-radiance"),
+        ("sword-shield", "astral-radiance-trainer-gallery"),
+    ],
+    "swsh10.5": [
+        ("sword-shield", "crown-zenith"),
+        ("sword-shield", "crown-zenith-galarian-gallery"),
+    ],
+    "swsh11": [
+        ("sword-shield", "lost-origin"),
+        ("sword-shield", "lost-origin-trainer-gallery"),
+    ],
+    "swsh12": [
+        ("sword-shield", "silver-tempest"),
+        ("sword-shield", "silver-tempest-trainer-gallery"),
+    ],
+    "swsh12.5": [
+        ("sword-shield", "crown-zenith"),
+        ("sword-shield", "crown-zenith-galarian-gallery"),
+    ],
     "sve": ("scarlet-violet", "scarlet-violet-energy-2023"),
-    "bog": ("other", "best-of-game"),
     "2011bw": ("other", "mcdonalds-collection-2011"),
     "2012bw": ("other", "mcdonalds-collection-2012"),
     "2014xy": ("other", "mcdonalds-collection-2014"),
@@ -86,17 +150,27 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "2022swsh": ("other", "mcdonalds-collection-2022"),
     "2023sv": ("other", "mcdonalds-collection-2023"),
     "2024sv": ("other", "mcdonalds-collection-2025"),
-    "col01": ("other", "call-of-legends"),
+    "col1": ("heartgold-soulsilver", "call-of-legends"),
+    "col01": ("heartgold-soulsilver", "call-of-legends"),
     "hsp": ("heartgold-soulsilver", "hgss-black-star-promos"),
+    "hgssp": ("heartgold-soulsilver", "hgss-black-star-promos"),
     "bwp": ("black-white", "bw-black-star-promos"),
-    "swsh4.5": ("sword-shield", "shining-fates"),
+    "swsh4.5": [
+        ("sword-shield", "shining-fates"),
+        ("sword-shield", "shiny-vault"),
+    ],
     "sm7.5": ("sun-moon", "dragon-majesty"),
     "sm3.5": ("sun-moon", "shining-legends"),
     "sm6": ("sun-moon", "forbidden-light"),
-    "ex5.5": ("ex", "poke-card-creator-pack"),
-    "exu": ("ex", "ex-unseen-forces"),
-    "tk-ex-p": ("ex", "ex-trainer-kit-plusle"),
-    "tk-ex-m": ("ex", "ex-trainer-kit-minun"),
+    "exu": ("ex", "unseen-forces"),
+    "tk1a": ("ex", "ex-trainer-kit-latias"),
+    "tk1b": ("ex", "ex-trainer-kit-latios"),
+    "tk2a": ("ex", "ex-trainer-kit-2-plusle"),
+    "tk2b": ("ex", "ex-trainer-kit-2-minun"),
+    "tk-ex-p": ("ex", "ex-trainer-kit-2-plusle"),
+    "tk-ex-m": ("ex", "ex-trainer-kit-2-minun"),
+    "tk-ex-latia": ("ex", "ex-trainer-kit-latias"),
+    "tk-ex-latio": ("ex", "ex-trainer-kit-latios"),
     "tk-hs-g": ("heartgold-soulsilver", "hgss-trainer-kit-gyarados"),
     "tk-hs-r": ("heartgold-soulsilver", "hgss-trainer-kit-raichu"),
     "tk-xy-w": ("xy", "xy-trainer-kit-wigglytuff"),
@@ -137,7 +211,72 @@ def normalize_number(num: str) -> str:
     text = text.lstrip("0")
     if not text:
         return "0"
+    text = re.sub(r"^([A-Z]+)0+([1-9][0-9A-Z]*)$", r"\1\2", text)
     return text
+
+
+def normalize_pkmngg_mapping(mapping: Any) -> list[tuple[str, str]]:
+    paths = mapping if isinstance(mapping, list) else [mapping]
+    normalized: list[tuple[str, str]] = []
+    for path in paths:
+        if not isinstance(path, tuple) or len(path) != 2:
+            continue
+        series, slug = path
+        clean_series = str(series or "").strip()
+        clean_slug = str(slug or "").strip()
+        if clean_series and clean_slug:
+            normalized.append((clean_series, clean_slug))
+    return normalized
+
+
+def slugify_pkmngg_set_name(set_name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", set_name.strip().lower()).strip("-")
+    return re.sub(r"-{2,}", "-", slug)
+
+
+def fetch_pkmngg_sitemap_set_paths() -> list[tuple[str, str]]:
+    headers = {"User-Agent": USER_AGENT}
+    request = urllib.request.Request(PKMNGG_SITEMAP_URL, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            xml = response.read().decode("utf-8", errors="replace")
+    except Exception:
+        return []
+
+    paths: list[tuple[str, str]] = []
+    for match in re.finditer(r"https://www\.pkmn\.gg/series/en/([^/]+)/([^/]+)/sitemap\.xml", xml):
+        paths.append((match.group(1), match.group(2)))
+    return dedupe_pkmngg_paths(paths)
+
+
+def dedupe_pkmngg_paths(paths: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    seen: set[tuple[str, str]] = set()
+    deduped: list[tuple[str, str]] = []
+    for series, slug in paths:
+        path = (series, slug)
+        if path in seen:
+            continue
+        seen.add(path)
+        deduped.append(path)
+    return deduped
+
+
+def candidate_pkmngg_set_paths(
+    card: dict[str, Any],
+    *,
+    sitemap_paths: list[tuple[str, str]] | None = None,
+) -> list[tuple[str, str]]:
+    if not str(card.get("name") or "").strip() or not str(card.get("card_number") or "").strip():
+        return []
+
+    set_id = str(card.get("set_id") or "").strip()
+    explicit_paths = normalize_pkmngg_mapping(EXPLICIT_SET_MAPPINGS.get(set_id))
+    if sitemap_paths is None:
+        return dedupe_pkmngg_paths(explicit_paths)
+
+    set_slug = slugify_pkmngg_set_name(str(card.get("set_name") or ""))
+    inferred_paths = [(series, slug) for series, slug in sitemap_paths if slug == set_slug]
+    return dedupe_pkmngg_paths(explicit_paths + inferred_paths)
 
 
 def fetch_pkmngg_set_cards(series: str, slug: str) -> list[dict[str, Any]]:
@@ -160,6 +299,61 @@ def fetch_pkmngg_set_cards(series: str, slug: str) -> list[dict[str, Any]]:
         return []
     except Exception:
         return []
+
+
+def extract_pkmngg_usd_price(
+    card_data: dict[str, Any],
+    *,
+    updated_at: str,
+) -> dict[str, Any] | None:
+    variant_map = card_data.get("variantMap") or {}
+    if not isinstance(variant_map, dict):
+        return None
+
+    preferred_variants: list[tuple[str, dict[str, Any]]] = []
+    for key in PKMNGG_VARIANT_PREFERENCE:
+        value = variant_map.get(key)
+        if isinstance(value, dict):
+            preferred_variants.append((key, value))
+
+    primary_variants = [
+        (str(key), value)
+        for key, value in variant_map.items()
+        if isinstance(value, dict) and str(value.get("type") or "").lower() == "primary"
+    ]
+    all_variants = [(str(key), value) for key, value in variant_map.items() if isinstance(value, dict)]
+
+    for key, variant in dedupe_pkmngg_variants(preferred_variants + primary_variants + all_variants):
+        if variant.get("notMarket") is True:
+            continue
+        price = variant.get("price")
+        if not isinstance(price, (int, float)) or price <= 0:
+            continue
+        return {
+            "unit": "USD",
+            "updated": updated_at,
+            "source_name": "pkmngg",
+            "selected_variant": {
+                "marketPrice": float(price),
+                "lowPrice": None,
+                "highPrice": None,
+                "pkmnggVariantKey": key,
+                "pkmnggPriceDisplay": variant.get("priceDisplay"),
+                "pkmnggTcgPlayerId": variant.get("tcgPlayerId"),
+            },
+        }
+    return None
+
+
+def dedupe_pkmngg_variants(variants: list[tuple[str, dict[str, Any]]]) -> list[tuple[str, dict[str, Any]]]:
+    seen: set[str] = set()
+    deduped: list[tuple[str, dict[str, Any]]] = []
+    for key, variant in variants:
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append((key, variant))
+    return deduped
 
 
 def match_card_in_candidates(local_card: dict[str, Any], candidates: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, str]:
@@ -348,6 +542,38 @@ def slugify_poketrace_set_name(set_name: str) -> str:
     return re.sub(r"-{2,}", "-", slug)
 
 
+def candidate_poketrace_card_numbers(card_number: str) -> list[str]:
+    clean_number = str(card_number or "").strip()
+    upper_number = clean_number.upper()
+    candidates = [clean_number, upper_number, normalize_number(clean_number)]
+
+    prefix_match = re.fullmatch(r"([A-Za-z]+)0*([0-9]+)([A-Za-z]?)", clean_number)
+    if prefix_match:
+        prefix, digits, suffix = prefix_match.groups()
+        compact_digits = str(int(digits)) if digits else digits
+        for width in (2, 3):
+            candidates.append(f"{prefix.upper()}{int(digits):0{width}d}{suffix.upper()}")
+        candidates.extend(
+            [
+                f"{prefix.upper()}{compact_digits}{suffix.upper()}",
+                f"{compact_digits}{suffix.upper()}",
+                compact_digits,
+            ]
+        )
+
+    suffix_match = re.fullmatch(r"([0-9]+)([A-Za-z]+)", clean_number)
+    if suffix_match:
+        digits, suffix = suffix_match.groups()
+        compact_digits = str(int(digits))
+        candidates.extend([f"{compact_digits}{suffix.upper()}", compact_digits])
+
+    slash_match = re.match(r"([^/]+)/[0-9]+", clean_number)
+    if slash_match:
+        candidates.append(slash_match.group(1))
+
+    return dedupe_strings(candidates)
+
+
 def load_poketrace_set_mapping_overrides() -> dict[str, str]:
     overrides_path = Path(__file__).resolve().parents[1] / "docs" / "provider_set_mapping.json"
     if not overrides_path.exists():
@@ -456,6 +682,16 @@ def match_pokemontcgio_card(
 
 def increment_counter(mapping: dict[str, Any], key: str) -> None:
     mapping[key] = int(mapping.get(key, 0)) + 1
+
+
+def provider_error_status(error: BaseException) -> int | None:
+    if isinstance(error, urllib.error.HTTPError):
+        return int(error.code)
+    return None
+
+
+def should_disable_provider_immediately(error: BaseException) -> bool:
+    return provider_error_status(error) in {401, 403, 429}
 
 
 def ensure_identity_audit(summary: dict[str, Any]) -> dict[str, Any]:
@@ -1152,7 +1388,9 @@ def try_fallback_providers(
             if not fallback_summary.get("ppt_first_error"):
                 fallback_summary["ppt_first_error"] = f"{type(error).__name__}: {error}"
             threshold = int(fallback_summary.get("ppt_error_disable_threshold") or 5)
-            if fallback_summary["ppt_hits"] == 0 and fallback_summary["ppt_errors"] >= threshold:
+            if should_disable_provider_immediately(error) or (
+                fallback_summary["ppt_hits"] == 0 and fallback_summary["ppt_errors"] >= threshold
+            ):
                 fallback_summary["ppt_disabled_due_to_errors"] = True
                 print(
                     f"warning: disabling PPT fallback after {fallback_summary['ppt_errors']} errors; "
@@ -1164,8 +1402,15 @@ def try_fallback_providers(
         slug = poketrace_set_slugs.get(set_id)
         if slug:
             try:
-                pt_card = poketrace_api.lookup_card(slug, card_number, api_key=poketrace_key)
-                if pt_card is not None:
+                pt_card = None
+                for candidate_number in candidate_poketrace_card_numbers(card_number):
+                    candidate_card = poketrace_api.lookup_card(slug, candidate_number, api_key=poketrace_key)
+                    if candidate_card is None:
+                        continue
+                    candidate_name = str(candidate_card.get("name") or "").strip()
+                    if card_name and candidate_name and normalize_name(candidate_name) != normalize_name(card_name):
+                        continue
+                    pt_card = candidate_card
                     result = poketrace_api.extract_usd_price(pt_card)
                     if result is not None:
                         result["source_name"] = "poketrace"
@@ -1178,7 +1423,9 @@ def try_fallback_providers(
                 if not fallback_summary.get("poketrace_first_error"):
                     fallback_summary["poketrace_first_error"] = f"{type(error).__name__}: {error}"
                 threshold = int(fallback_summary.get("poketrace_error_disable_threshold") or 5)
-                if fallback_summary["poketrace_hits"] == 0 and fallback_summary["poketrace_errors"] >= threshold:
+                if should_disable_provider_immediately(error) or (
+                    fallback_summary["poketrace_hits"] == 0 and fallback_summary["poketrace_errors"] >= threshold
+                ):
                     fallback_summary["poketrace_disabled_due_to_errors"] = True
                     print(
                         "warning: disabling PokeTrace fallback after "
@@ -1286,6 +1533,9 @@ def build_ppt_set_cache(
             cards = ppt_api.fetch_set_cards(set_name, api_key=api_key)
         except Exception as error:
             print(f"PPT bulk: error fetching set '{set_name}': {type(error).__name__}: {error}")
+            if should_disable_provider_immediately(error):
+                print("PPT bulk: disabling provider after authentication/rate-limit error")
+                break
             continue
 
         if not cards:
@@ -1346,6 +1596,7 @@ def build_prices_db(
     pokemontcgio_cards: list[dict[str, Any]] = []
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]] = {}
     pkmngg_set_cache: dict[str, list[dict[str, Any]]] = {}
+    pkmngg_sitemap_paths: list[tuple[str, str]] | None = None
     poketrace_set_slugs: dict[str, str] = {}
     ppt_set_cache: dict[str, dict[str, dict[str, Any]]] = {}
     allow_fallback_queries = max_fallback_cards is None or max_fallback_cards > 0
@@ -1362,29 +1613,7 @@ def build_prices_db(
         elif reuse_existing_tcgplayer_date:
             pokemontcgio_cards = []
         else:
-            # Optimize: Only query PokemonTCG.io sets that have cards needing refresh and are not resolved by pkmn.gg fallbacks!
-            english_cards_needing_refresh = []
-            for card in english_cards:
-                tcgplayer_resolved = False
-                pricing = card.get("pricing") or {}
-                tcgdex_tcgplayer = pricing.get("tcgplayer")
-                if isinstance(tcgdex_tcgplayer, dict):
-                    normalized, updated_at = normalize_tcgplayer_payload(tcgdex_tcgplayer)
-                    if normalized is not None:
-                        is_fresh = False
-                        if updated_at is not None:
-                            try:
-                                is_fresh = is_price_payload_fresh(updated_at, max_age_days=max_pokemontcgio_age_days, now=now)
-                            except ValueError:
-                                is_fresh = False
-                        if updated_at is None or is_fresh:
-                            tcgplayer_resolved = True
-
-                set_id = str(card.get("set_id") or "").strip()
-                if not tcgplayer_resolved and set_id not in EXPLICIT_SET_MAPPINGS:
-                    english_cards_needing_refresh.append(card)
-
-            pokemontcgio_cards = fetch_set_scoped_pokemontcgio_cards(english_cards_needing_refresh)
+            pokemontcgio_cards = fetch_set_scoped_pokemontcgio_cards(english_cards_needing_primary_refresh)
         pokemontcgio_index = build_pokemontcgio_index(pokemontcgio_cards)
         if allow_fallback_queries:
             poketrace_set_slugs = build_poketrace_set_slugs(english_cards)
@@ -1491,6 +1720,10 @@ def build_prices_db(
                 "ppt_bulk_sets_cached": len(ppt_set_cache),
                 "ppt_bulk_hits": 0,
                 "ppt_bulk_misses": 0,
+                "pkmngg_hits": 0,
+                "pkmngg_misses": 0,
+                "pkmngg_sets_fetched": 0,
+                "pkmngg_sitemap_paths": 0,
             },
             "seed_reuse": {
                 "seed_db_path": str(seed_db_path) if seed_db_path is not None else None,
@@ -1532,49 +1765,39 @@ def build_prices_db(
                     summary=build_metadata,
                 )
                 if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES):
-                    set_id = str(card.get("set_id") or "").strip()
-                    if set_id in EXPLICIT_SET_MAPPINGS:
-                        mapping = EXPLICIT_SET_MAPPINGS[set_id]
+                    candidate_paths = candidate_pkmngg_set_paths(card)
+                    can_infer_pkmngg_path = bool(str(card.get("name") or "").strip() and str(card.get("card_number") or "").strip())
+                    if not candidate_paths and can_infer_pkmngg_path:
+                        if pkmngg_sitemap_paths is None:
+                            print("fetching pkmn.gg sitemap for inferred set mappings...")
+                            pkmngg_sitemap_paths = fetch_pkmngg_sitemap_set_paths()
+                            build_metadata["fallback_providers"]["pkmngg_sitemap_paths"] = len(pkmngg_sitemap_paths)
+                        candidate_paths = candidate_pkmngg_set_paths(card, sitemap_paths=pkmngg_sitemap_paths)
+
+                    if candidate_paths:
                         candidates = []
-                        if isinstance(mapping, list):
-                            for series, slug in mapping:
-                                cache_key = f"{series}/{slug}"
-                                if cache_key not in pkmngg_set_cache:
-                                    print(f"fetching pkmn.gg set {cache_key}...")
-                                    pkmngg_set_cache[cache_key] = fetch_pkmngg_set_cards(series, slug)
-                                candidates.extend(pkmngg_set_cache[cache_key])
-                        else:
-                            series, slug = mapping
+                        for series, slug in candidate_paths:
                             cache_key = f"{series}/{slug}"
                             if cache_key not in pkmngg_set_cache:
                                 print(f"fetching pkmn.gg set {cache_key}...")
                                 pkmngg_set_cache[cache_key] = fetch_pkmngg_set_cards(series, slug)
-                            candidates = pkmngg_set_cache[cache_key]
+                                build_metadata["fallback_providers"]["pkmngg_sets_fetched"] += 1
+                            candidates.extend(pkmngg_set_cache[cache_key])
 
-                        match, reason = match_card_in_candidates(card, candidates)
-                        if match:
-                            variant_map = match.get("variantMap") or {}
-                            market_price = None
-                            for v_key in ["normal", "reverse-holo", "holo", "reverse"] + list(variant_map.keys()):
-                                v_data = variant_map.get(v_key)
-                                if isinstance(v_data, dict):
-                                    p = v_data.get("price")
-                                    if isinstance(p, (int, float)) and p > 0:
-                                        market_price = float(p)
-                                        break
-                            if market_price is not None:
-                                selected_sources["pkmngg"] = {
-                                    "unit": "USD",
-                                    "updated": now.strftime("%Y/%m/%d %H:%M:%S"),
-                                    "source_name": "pkmngg",
-                                    "selected_variant": {
-                                        "marketPrice": market_price,
-                                        "lowPrice": None,
-                                        "highPrice": None
-                                    }
-                                }
-                                increment_counter(build_metadata["transport_counts"].setdefault("tcgplayer", {}), "pkmngg")
-                                build_metadata["fallback_providers"]["pkmngg_hits"] = build_metadata["fallback_providers"].get("pkmngg_hits", 0) + 1
+                        match, _ = match_card_in_candidates(card, candidates)
+                        result = (
+                            extract_pkmngg_usd_price(match, updated_at=now.strftime("%Y/%m/%d %H:%M:%S"))
+                            if match is not None
+                            else None
+                        )
+                        if result is not None:
+                            selected_sources["pkmngg"] = result
+                            increment_counter(build_metadata["transport_counts"].setdefault("tcgplayer", {}), "pkmngg")
+                            build_metadata["fallback_providers"]["pkmngg_hits"] += 1
+                        else:
+                            build_metadata["fallback_providers"]["pkmngg_misses"] += 1
+                    else:
+                        build_metadata["fallback_providers"]["pkmngg_misses"] += 1
 
                 if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES) and has_fallback_providers:
                     if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:

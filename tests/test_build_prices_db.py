@@ -888,6 +888,88 @@ class BuildPricesDbTests(unittest.TestCase):
 
 
 class PkmnggPriceSourceTests(unittest.TestCase):
+    def test_normalize_number_matches_prefixed_zero_promo_numbers(self) -> None:
+        self.assertEqual("BW4", build_prices_db.normalize_number("BW04"))
+        self.assertEqual("BW4", build_prices_db.normalize_number("BW004"))
+        self.assertEqual("SV31", build_prices_db.normalize_number("SV031"))
+
+    def test_match_card_in_candidates_accepts_prefixed_zero_number_difference(self) -> None:
+        card = {
+            "id": "pokemon:en:bwp:BW04",
+            "locale": "en",
+            "set_id": "bwp",
+            "name": "Reshiram",
+            "card_number": "BW04",
+            "pricing": {},
+        }
+        candidates = [
+            {
+                "name": "Reshiram",
+                "number": "BW004",
+                "numberDisplay": "BW004",
+                "variantMap": {"holofoil": {"price": 4.22, "notMarket": False}},
+            }
+        ]
+
+        match, reason = build_prices_db.match_card_in_candidates(card, candidates)
+
+        self.assertIsNotNone(match)
+        self.assertEqual("exact_match", reason)
+
+    def test_candidate_pkmngg_set_paths_include_classic_collection(self) -> None:
+        card = {
+            "id": "pokemon:en:cel25:107A",
+            "locale": "en",
+            "set_id": "cel25",
+            "set_name": "Celebrations",
+            "name": "Donphan",
+            "card_number": "107A",
+            "pricing": {},
+        }
+
+        paths = build_prices_db.candidate_pkmngg_set_paths(card)
+
+        self.assertIn(("sword-shield", "celebrations"), paths)
+        self.assertIn(("sword-shield", "celebrations-classic-collection"), paths)
+
+    def test_candidate_pkmngg_set_paths_infers_exact_sitemap_slug(self) -> None:
+        card = {
+            "id": "pokemon:en:dc1:1",
+            "locale": "en",
+            "set_id": "dc1",
+            "set_name": "Double Crisis",
+            "name": "Team Aqua's Spheal",
+            "card_number": "1",
+            "pricing": {},
+        }
+
+        paths = build_prices_db.candidate_pkmngg_set_paths(
+            card,
+            sitemap_paths=[("xy", "double-crisis"), ("xy", "generations")],
+        )
+
+        self.assertEqual([("xy", "double-crisis")], paths)
+
+    def test_extract_pkmngg_usd_price_skips_non_market_variants(self) -> None:
+        card_data = {
+            "variantMap": {
+                "stamp": {"price": 99.0, "notMarket": True, "priceDisplay": "$99.00"},
+                "normal": {
+                    "price": 1.5,
+                    "notMarket": False,
+                    "priceDisplay": "$1.50",
+                    "tcgPlayerId": "12345",
+                },
+            }
+        }
+
+        result = build_prices_db.extract_pkmngg_usd_price(card_data, updated_at="2026/04/10 12:00:00")
+
+        self.assertIsNotNone(result)
+        self.assertEqual("USD", result["unit"])
+        self.assertEqual(1.5, result["selected_variant"]["marketPrice"])
+        self.assertEqual("normal", result["selected_variant"]["pkmnggVariantKey"])
+
     def test_select_price_sources_falls_back_to_pkmngg(self) -> None:
         summary = {
             "transport_counts": {},
@@ -955,29 +1037,11 @@ class PkmnggPriceSourceTests(unittest.TestCase):
             self.assertIsNotNone(match)
             self.assertEqual("exact_match", reason)
             
-            variant_map = match.get("variantMap") or {}
-            market_price = None
-            for v_key in ["normal", "reverse-holo", "holo", "reverse"] + list(variant_map.keys()):
-                v_data = variant_map.get(v_key)
-                if isinstance(v_data, dict):
-                    p = v_data.get("price")
-                    if isinstance(p, (int, float)) and p > 0:
-                        market_price = float(p)
-                        break
-            
-            self.assertEqual(1.5, market_price)
+            result = build_prices_db.extract_pkmngg_usd_price(match, updated_at="2026/04/10 12:00:00")
+            self.assertIsNotNone(result)
             
             # Construct the pricing row structure
-            selected["pkmngg"] = {
-                "unit": "USD",
-                "updated": "2026/04/10 12:00:00",
-                "source_name": "pkmngg",
-                "selected_variant": {
-                    "marketPrice": market_price,
-                    "lowPrice": None,
-                    "highPrice": None
-                }
-            }
+            selected["pkmngg"] = result
             
             # Verify rows extraction
             rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], selected)
@@ -1299,6 +1363,70 @@ class PptBulkCacheTests(unittest.TestCase):
 
 
 class PoketraceApiTests(unittest.TestCase):
+    def test_candidate_poketrace_card_numbers_cover_prefixed_and_suffix_forms(self) -> None:
+        self.assertEqual(
+            ["BW04", "BW4", "BW004", "4"],
+            build_prices_db.candidate_poketrace_card_numbers("BW04"),
+        )
+        self.assertIn("107", build_prices_db.candidate_poketrace_card_numbers("107A"))
+
+    def test_try_fallback_providers_retries_poketrace_number_variants_with_name_validation(self) -> None:
+        import poketrace_api
+
+        card = {
+            "set_id": "bwp",
+            "card_number": "BW04",
+            "name": "Reshiram",
+            "set_name": "BW Black Star Promos",
+        }
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {
+                "ppt_configured": False,
+                "poketrace_configured": True,
+                "ppt_bulk_hits": 0,
+                "ppt_bulk_misses": 0,
+                "ppt_hits": 0,
+                "ppt_misses": 0,
+                "ppt_errors": 0,
+                "ppt_first_error": None,
+                "ppt_disabled_due_to_errors": False,
+                "ppt_error_disable_threshold": 5,
+                "poketrace_hits": 0,
+                "poketrace_misses": 0,
+                "poketrace_errors": 0,
+                "poketrace_first_error": None,
+                "poketrace_disabled_due_to_errors": False,
+                "poketrace_error_disable_threshold": 5,
+                "poketrace_set_mapping_failures": 0,
+            },
+        }
+
+        def fake_lookup(slug: str, number: str, *, api_key: str | None = None) -> dict | None:
+            if number == "BW4":
+                return {"name": "Wrong Card", "prices": {"tcgplayer": {"NEAR_MINT": {"avg": 99.0}}}}
+            if number == "BW004":
+                return {"name": "Reshiram", "prices": {"tcgplayer": {"NEAR_MINT": {"avg": 4.22, "low": 3.0, "high": 5.0}}}}
+            return None
+
+        with mock.patch.object(poketrace_api, "resolve_api_key", return_value="test-key"), mock.patch.object(
+            poketrace_api,
+            "lookup_card",
+            side_effect=fake_lookup,
+        ) as lookup_mock:
+            result = build_prices_db.try_fallback_providers(
+                card,
+                ppt_set_cache={},
+                poketrace_set_slugs={"bwp": "bw-black-star-promos"},
+                summary=summary,
+            )
+
+        self.assertIsNotNone(result)
+        self.assertEqual("poketrace", result["source_name"])
+        self.assertEqual(4.22, result["selected_variant"]["market"])
+        self.assertEqual(1, summary["fallback_providers"]["poketrace_hits"])
+        self.assertIn(mock.call("bw-black-star-promos", "BW004", api_key="test-key"), lookup_mock.mock_calls)
+
     def test_build_poketrace_set_slugs_tolerates_provider_errors(self) -> None:
         import poketrace_api
 

@@ -96,6 +96,7 @@ jobs:
           POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
           PPT_API_KEY: ${{ secrets.PPT_API_KEY }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+          PYTHONUNBUFFERED: "1"
         run: |
           extra_args=""
           if [ "${REUSE_EXISTING_SAME_DAY}" = "true" ] && [ -f existing-release/prices.db ] && [ -n "${REUSE_EXISTING_TCGPLAYER_DATE}" ]; then
