@@ -10,6 +10,7 @@ import re
 import sqlite3
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
@@ -104,6 +105,14 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "g1": ("xy", "generations"),
     "dv1": ("black-white", "dragon-vault"),
     "dc1": ("xy", "double-crisis"),
+    "xya": [
+        ("xy", "fates-collide"),
+        ("xy", "phantom-forces"),
+        ("xy", "generations"),
+        ("xy", "furious-fists"),
+        ("xy", "roaring-skies"),
+        ("xy", "breakpoint"),
+    ],
     "sma": ("sun-moon", "shiny-vault"),
     "sm115": ("sun-moon", "hidden-fates"),
     "smp": ("sun-moon", "sm-black-star-promos"),
@@ -162,6 +171,7 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "sm7.5": ("sun-moon", "dragon-majesty"),
     "sm3.5": ("sun-moon", "shining-legends"),
     "sm6": ("sun-moon", "forbidden-light"),
+    "ex5.5": ("ex", "poke-card-creator-pack"),
     "exu": ("ex", "unseen-forces"),
     "tk1a": ("ex", "ex-trainer-kit-latias"),
     "tk1b": ("ex", "ex-trainer-kit-latios"),
@@ -203,16 +213,55 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
 def normalize_name(name: str) -> str:
     text = str(name or "").lower()
     text = text.replace("’", "'").replace("‘", "'").replace("–", "-").replace("—", "-")
+    text = text.replace("☆", " star ")
+    text = re.sub(r"\bbasic\b", " ", text)
     return re.sub(r"[^a-z0-9]", "", text)
 
 
+def compatible_normalized_names(local_name: str, candidate_name: str) -> bool:
+    local = normalize_name(local_name)
+    candidate = normalize_name(candidate_name)
+    if not local or not candidate:
+        return False
+    if local == candidate:
+        return True
+    suffixes = ("lvx", "lvlx", "star")
+    return any(candidate == f"{local}{suffix}" or local == f"{candidate}{suffix}" for suffix in suffixes)
+
+
 def normalize_number(num: str) -> str:
-    text = str(num or "").strip().upper()
+    text = urllib.parse.unquote(str(num or "").strip()).upper()
+    text = text.replace("_", "")
+    if text in {"?", "QUESTIONMARK"}:
+        return "QUESTIONMARK"
     text = text.lstrip("0")
     if not text:
         return "0"
     text = re.sub(r"^([A-Z]+)0+([1-9][0-9A-Z]*)$", r"\1\2", text)
     return text
+
+
+def candidate_number_values(value: Any) -> set[str]:
+    normalized = normalize_number(str(value or ""))
+    values = {normalized} if normalized else set()
+    suffix_match = re.fullmatch(r"([0-9]+)[A-Z]", normalized)
+    if suffix_match:
+        values.add(normalize_number(suffix_match.group(1)))
+    return values
+
+
+def exact_number_values(value: Any) -> set[str]:
+    normalized = normalize_number(str(value or ""))
+    return {normalized} if normalized else set()
+
+
+def relaxed_local_number_values(value: Any) -> set[str]:
+    normalized = normalize_number(str(value or ""))
+    values = {normalized} if normalized else set()
+    suffix_match = re.fullmatch(r"([0-9]+)[A-Z]", normalized)
+    if suffix_match:
+        values.add(normalize_number(suffix_match.group(1)))
+    return values
 
 
 def normalize_pkmngg_mapping(mapping: Any) -> list[tuple[str, str]]:
@@ -323,9 +372,15 @@ def extract_pkmngg_usd_price(
     ]
     all_variants = [(str(key), value) for key, value in variant_map.items() if isinstance(value, dict)]
 
+    market_variants: list[tuple[str, dict[str, Any]]] = []
+    non_market_variants: list[tuple[str, dict[str, Any]]] = []
     for key, variant in dedupe_pkmngg_variants(preferred_variants + primary_variants + all_variants):
         if variant.get("notMarket") is True:
-            continue
+            non_market_variants.append((key, variant))
+        else:
+            market_variants.append((key, variant))
+
+    for key, variant in market_variants + non_market_variants:
         price = variant.get("price")
         if not isinstance(price, (int, float)) or price <= 0:
             continue
@@ -357,43 +412,81 @@ def dedupe_pkmngg_variants(variants: list[tuple[str, dict[str, Any]]]) -> list[t
 
 
 def match_card_in_candidates(local_card: dict[str, Any], candidates: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, str]:
-    loc_name_norm = normalize_name(local_card["name"])
-    loc_num_norm = normalize_number(local_card["card_number"])
-    
-    matches = []
-    for cand in candidates:
-        cand_name_norm = normalize_name(cand.get("name") or "")
-        cand_num_norm = normalize_number(cand.get("number") or "")
-        cand_num_disp_norm = normalize_number(cand.get("numberDisplay") or "")
-        
-        if cand_name_norm != loc_name_norm:
-            continue
-            
-        if loc_num_norm == cand_num_norm or loc_num_norm == cand_num_disp_norm:
-            matches.append(cand)
-            
-    if len(matches) == 1:
-        return matches[0], "exact_match"
-        
-    if len(matches) > 1:
+    local_name = str(local_card["name"])
+    loc_exact_numbers = exact_number_values(local_card["card_number"])
+    loc_relaxed_numbers = relaxed_local_number_values(local_card["card_number"])
+
+    name_matches = [
+        cand
+        for cand in candidates
+        if compatible_normalized_names(local_name, str(cand.get("name") or ""))
+    ]
+
+    exact_matches = []
+    for cand in name_matches:
+        cand_num_values = candidate_number_values(cand.get("number")) | candidate_number_values(cand.get("numberDisplay"))
+        if loc_exact_numbers & cand_num_values:
+            exact_matches.append(cand)
+    if len(exact_matches) == 1:
+        return exact_matches[0], "exact_match"
+    if len(exact_matches) > 1:
         name_lower = local_card["name"].lower()
         if "energy" in name_lower or name_lower in ("potion", "switch"):
-            return matches[0], "duplicate_identical_allowed"
-        return None, f"ambiguous_matches: {len(matches)}"
+            return exact_matches[0], "duplicate_identical_allowed"
+        return None, f"ambiguous_matches: {len(exact_matches)}"
+
+    relaxed_matches = []
+    for cand in name_matches:
+        cand_num_values = exact_number_values(cand.get("number")) | exact_number_values(cand.get("numberDisplay"))
+        if loc_relaxed_numbers & cand_num_values:
+            relaxed_matches.append(cand)
+    if len(relaxed_matches) == 1:
+        return relaxed_matches[0], "relaxed_number_match"
         
-    name_only_matches = [
-        c for c in candidates
-        if normalize_name(c.get("name") or "") == loc_name_norm
-    ]
-    if len(name_only_matches) == 1:
-        return name_only_matches[0], "name_only_match"
+    if len(relaxed_matches) > 1:
+        name_lower = local_card["name"].lower()
+        if "energy" in name_lower or name_lower in ("potion", "switch"):
+            return relaxed_matches[0], "duplicate_identical_allowed"
+        return None, f"ambiguous_matches: {len(relaxed_matches)}"
         
-    if len(name_only_matches) > 1:
+    if len(name_matches) == 1:
+        return name_matches[0], "name_only_match"
+        
+    if len(name_matches) > 1:
         name_lower = local_card["name"].lower()
         if local_card["set_id"] == "mfb" or "energy" in name_lower or name_lower in ("potion", "switch", "charmander", "pikachu", "squirtle", "bulbasaur"):
-            return name_only_matches[0], "name_only_duplicate_allowed"
+            return name_matches[0], "name_only_duplicate_allowed"
         
     return None, "no_match"
+
+
+def extract_pkmngg_price_for_card(
+    card: dict[str, Any],
+    candidates: list[dict[str, Any]],
+    *,
+    updated_at: str,
+) -> dict[str, Any] | None:
+    match, _ = match_card_in_candidates(card, candidates)
+    if match is not None:
+        result = extract_pkmngg_usd_price(match, updated_at=updated_at)
+        if result is not None:
+            return result
+
+    priced_name_matches: list[dict[str, Any]] = []
+    for candidate in candidates:
+        if not compatible_normalized_names(str(card.get("name") or ""), str(candidate.get("name") or "")):
+            continue
+        result = extract_pkmngg_usd_price(candidate, updated_at=updated_at)
+        if result is not None:
+            priced_name_matches.append(candidate)
+    if len(priced_name_matches) == 1:
+        return extract_pkmngg_usd_price(priced_name_matches[0], updated_at=updated_at)
+
+    energy_name = normalize_name(str(card.get("name") or ""))
+    if energy_name.endswith("energy") and priced_name_matches:
+        return extract_pkmngg_usd_price(priced_name_matches[0], updated_at=updated_at)
+
+    return None
 
 POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "swsh3.5": ["swsh35"],
@@ -987,6 +1080,10 @@ def select_price_sources(
                 elif not invalid_updated_at:
                     summary["pokemontcgio"]["stale_tcgplayer_rows"] += 1
                     increment_counter(summary["pokemontcgio"].setdefault("stale_reasons", {}), "older_than_max_age")
+                    selected_sources["tcgplayer"] = normalized_tcgplayer
+                    summary["pokemontcgio"]["english_cards_with_tcgplayer"] += 1
+                    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "pokemontcgio_stale")
+                    tcgplayer_resolved = True
                     if resolution_reason is None:
                         identity_audit["stale_or_missing_tcgplayer"] += 1
                         resolution_reason = "pokemontcgio_tcgplayer_older_than_max_age"
@@ -1784,11 +1881,10 @@ def build_prices_db(
                                 build_metadata["fallback_providers"]["pkmngg_sets_fetched"] += 1
                             candidates.extend(pkmngg_set_cache[cache_key])
 
-                        match, _ = match_card_in_candidates(card, candidates)
-                        result = (
-                            extract_pkmngg_usd_price(match, updated_at=now.strftime("%Y/%m/%d %H:%M:%S"))
-                            if match is not None
-                            else None
+                        result = extract_pkmngg_price_for_card(
+                            card,
+                            candidates,
+                            updated_at=now.strftime("%Y/%m/%d %H:%M:%S"),
                         )
                         if result is not None:
                             selected_sources["pkmngg"] = result

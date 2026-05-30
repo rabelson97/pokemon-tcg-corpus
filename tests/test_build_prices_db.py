@@ -303,7 +303,7 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertEqual("2026/04/06", rows[0][7])
         self.assertEqual(1, summary["transport_counts"]["tcgplayer"]["pokemontcgio"])
 
-    def test_select_price_sources_skips_stale_pokemontcgio_prices(self) -> None:
+    def test_select_price_sources_uses_stale_pokemontcgio_prices_as_last_resort(self) -> None:
         summary = {
             "transport_counts": {"cardmarket": {"tcgdex": 0}, "tcgplayer": {"pokemontcgio": 0}},
             "pokemontcgio": {
@@ -355,7 +355,8 @@ class BuildPricesDbTests(unittest.TestCase):
             summary=summary,
         )
 
-        self.assertNotIn("tcgplayer", selected)
+        self.assertIn("tcgplayer", selected)
+        self.assertEqual(2.2, selected["tcgplayer"]["selected_variant"]["market"])
         self.assertNotIn("cardmarket", selected)
         self.assertEqual(1, summary["pokemontcgio"]["stale_tcgplayer_rows"])
         self.assertEqual(1, summary["pokemontcgio"]["stale_reasons"]["older_than_max_age"])
