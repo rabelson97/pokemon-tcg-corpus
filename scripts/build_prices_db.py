@@ -544,8 +544,8 @@ def fetch_set_scoped_pokemontcgio_cards(
     english_cards: list[dict[str, Any]],
     *,
     page_size: int = 50,
-    timeout: int = 12,
-    retries: int = 2,
+    timeout: int = 30,
+    retries: int = 5,
 ) -> list[dict[str, Any]]:
     set_ids = sorted(
         {
