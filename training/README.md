@@ -1,212 +1,102 @@
-# Training Pipelines
+# Training
 
-This directory contains two distinct tracks:
+Local training utilities for the corpus models.
 
-1. Retrieval embedder training and promotion for `models/card_embedder.onnx`
-2. Detector training and ONNX export for card localization
+This directory is for model experiments and exports. It is not required for the
+daily prices workflow. Release embeddings are built with the promoted ONNX model
+in `models/`.
 
-The retrieval embedder is the production-critical asset used by both:
-
-- repository inference and downstream consumers of the exported ONNX model
-- the `embeddings.db` release pipeline
-
-Because of that, a candidate model must never be copied directly into `models/` without evaluation and promotion.
-
-## Retrieval embedder workflow
-
-Build the multilingual TCGdex manifest first:
+## Setup
 
 ```bash
-python3.12 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt -r training/requirements.txt
+```
 
-python3 scripts/build_training_manifest.py \
+## Retrieval Embedder
+
+Build an English manifest:
+
+```bash
+python scripts/build_training_manifest.py \
   --output training/data/full/manifest.jsonl \
   --image-dir training/data/full/images \
   --locales en \
   --summary-json training/data/full/manifest.summary.json
 ```
 
-Manifest notes:
-
-- The builder resolves TCGdex asset-base URLs to localized `high.webp` image URLs before download.
-- Some upstream cards have no localized art URL. Those rows are skipped and counted in `manifest.summary.json`.
-- Validation and train/val splitting are locale-aware, so the multilingual sample stays represented during training and evaluation.
-
-Train a retrieval checkpoint:
+Train a candidate:
 
 ```bash
-python3 training/train_retrieval.py \
+python training/train_retrieval.py \
   --manifest training/data/full/manifest.jsonl \
   --output training/checkpoints/card_retrieval_candidate.pt
 ```
 
-The retrieval embedder training path is intentionally simple: `mobilenet_v3_small` with the baseline contrastive + light classification objective.
-The trainer now supports explicit stream augmentation profiles via `--augment-profile`:
-
-- `baseline`: current stream-like augmentation stack
-- `targeted_v1`: baseline plus directional motion blur, partial-card crop truncation, JPEG artifacts, and mild sensor noise
-- `targeted_v2`: a narrower version of `targeted_v1` with lighter motion blur, lighter crop truncation, and milder JPEG/noise pressure
-- `targeted_v3`: `targeted_v2` with softer edge behavior plus lower-left/lower-right/body-text occlusion pressure
-
-Before retraining a new profile, render a few visual samples so the distortions can be sanity-checked:
+Export to ONNX:
 
 ```bash
-python3 training/render_augment_samples.py \
-  --manifest training/data/full/manifest.jsonl \
-  --augment-profile targeted_v1 \
-  --output-dir training/augment_samples/targeted_v1
-```
-
-Export a candidate ONNX model:
-
-```bash
-python3 training/export_card_embedder_onnx.py \
+python training/export_card_embedder_onnx.py \
   --checkpoint training/checkpoints/card_retrieval_candidate.pt \
   --output training/exports/card_embedder_candidate.onnx
 ```
 
-Evaluate the candidate against the repository contract:
+Evaluate the candidate:
 
 ```bash
-python3 training/evaluate_card_embedder.py \
+python training/evaluate_card_embedder.py \
   --manifest training/data/full/manifest.jsonl \
   --model training/exports/card_embedder_candidate.onnx \
   --output training/exports/card_embedder_candidate.eval.json
 ```
 
-Evaluation output now includes overall metrics plus per-locale validation counts and retrieval metrics.
-It also reports mean reciprocal rank, mean rank, mean top-1 margin, and same-art top-1 confusion examples so candidate models can be compared on retrieval quality rather than only raw recall.
-
-## CardHawk thumbs-down bundles
-
-CardHawk's Android thumbs-down button already saves a misread bundle containing:
-
-- full frame image
-- cropped image used for the locked candidate
-- predicted card metadata
-- evidence candidate list
-- OCR hints
-- runtime diagnostics
-
-The supported automation for pulling and analyzing those bundles now lives in the sibling CardHawk repo under `tools/misread-tools/`.
-Use that workflow as the source of truth for thumbs-down triage instead of adding separate import scripts here.
-
-## Synthetic benchmark automation
-
-For a reproducible first-pass benchmark from the cached card art, build a sequential clip manifest and run the augmented baseline smoke benchmark:
+Promote only after evaluation:
 
 ```bash
-python3 training/run_benchmark_matrix.py \
-  --output-dir training/benchmarks/matrix \
-  --subset-size 1024 \
-  --epochs 2 \
-  --batch-size 32
-```
-
-This will:
-
-- create a grouped subset manifest when `--subset-size` is set
-- generate `synthetic_benchmark.jsonl` from cached images
-- train the baseline MobileNet candidate
-- export it to ONNX
-- evaluate it on exact, stream-like, and sequential synthetic benchmark queries
-- write `benchmark_summary.json` plus the candidate `benchmark_topk.json` artifact
-
-If you only need the sequential benchmark manifest, run:
-
-```bash
-python3 training/build_benchmark_manifest.py \
-  --manifest training/data/full/manifest.jsonl \
-  --output training/benchmarks/synthetic_benchmark.jsonl \
-  --summary-json training/benchmarks/synthetic_benchmark.summary.json
-```
-
-Promote only if evaluation passes:
-
-```bash
-python3 training/promote_card_embedder.py \
+python training/promote_card_embedder.py \
   --candidate-model training/exports/card_embedder_candidate.onnx \
   --evaluation-json training/exports/card_embedder_candidate.eval.json
 ```
 
-Promotion writes:
+Promotion updates:
 
 - `models/card_embedder.onnx`
 - `models/card_embedder.manifest.json`
 
-The release workflow validates that manifest before building `embeddings.db.zip`.
-The retrieval manifest uses locale-first canonical ids from TCGdex, not legacy English-only ids.
-The production embeddings builder and training/evaluation scripts use the same crop inset, resize, and normalization contract.
-
-## Detector workflow
-
-This `training/` directory also includes detector work:
-
-1. `prepare_detector_frames.py`
-- Extracts frames from a local stream recording with `ffmpeg`
-- Converts them into detector-friendly JPEGs
-- Skips near-duplicate frames using an average-hash dedupe pass
-- Creates `images/`, `labels/`, and `frames_manifest.jsonl` so you can start annotating immediately
-
-2. `train_detector.py`
-- Fine-tunes a YOLO detector on a Roboflow-style YOLO export
-- Intended for the "where is the card?" stage of a card-recognition pipeline
-- Produces `best.pt` / `last.pt` weights in `training/detector_runs/...`
-
-3. `export_detector_onnx.py`
-- Exports a trained YOLO detector checkpoint to ONNX
-
-## Quick start
-
-Install detector dependencies:
+After promotion, rebuild embeddings:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r training/requirements.txt
+python scripts/rebuild_embeddings_local.py
 ```
 
-## Preparing detector data from stream recordings
+## Augmentation Samples
 
-If you have a Whatnot screen recording, this is the fastest way to build a detector-labeling set without taking hundreds of manual screenshots.
-
-Extract and dedupe frames:
+Render sample augmentations before committing to a new training profile:
 
 ```bash
-python3 training/prepare_detector_frames.py \
-  --video /path/to/whatnot-session.mp4 \
+python training/render_augment_samples.py \
+  --manifest training/data/full/manifest.jsonl \
+  --augment-profile targeted_v1 \
+  --output-dir training/augment_samples/targeted_v1
+```
+
+## Detector Tools
+
+Prepare frames from local video:
+
+```bash
+python training/prepare_detector_frames.py \
+  --video /path/to/session.mp4 \
   --output-dir training/data/detector/session_001 \
   --fps 0.5 \
   --max-frames 250
 ```
 
-That will create:
-
-- `training/data/detector/session_001/images/`
-- `training/data/detector/session_001/labels/`
-- `training/data/detector/session_001/frames_manifest.jsonl`
-
-Recommended settings:
-
-- `--fps 0.5` for one frame every 2 seconds
-- `--fps 1.0` if the stream changes cards quickly
-- `--max-frames 150-300` for an initial labeling batch
-
-Labeling guidance for the first detector pass:
-
-- Draw one box around the main visible card or slab you want tracked
-- Use the outer visible border of the card or slab, not the art box
-- Treat raw cards and slabs as the same class for the first version
-- Skip frames where the card is too occluded to label confidently
-
-## Training a detector from the Roboflow export
-
-You already downloaded a ready-made Roboflow dataset export. To train a baseline detector from it:
+Train a detector from a YOLO dataset:
 
 ```bash
-python3 training/train_detector.py \
+python training/train_detector.py \
   --data training/data/roboflow/pokemon-card-identification-v1/pokemon-card-identification.v1i.yolov8/data.yaml \
   --model yolov8n.pt \
   --epochs 30 \
@@ -214,28 +104,18 @@ python3 training/train_detector.py \
   --batch 16
 ```
 
-Notes:
-
-- `yolov8n.pt` is the fastest baseline.
-- `yolov8s.pt` is a reasonable next step if `n` underfits.
-- On Apple Silicon, `--device mps` is the default in the script.
-- This detector solves localization only. Identity still comes from the SQLite embeddings corpus built by the repo-level embeddings workflow.
-
-## Exporting detector weights to ONNX
+Export detector ONNX:
 
 ```bash
-python3 training/export_detector_onnx.py \
-  --weights training/detector_runs/pokemon_card_detector/weights/best.pt \
-  --imgsz 960
+python training/export_detector_onnx.py \
+  --checkpoint training/detector_runs/path/to/best.pt \
+  --output training/exports/card_detector_candidate.onnx
 ```
 
-## Notes
+## Rules
 
-- This is intentionally a first-pass detector stack, not a finished production recognizer.
-- A complete consumer pipeline would typically use:
-  - detector/tracker
-  - ONNX embedder inference on the detected crop
-  - nearest-neighbor retrieval against the published SQLite embeddings corpus
-  - temporal stabilization
-  - local price lookup
-- CardHawk's current shipped path is embedding-first. Treat OCR as an optional experiment, not the primary runtime identifier.
+- Do not copy candidate models directly into `models/`.
+- Do not promote a candidate without an evaluation JSON.
+- Keep manifests English-only unless the release scope changes.
+- Keep generated training data, checkpoints, and exports out of git unless a
+  specific artifact is intentionally promoted.

@@ -8,9 +8,9 @@ Providers are auto-detected via environment variables:
 
 Usage:
   python scripts/evaluate_price_providers.py \
-    --sample-csv docs/english_price_gap_sample.csv \
-    --output-csv docs/provider_evaluation_results.csv \
-    --output-summary-json docs/provider_evaluation_summary.json \
+    --sample-csv /path/to/english_price_gap_sample.csv \
+    --output-csv build/provider-eval/provider_evaluation_results.csv \
+    --output-summary-json build/provider-eval/provider_evaluation_summary.json \
     --max-cards 50
 """
 from __future__ import annotations

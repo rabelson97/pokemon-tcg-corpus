@@ -967,7 +967,7 @@ def candidate_poketrace_card_numbers(card_number: str) -> list[str]:
 
 
 def load_poketrace_set_mapping_overrides() -> dict[str, str]:
-    overrides_path = Path(__file__).resolve().parents[1] / "docs" / "provider_set_mapping.json"
+    overrides_path = Path(__file__).resolve().parents[1] / "config" / "provider_set_mapping.json"
     if not overrides_path.exists():
         return {}
     try:
