@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import html
 import json
 import os
 import re
@@ -62,10 +63,34 @@ CARDMARKET_NUMERIC_KEYS = [
     "averageSellPrice",
     "trendPrice",
 ]
-USD_PRICE_SOURCE_NAMES = ("tcgplayer", "pokemonpricetracker", "poketrace", "pricecharting", "pkmngg")
+USD_PRICE_SOURCE_NAMES = (
+    "tcgplayer",
+    "pokemonpricetracker",
+    "poketrace",
+    "pricecharting",
+    "scrydex",
+    "pkmngg",
+    "no_usd_market",
+)
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 PKMNGG_SITEMAP_URL = "https://www.pkmn.gg/sitemap.xml"
+PRICECHARTING_BASE_URL = "https://www.pricecharting.com/game"
+SCRYDEX_SET_URLS = {
+    "ex5.5": "https://scrydex.com/pokemon/expansions/pok-card-creator-pack/wb1",
+}
+PRICECHARTING_FALLBACK_SLUGS = {
+    "pokemon:en:dpp:DP25": "pokemon-promo/tropical-wind-dp25",
+    "pokemon:en:dpp:DP55": "pokemon-promo/ultimate-zone-dp55",
+    "pokemon:en:mep:069": "pokemon-promo/chikorita-069",
+    "pokemon:en:np:27": "pokemon-promo/tropical-tidal-wave-27",
+    "pokemon:en:np:28": "pokemon-promo/championship-arena-28",
+    "pokemon:en:np:36": "pokemon-promo/tropical-tidal-wave-36",
+}
+NO_USD_MARKET_CARD_REASONS = {
+    "pokemon:en:bwp:BW78": "English BW78 Raichu promo was catalogued but not publicly released; free USD market sources report no sales/price.",
+    "pokemon:en:dpp:DP54": "DP54 Beginning Door has no reachable free USD market price; public USD sources report no sales/price.",
+}
 PKMNGG_VARIANT_PREFERENCE = (
     "normal",
     "holofoil",
@@ -348,6 +373,215 @@ def fetch_pkmngg_set_cards(series: str, slug: str) -> list[dict[str, Any]]:
         return []
     except Exception:
         return []
+
+
+def fetch_text_url(url: str, *, timeout: int = 30) -> str:
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+    request = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+
+def parse_usd_amount(value: str) -> float | None:
+    match = re.search(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", value)
+    if not match:
+        return None
+    return float(match.group(1).replace(",", ""))
+
+
+def scraped_usd_source(
+    *,
+    source_name: str,
+    price: float,
+    updated_at: str,
+    detail: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    variant: dict[str, Any] = {
+        "marketPrice": price,
+        "lowPrice": None,
+        "highPrice": None,
+    }
+    if detail:
+        variant.update(detail)
+    return {
+        "unit": "USD",
+        "updated": updated_at,
+        "source_name": source_name,
+        "selected_variant": variant,
+    }
+
+
+def parse_pricecharting_used_price(page_html: str) -> float | None:
+    used_block = re.search(r'<td\b[^>]*id=["\']used_price["\'][^>]*>[\s\S]{0,2500}?</td>', page_html, flags=re.IGNORECASE)
+    if used_block:
+        price = parse_usd_amount(html.unescape(used_block.group(0)))
+        if price is not None:
+            return price
+
+    for pattern in (
+        r'class=["\'][^"\']*\bused_price\b[^"\']*["\'][\s\S]{0,500}',
+        r'Used Price[\s\S]{0,500}',
+    ):
+        match = re.search(pattern, page_html, flags=re.IGNORECASE)
+        if match:
+            price = parse_usd_amount(html.unescape(match.group(0)))
+            if price is not None:
+                return price
+    return None
+
+
+def fetch_pricecharting_price(slug: str, *, page_cache: dict[str, str]) -> float | None:
+    clean_slug = slug.strip("/")
+    url = f"{PRICECHARTING_BASE_URL}/{clean_slug}"
+    if url not in page_cache:
+        time.sleep(0.5)
+        page_cache[url] = fetch_text_url(url)
+    return parse_pricecharting_used_price(page_cache[url])
+
+
+def parse_scrydex_set_prices(page_html: str) -> dict[str, dict[str, Any]]:
+    prices: dict[str, dict[str, Any]] = {}
+    for match in re.finditer(
+        r'<a\b(?=[^>]*href=["\']/pokemon/cards/[^"\']+/wb1-(?P<number>[^"?\']+)[^"\']*["\'])[^>]*>(?P<body>[\s\S]*?)</a>',
+        page_html,
+        flags=re.IGNORECASE,
+    ):
+        body = html.unescape(match.group("body"))
+        price = parse_usd_amount(body)
+        if price is None:
+            continue
+        text = re.sub(r"<[^>]+>", " ", body)
+        text = re.sub(r"\s+", " ", text).strip()
+        number = normalize_number(match.group("number"))
+        name_match = re.search(r"(.+?)\s+#\s*" + re.escape(str(int(number)) if number.isdigit() else number) + r"\b", text)
+        if not name_match:
+            name_match = re.search(r"(.+?)\s+#\s*[A-Z0-9]+", text)
+        prices[number] = {
+            "name": name_match.group(1).strip() if name_match else "",
+            "price": price,
+        }
+    return prices
+
+
+def fetch_scrydex_set_prices(
+    set_id: str,
+    *,
+    page_cache: dict[str, str],
+    price_cache: dict[str, dict[str, dict[str, Any]]],
+) -> dict[str, dict[str, Any]]:
+    if set_id in price_cache:
+        return price_cache[set_id]
+
+    url = SCRYDEX_SET_URLS.get(set_id)
+    if not url:
+        price_cache[set_id] = {}
+        return price_cache[set_id]
+
+    if url not in page_cache:
+        time.sleep(0.5)
+        page_cache[url] = fetch_text_url(url)
+    price_cache[set_id] = parse_scrydex_set_prices(page_cache[url])
+    return price_cache[set_id]
+
+
+def try_static_scraped_price_fallback(
+    card: dict[str, Any],
+    *,
+    updated_at: str,
+    pricecharting_page_cache: dict[str, str],
+    scrydex_page_cache: dict[str, str],
+    scrydex_price_cache: dict[str, dict[str, dict[str, Any]]],
+    summary: dict[str, Any],
+) -> dict[str, Any] | None:
+    fallback_summary = summary["fallback_providers"]
+    card_id = str(card.get("id") or "")
+    set_id = str(card.get("set_id") or "")
+    card_number = normalize_number(str(card.get("card_number") or ""))
+    card_name = str(card.get("name") or "")
+
+    try:
+        scrydex_prices = fetch_scrydex_set_prices(
+            set_id,
+            page_cache=scrydex_page_cache,
+            price_cache=scrydex_price_cache,
+        )
+    except Exception as error:
+        scrydex_prices = {}
+        fallback_summary["scrydex_errors"] += 1
+        if not fallback_summary.get("scrydex_first_error"):
+            fallback_summary["scrydex_first_error"] = f"{type(error).__name__}: {error}"
+    if scrydex_prices:
+        fallback_summary["scrydex_sets_fetched"] = len(
+            [set_prices for set_prices in scrydex_price_cache.values() if set_prices]
+        )
+        scrydex_card = scrydex_prices.get(card_number)
+        if scrydex_card is not None and compatible_normalized_names(card_name, str(scrydex_card.get("name") or "")):
+            fallback_summary["scrydex_hits"] += 1
+            increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "scrydex")
+            return scraped_usd_source(
+                source_name="scrydex",
+                price=float(scrydex_card["price"]),
+                updated_at=updated_at,
+                detail={"scrydexSetUrl": SCRYDEX_SET_URLS.get(set_id), "scrydexCardNumber": card_number},
+            )
+        fallback_summary["scrydex_misses"] += 1
+    elif set_id in SCRYDEX_SET_URLS:
+        fallback_summary["scrydex_misses"] += 1
+
+    slug = PRICECHARTING_FALLBACK_SLUGS.get(card_id)
+    if not slug:
+        return None
+
+    try:
+        price = fetch_pricecharting_price(slug, page_cache=pricecharting_page_cache)
+    except Exception as error:
+        fallback_summary["pricecharting_errors"] += 1
+        if not fallback_summary.get("pricecharting_first_error"):
+            fallback_summary["pricecharting_first_error"] = f"{type(error).__name__}: {error}"
+        return None
+
+    if price is None:
+        fallback_summary["pricecharting_misses"] += 1
+        return None
+
+    fallback_summary["pricecharting_hits"] += 1
+    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "pricecharting")
+    return scraped_usd_source(
+        source_name="pricecharting",
+        price=price,
+        updated_at=updated_at,
+        detail={"priceChartingSlug": slug},
+    )
+
+
+def try_no_usd_market_fallback(
+    card: dict[str, Any],
+    *,
+    updated_at: str,
+    summary: dict[str, Any],
+) -> dict[str, Any] | None:
+    card_id = str(card.get("id") or "")
+    reason = NO_USD_MARKET_CARD_REASONS.get(card_id)
+    if reason is None:
+        return None
+
+    fallback_summary = summary["fallback_providers"]
+    fallback_summary["no_usd_market_rows"] += 1
+    increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "no_usd_market")
+    return {
+        "unit": "USD",
+        "updated": updated_at,
+        "source_name": "no_usd_market",
+        "selected_variant": {
+            "marketPrice": None,
+            "lowPrice": None,
+            "highPrice": None,
+            "reason": reason,
+        },
+    }
 
 
 def extract_pkmngg_usd_price(
@@ -1694,6 +1928,9 @@ def build_prices_db(
     pokemontcgio_index: dict[tuple[str, str], dict[str, Any]] = {}
     pkmngg_set_cache: dict[str, list[dict[str, Any]]] = {}
     pkmngg_sitemap_paths: list[tuple[str, str]] | None = None
+    pricecharting_page_cache: dict[str, str] = {}
+    scrydex_page_cache: dict[str, str] = {}
+    scrydex_price_cache: dict[str, dict[str, dict[str, Any]]] = {}
     poketrace_set_slugs: dict[str, str] = {}
     ppt_set_cache: dict[str, dict[str, dict[str, Any]]] = {}
     allow_fallback_queries = max_fallback_cards is None or max_fallback_cards > 0
@@ -1821,6 +2058,16 @@ def build_prices_db(
                 "pkmngg_misses": 0,
                 "pkmngg_sets_fetched": 0,
                 "pkmngg_sitemap_paths": 0,
+                "pricecharting_hits": 0,
+                "pricecharting_misses": 0,
+                "pricecharting_errors": 0,
+                "pricecharting_first_error": None,
+                "scrydex_hits": 0,
+                "scrydex_misses": 0,
+                "scrydex_errors": 0,
+                "scrydex_first_error": None,
+                "scrydex_sets_fetched": 0,
+                "no_usd_market_rows": 0,
             },
             "seed_reuse": {
                 "seed_db_path": str(seed_db_path) if seed_db_path is not None else None,
@@ -1895,6 +2142,18 @@ def build_prices_db(
                     else:
                         build_metadata["fallback_providers"]["pkmngg_misses"] += 1
 
+                if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES):
+                    scraped_result = try_static_scraped_price_fallback(
+                        card,
+                        updated_at=now.strftime("%Y/%m/%d %H:%M:%S"),
+                        pricecharting_page_cache=pricecharting_page_cache,
+                        scrydex_page_cache=scrydex_page_cache,
+                        scrydex_price_cache=scrydex_price_cache,
+                        summary=build_metadata,
+                    )
+                    if scraped_result is not None:
+                        selected_sources[str(scraped_result.get("source_name") or "pricecharting")] = scraped_result
+
                 if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES) and has_fallback_providers:
                     if max_fallback_cards is not None and fallback_attempts >= max_fallback_cards:
                         build_metadata["fallback_providers"]["english_cards_skipped_due_to_budget"] += 1
@@ -1918,6 +2177,15 @@ def build_prices_db(
                         )
                         if fallback_result is not None:
                             selected_sources[str(fallback_result.get("source_name") or "tcgplayer")] = fallback_result
+
+                if locale == "en" and not any(source in selected_sources for source in USD_PRICE_SOURCE_NAMES):
+                    no_market_result = try_no_usd_market_fallback(
+                        card,
+                        updated_at=now.strftime("%Y/%m/%d %H:%M:%S"),
+                        summary=build_metadata,
+                    )
+                    if no_market_result is not None:
+                        selected_sources["no_usd_market"] = no_market_result
 
                 extracted = extract_price_rows_from_selected_sources(card_id, selected_sources)
             if locale == "en" and not any(row[2] == "USD" and row[3] in USD_PRICE_SOURCE_NAMES for row in extracted):

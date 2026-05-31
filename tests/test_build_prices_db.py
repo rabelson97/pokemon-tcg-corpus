@@ -1062,6 +1062,156 @@ class PkmnggPriceSourceTests(unittest.TestCase):
                 rows[0]
             )
 
+    def test_parse_pricecharting_used_price(self) -> None:
+        page = """
+        <tr id="used_price">
+          <td>Ungraded</td>
+          <td class="price numeric used_price"><span class="js-price">$610.00</span></td>
+        </tr>
+        """
+
+        self.assertEqual(610.0, build_prices_db.parse_pricecharting_used_price(page))
+
+    def test_parse_scrydex_set_prices(self) -> None:
+        page = """
+        <a class="card-grid-card" href="/pokemon/cards/treecko/wb1-1?variant=normal">
+          <span>Treecko #1</span>
+          <span>$399.39 (LP)</span>
+        </a>
+        <a class="card-grid-card" href="/pokemon/cards/pikachu/wb1-5?variant=normal">
+          <span>Pikachu #5</span>
+          <span>$165.95</span>
+        </a>
+        """
+
+        prices = build_prices_db.parse_scrydex_set_prices(page)
+
+        self.assertEqual({"1", "5"}, set(prices))
+        self.assertEqual("Treecko", prices["1"]["name"])
+        self.assertEqual(399.39, prices["1"]["price"])
+        self.assertEqual("Pikachu", prices["5"]["name"])
+        self.assertEqual(165.95, prices["5"]["price"])
+
+    def test_static_scraped_price_fallback_uses_scrydex(self) -> None:
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {
+                "scrydex_hits": 0,
+                "scrydex_misses": 0,
+                "scrydex_errors": 0,
+                "scrydex_first_error": None,
+                "scrydex_sets_fetched": 0,
+                "pricecharting_hits": 0,
+                "pricecharting_misses": 0,
+                "pricecharting_errors": 0,
+                "pricecharting_first_error": None,
+            },
+        }
+        card = {
+            "id": "pokemon:en:ex5.5:5",
+            "locale": "en",
+            "set_id": "ex5.5",
+            "set_name": "Poké Card Creator Pack",
+            "name": "Pikachu",
+            "card_number": "5",
+        }
+        page_cache = {
+            build_prices_db.SCRYDEX_SET_URLS["ex5.5"]: """
+            <a href="/pokemon/cards/pikachu/wb1-5?variant=normal">
+              <span>Pikachu #5</span><span>$165.95</span>
+            </a>
+            """
+        }
+
+        result = build_prices_db.try_static_scraped_price_fallback(
+            card,
+            updated_at="2026/05/30 12:00:00",
+            pricecharting_page_cache={},
+            scrydex_page_cache=page_cache,
+            scrydex_price_cache={},
+            summary=summary,
+        )
+
+        self.assertIsNotNone(result)
+        self.assertEqual("scrydex", result["source_name"])
+        self.assertEqual(165.95, result["selected_variant"]["marketPrice"])
+        self.assertEqual(1, summary["fallback_providers"]["scrydex_hits"])
+
+    def test_static_scraped_price_fallback_uses_pricecharting(self) -> None:
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {
+                "scrydex_hits": 0,
+                "scrydex_misses": 0,
+                "scrydex_errors": 0,
+                "scrydex_first_error": None,
+                "scrydex_sets_fetched": 0,
+                "pricecharting_hits": 0,
+                "pricecharting_misses": 0,
+                "pricecharting_errors": 0,
+                "pricecharting_first_error": None,
+            },
+        }
+        card = {
+            "id": "pokemon:en:dpp:DP25",
+            "locale": "en",
+            "set_id": "dpp",
+            "set_name": "DP Black Star Promos",
+            "name": "Tropical Wind",
+            "card_number": "DP25",
+        }
+        slug = build_prices_db.PRICECHARTING_FALLBACK_SLUGS[card["id"]]
+        url = f"{build_prices_db.PRICECHARTING_BASE_URL}/{slug}"
+        page_cache = {
+            url: """
+            <tr id="used_price">
+              <td class="price numeric used_price"><span>$610.00</span></td>
+            </tr>
+            """
+        }
+
+        result = build_prices_db.try_static_scraped_price_fallback(
+            card,
+            updated_at="2026/05/30 12:00:00",
+            pricecharting_page_cache=page_cache,
+            scrydex_page_cache={},
+            scrydex_price_cache={},
+            summary=summary,
+        )
+
+        self.assertIsNotNone(result)
+        self.assertEqual("pricecharting", result["source_name"])
+        self.assertEqual(610.0, result["selected_variant"]["marketPrice"])
+        self.assertEqual(1, summary["fallback_providers"]["pricecharting_hits"])
+
+    def test_no_usd_market_fallback_writes_honest_terminal_row(self) -> None:
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {"no_usd_market_rows": 0},
+        }
+        card = {
+            "id": "pokemon:en:bwp:BW78",
+            "locale": "en",
+            "set_id": "bwp",
+            "set_name": "BW Black Star Promos",
+            "name": "Raichu",
+            "card_number": "BW78",
+        }
+
+        result = build_prices_db.try_no_usd_market_fallback(
+            card,
+            updated_at="2026/05/30 12:00:00",
+            summary=summary,
+        )
+
+        self.assertIsNotNone(result)
+        rows = build_prices_db.extract_price_rows_from_selected_sources(card["id"], {"no_usd_market": result})
+        self.assertEqual(1, len(rows))
+        self.assertEqual("USD", rows[0][2])
+        self.assertEqual("no_usd_market", rows[0][3])
+        self.assertIsNone(rows[0][5])
+        self.assertEqual(1, summary["fallback_providers"]["no_usd_market_rows"])
+
 
 class PptApiTests(unittest.TestCase):
     def test_search_card_matcher_accepts_name_suffix_number(self) -> None:
