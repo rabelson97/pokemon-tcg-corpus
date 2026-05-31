@@ -69,6 +69,7 @@ USD_PRICE_SOURCE_NAMES = (
     "poketrace",
     "pricecharting",
     "scrydex",
+    "limitless",
     "pkmngg",
     "no_usd_market",
 )
@@ -78,6 +79,9 @@ PKMNGG_SITEMAP_URL = "https://www.pkmn.gg/sitemap.xml"
 PRICECHARTING_BASE_URL = "https://www.pricecharting.com/game"
 SCRYDEX_SET_URLS = {
     "ex5.5": "https://scrydex.com/pokemon/expansions/pok-card-creator-pack/wb1",
+}
+LIMITLESS_FALLBACK_URLS = {
+    "pokemon:en:sm9:152a": "https://limitlesstcg.com/cards/TEU/152a",
 }
 PRICECHARTING_FALLBACK_SLUGS = {
     "pokemon:en:dpp:DP25": "pokemon-promo/tropical-wind-dp25",
@@ -487,11 +491,53 @@ def fetch_scrydex_set_prices(
     return price_cache[set_id]
 
 
+def parse_limitless_usd_price(page_html: str, *, set_code: str, card_number: str) -> float | None:
+    href_match = re.search(re.escape(f"/cards/{set_code}/{card_number}") + r"\b", page_html, flags=re.IGNORECASE)
+    row_html = ""
+    if href_match:
+        row_start = page_html.rfind("<tr", 0, href_match.start())
+        row_end = page_html.find("</tr>", href_match.end())
+        if row_start >= 0 and row_end >= 0:
+            row_html = page_html[row_start : row_end + len("</tr>")]
+
+    if not row_html:
+        current_row = re.search(r'<tr\b[^>]*class=["\'][^"\']*\bcurrent\b[^"\']*["\'][^>]*>[\s\S]{0,2500}?</tr>', page_html, flags=re.IGNORECASE)
+        if current_row:
+            row_html = current_row.group(0)
+
+    if not row_html:
+        return None
+
+    usd_cell = re.search(r'class=["\'][^"\']*\bcard-price\b[^"\']*\busd\b[^"\']*["\'][^>]*>(?P<price>[^<]+)', row_html, flags=re.IGNORECASE)
+    if not usd_cell:
+        return None
+    return parse_usd_amount(html.unescape(usd_cell.group("price")))
+
+
+def fetch_limitless_price(card_id: str, *, page_cache: dict[str, str]) -> float | None:
+    url = LIMITLESS_FALLBACK_URLS.get(card_id)
+    if not url:
+        return None
+
+    parsed = urllib.parse.urlparse(url)
+    parts = [part for part in parsed.path.split("/") if part]
+    if len(parts) < 3 or parts[-3] != "cards":
+        return None
+    set_code = parts[-2]
+    card_number = parts[-1]
+
+    if url not in page_cache:
+        time.sleep(0.5)
+        page_cache[url] = fetch_text_url(url)
+    return parse_limitless_usd_price(page_cache[url], set_code=set_code, card_number=card_number)
+
+
 def try_static_scraped_price_fallback(
     card: dict[str, Any],
     *,
     updated_at: str,
     pricecharting_page_cache: dict[str, str],
+    limitless_page_cache: dict[str, str],
     scrydex_page_cache: dict[str, str],
     scrydex_price_cache: dict[str, dict[str, dict[str, Any]]],
     summary: dict[str, Any],
@@ -530,6 +576,25 @@ def try_static_scraped_price_fallback(
         fallback_summary["scrydex_misses"] += 1
     elif set_id in SCRYDEX_SET_URLS:
         fallback_summary["scrydex_misses"] += 1
+
+    try:
+        limitless_price = fetch_limitless_price(card_id, page_cache=limitless_page_cache)
+    except Exception as error:
+        fallback_summary["limitless_errors"] += 1
+        if not fallback_summary.get("limitless_first_error"):
+            fallback_summary["limitless_first_error"] = f"{type(error).__name__}: {error}"
+        limitless_price = None
+    if limitless_price is not None:
+        fallback_summary["limitless_hits"] += 1
+        increment_counter(summary["transport_counts"].setdefault("tcgplayer", {}), "limitless")
+        return scraped_usd_source(
+            source_name="limitless",
+            price=limitless_price,
+            updated_at=updated_at,
+            detail={"limitlessUrl": LIMITLESS_FALLBACK_URLS.get(card_id)},
+        )
+    if card_id in LIMITLESS_FALLBACK_URLS:
+        fallback_summary["limitless_misses"] += 1
 
     slug = PRICECHARTING_FALLBACK_SLUGS.get(card_id)
     if not slug:
@@ -1929,6 +1994,7 @@ def build_prices_db(
     pkmngg_set_cache: dict[str, list[dict[str, Any]]] = {}
     pkmngg_sitemap_paths: list[tuple[str, str]] | None = None
     pricecharting_page_cache: dict[str, str] = {}
+    limitless_page_cache: dict[str, str] = {}
     scrydex_page_cache: dict[str, str] = {}
     scrydex_price_cache: dict[str, dict[str, dict[str, Any]]] = {}
     poketrace_set_slugs: dict[str, str] = {}
@@ -2067,6 +2133,10 @@ def build_prices_db(
                 "scrydex_errors": 0,
                 "scrydex_first_error": None,
                 "scrydex_sets_fetched": 0,
+                "limitless_hits": 0,
+                "limitless_misses": 0,
+                "limitless_errors": 0,
+                "limitless_first_error": None,
                 "no_usd_market_rows": 0,
             },
             "seed_reuse": {
@@ -2147,6 +2217,7 @@ def build_prices_db(
                         card,
                         updated_at=now.strftime("%Y/%m/%d %H:%M:%S"),
                         pricecharting_page_cache=pricecharting_page_cache,
+                        limitless_page_cache=limitless_page_cache,
                         scrydex_page_cache=scrydex_page_cache,
                         scrydex_price_cache=scrydex_price_cache,
                         summary=build_metadata,

@@ -1127,6 +1127,7 @@ class PkmnggPriceSourceTests(unittest.TestCase):
             card,
             updated_at="2026/05/30 12:00:00",
             pricecharting_page_cache={},
+            limitless_page_cache={},
             scrydex_page_cache=page_cache,
             scrydex_price_cache={},
             summary=summary,
@@ -1174,6 +1175,7 @@ class PkmnggPriceSourceTests(unittest.TestCase):
             card,
             updated_at="2026/05/30 12:00:00",
             pricecharting_page_cache=page_cache,
+            limitless_page_cache={},
             scrydex_page_cache={},
             scrydex_price_cache={},
             summary=summary,
@@ -1183,6 +1185,58 @@ class PkmnggPriceSourceTests(unittest.TestCase):
         self.assertEqual("pricecharting", result["source_name"])
         self.assertEqual(610.0, result["selected_variant"]["marketPrice"])
         self.assertEqual(1, summary["fallback_providers"]["pricecharting_hits"])
+
+    def test_static_scraped_price_fallback_uses_limitless(self) -> None:
+        summary = {
+            "transport_counts": {},
+            "fallback_providers": {
+                "scrydex_hits": 0,
+                "scrydex_misses": 0,
+                "scrydex_errors": 0,
+                "scrydex_first_error": None,
+                "scrydex_sets_fetched": 0,
+                "limitless_hits": 0,
+                "limitless_misses": 0,
+                "limitless_errors": 0,
+                "limitless_first_error": None,
+                "pricecharting_hits": 0,
+                "pricecharting_misses": 0,
+                "pricecharting_errors": 0,
+                "pricecharting_first_error": None,
+            },
+        }
+        card = {
+            "id": "pokemon:en:sm9:152a",
+            "locale": "en",
+            "set_id": "sm9",
+            "set_name": "Team Up",
+            "name": "Pokémon Communication",
+            "card_number": "152a",
+        }
+        url = build_prices_db.LIMITLESS_FALLBACK_URLS[card["id"]]
+        page_cache = {
+            url: """
+            <tr>
+              <td><a href="/cards/TEU/152a">Team Up <span>#152a</span></a></td>
+              <td><a class="card-price usd" href="https://tcgplayer.example">$31.49</a></td>
+            </tr>
+            """
+        }
+
+        result = build_prices_db.try_static_scraped_price_fallback(
+            card,
+            updated_at="2026/05/30 12:00:00",
+            pricecharting_page_cache={},
+            limitless_page_cache=page_cache,
+            scrydex_page_cache={},
+            scrydex_price_cache={},
+            summary=summary,
+        )
+
+        self.assertIsNotNone(result)
+        self.assertEqual("limitless", result["source_name"])
+        self.assertEqual(31.49, result["selected_variant"]["marketPrice"])
+        self.assertEqual(1, summary["fallback_providers"]["limitless_hits"])
 
     def test_no_usd_market_fallback_writes_honest_terminal_row(self) -> None:
         summary = {
