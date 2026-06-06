@@ -160,8 +160,7 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
         ("sword-shield", "astral-radiance-trainer-gallery"),
     ],
     "swsh10.5": [
-        ("sword-shield", "crown-zenith"),
-        ("sword-shield", "crown-zenith-galarian-gallery"),
+        ("sword-shield", "pokemon-go"),
     ],
     "swsh11": [
         ("sword-shield", "lost-origin"),
@@ -794,7 +793,7 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "sv10.5w": ["rsv10pt5"],
     "sm3.5": ["sm35"],
     "sm7.5": ["sm75"],
-    "swsh10.5": ["swsh12pt5"],
+    "swsh10.5": ["pgo"],
     "hgssp": ["hsp"],
     "fut2020": ["fut20"],
     "lc": ["base6"],

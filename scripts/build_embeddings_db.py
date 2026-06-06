@@ -52,7 +52,7 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "sm7.5": ["sm75"],
     "swsh3.5": ["swsh35"],
     "swsh4.5": ["swsh45"],
-    "swsh10.5": ["swsh12pt5"],
+    "swsh10.5": ["pgo"],
     "sv10.5b": ["zsv10pt5"],
     "sv10.5w": ["rsv10pt5"],
     "hgssp": ["hsp"],
@@ -120,7 +120,7 @@ def fetch_supplementary_pokemontcgio_cards(
 
     existing_ids: set[str] = set()
     for card in existing_cards:
-        existing_ids.add(f"{card['set_id']}|{card['card_number']}")
+        existing_ids.add(f"{card['set_id']}|{compact_numeric_token(card['card_number'])}")
 
     try:
         sets_payload = pio_api_get_json("/sets", params={"pageSize": "500"}, api_key=clean_key)
@@ -217,7 +217,7 @@ def fetch_supplementary_pokemontcgio_cards(
                 pio_number = str(pio_card.get("number") or "").strip()
                 if not pio_number:
                     continue
-                combo = f"{our_set_id}|{pio_number}"
+                combo = f"{our_set_id}|{compact_numeric_token(pio_number)}"
                 if combo in existing_ids:
                     continue
 
