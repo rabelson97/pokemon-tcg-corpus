@@ -163,6 +163,11 @@ class InsertEmbeddingsTests(unittest.TestCase):
                     (card["id"],),
                 ).fetchone()[0]
                 self.assertEqual(build_embeddings_db.VARIANT_K, variant_count)
+                source_url = connection.execute(
+                    "SELECT image_url FROM embedding_sources WHERE card_id = ? AND model_name = ?;",
+                    (card["id"], build_embeddings_db.MODEL_NAME),
+                ).fetchone()[0]
+                self.assertEqual("https://assets.tcgdex.net/en/base/base1/1/high.webp", source_url)
 
                 tags = sorted(
                     str(value)
@@ -344,9 +349,96 @@ class InsertEmbeddingsTests(unittest.TestCase):
             with sqlite3.connect(output_db) as connection:
                 name = connection.execute("SELECT name FROM cards WHERE id = ?;", (card["id"],)).fetchone()[0]
                 embedding_count = connection.execute("SELECT COUNT(*) FROM embeddings WHERE card_id = ?;", (card["id"],)).fetchone()[0]
+                source_url = connection.execute(
+                    "SELECT image_url FROM embedding_sources WHERE card_id = ? AND model_name = ?;",
+                    (card["id"], build_embeddings_db.MODEL_NAME),
+                ).fetchone()[0]
 
             self.assertEqual("Mewtwo Updated", name)
             self.assertEqual(build_embeddings_db.VARIANT_K, embedding_count)
+            self.assertEqual(card["image_url"], source_url)
+
+    def test_copy_seed_embeddings_skips_seed_without_source_metadata(self) -> None:
+        card = self._make_card("pokemon:en:base1:6", name="Mew")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            seed_db = Path(tmp_dir) / "seed.db"
+            output_db = Path(tmp_dir) / "output.db"
+            record = build_embeddings_db.DownloadedCard(card=card, image_path=Path(tmp_dir) / "unused.img")
+
+            with (
+                mock.patch.object(
+                    build_embeddings_db,
+                    "load_onnx_session",
+                    return_value=(self._patched_session(), "input", build_embeddings_db.EXPECTED_DIM, 0.0),
+                ),
+                mock.patch.object(
+                    build_embeddings_db,
+                    "base_pil_for_card",
+                    return_value=Image.new("RGB", (224, 224), color=(127, 127, 127)),
+                ),
+            ):
+                build_embeddings_db.insert_new_embeddings(
+                    seed_db,
+                    [record],
+                    model_path=Path("unused.onnx"),
+                )
+
+            with sqlite3.connect(seed_db) as connection:
+                connection.execute("DROP TABLE embedding_sources;")
+            with sqlite3.connect(output_db) as connection:
+                build_embeddings_db.init_db(connection)
+
+            reused_ids = build_embeddings_db.copy_seed_embeddings(output_db, seed_db, [card])
+
+            self.assertEqual(set(), reused_ids)
+            with sqlite3.connect(output_db) as connection:
+                card_count = connection.execute("SELECT COUNT(*) FROM cards;").fetchone()[0]
+                embedding_count = connection.execute("SELECT COUNT(*) FROM embeddings;").fetchone()[0]
+
+            self.assertEqual(0, card_count)
+            self.assertEqual(0, embedding_count)
+
+    def test_copy_seed_embeddings_skips_when_image_url_changed(self) -> None:
+        card = self._make_card("pokemon:en:base1:7", name="Mewtwo ex")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            seed_db = Path(tmp_dir) / "seed.db"
+            output_db = Path(tmp_dir) / "output.db"
+            record = build_embeddings_db.DownloadedCard(card=card, image_path=Path(tmp_dir) / "unused.img")
+
+            with (
+                mock.patch.object(
+                    build_embeddings_db,
+                    "load_onnx_session",
+                    return_value=(self._patched_session(), "input", build_embeddings_db.EXPECTED_DIM, 0.0),
+                ),
+                mock.patch.object(
+                    build_embeddings_db,
+                    "base_pil_for_card",
+                    return_value=Image.new("RGB", (224, 224), color=(127, 127, 127)),
+                ),
+            ):
+                build_embeddings_db.insert_new_embeddings(
+                    seed_db,
+                    [record],
+                    model_path=Path("unused.onnx"),
+                )
+
+            updated_card = dict(card)
+            updated_card["image_url"] = "https://assets.tcgdex.net/en/base/base1/6/high.webp"
+            with sqlite3.connect(output_db) as connection:
+                build_embeddings_db.init_db(connection)
+
+            reused_ids = build_embeddings_db.copy_seed_embeddings(output_db, seed_db, [updated_card])
+
+            self.assertEqual(set(), reused_ids)
+            with sqlite3.connect(output_db) as connection:
+                card_count = connection.execute("SELECT COUNT(*) FROM cards;").fetchone()[0]
+                embedding_count = connection.execute("SELECT COUNT(*) FROM embeddings;").fetchone()[0]
+
+            self.assertEqual(0, card_count)
+            self.assertEqual(0, embedding_count)
 
     def test_fetch_supplementary_skips_without_api_key(self) -> None:
         result = build_embeddings_db.fetch_supplementary_pokemontcgio_cards(

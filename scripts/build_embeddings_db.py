@@ -42,7 +42,7 @@ from pokemontcgio_api import api_get_json as pio_api_get_json, resolve_api_key a
 VARIANT_TAGS: tuple[str, ...] = ("clean", "blur_lo", "jpeg_lo", "glare_mild")
 VARIANT_K = len(VARIANT_TAGS)
 
-DB_USER_VERSION = 7
+DB_USER_VERSION = 8
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 SCAN_EXCLUDED_SERIES_IDS = {"tcgp"}
@@ -428,6 +428,13 @@ def init_db(connection: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_embeddings_card ON embeddings(card_id);
 
+        CREATE TABLE IF NOT EXISTS embedding_sources (
+          card_id TEXT NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+          model_name TEXT NOT NULL,
+          image_url TEXT NOT NULL,
+          PRIMARY KEY (card_id, model_name)
+        );
+
         CREATE TABLE IF NOT EXISTS card_equivalents (
           card_id TEXT NOT NULL PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
           equivalence_key TEXT NOT NULL,
@@ -633,6 +640,14 @@ def validate_embeddings_db(
             raise RuntimeError(
                 f"embeddings count {embedding_count} != cards ({card_count}) * variants ({VARIANT_K}) = {expected_embeddings}"
             )
+        source_count = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM embedding_sources WHERE model_name = ?;",
+                (MODEL_NAME,),
+            ).fetchone()[0]
+        )
+        if source_count != card_count:
+            raise RuntimeError(f"embedding_sources count {source_count} != cards count {card_count}")
 
         variants_per_card_min = int(
             connection.execute(
@@ -1403,29 +1418,55 @@ def copy_seed_embeddings(output_db: Path, seed_db: Path, cards: list[dict[str, A
     card_ids = [str(card["id"]) for card in cards]
     if not card_ids:
         return set()
+    current_image_urls = {
+        str(card["id"]): str(card.get("image_url") or "").strip()
+        for card in cards
+    }
 
     with sqlite3.connect(output_db) as connection:
         connection.execute("PRAGMA foreign_keys=ON;")
         connection.execute("ATTACH DATABASE ? AS seed;", (str(seed_db),))
         try:
+            has_seed_sources = bool(
+                connection.execute(
+                    """
+                    SELECT 1
+                    FROM seed.sqlite_master
+                    WHERE type = 'table' AND name = 'embedding_sources'
+                    LIMIT 1;
+                    """
+                ).fetchone()
+            )
+            if not has_seed_sources:
+                print("seed db lacks embedding_sources; recomputing all cards")
+                return set()
+
             reused_ids: set[str] = set()
+            image_mismatch_ids: set[str] = set()
             for start in range(0, len(card_ids), 500):
                 chunk = card_ids[start : start + 500]
                 placeholders = ",".join("?" for _ in chunk)
                 rows = connection.execute(
                     f"""
-                    SELECT card_id
-                    FROM seed.embeddings
-                    WHERE card_id IN ({placeholders})
-                      AND model_name = ?
-                      AND dim = ?
-                    GROUP BY card_id
+                    SELECT e.card_id, COALESCE(s.image_url, '')
+                    FROM seed.embeddings e
+                    INNER JOIN seed.embedding_sources s
+                      ON s.card_id = e.card_id AND s.model_name = e.model_name
+                    WHERE e.card_id IN ({placeholders})
+                      AND e.model_name = ?
+                      AND e.dim = ?
+                    GROUP BY e.card_id
                     HAVING COUNT(*) = ?
-                       AND COUNT(DISTINCT variant_idx) = ?;
+                       AND COUNT(DISTINCT e.variant_idx) = ?;
                     """,
                     [*chunk, MODEL_NAME, EXPECTED_DIM, VARIANT_K, VARIANT_K],
                 ).fetchall()
-                reused_ids.update(str(row[0]) for row in rows)
+                for card_id, seed_image_url in rows:
+                    card_id = str(card_id)
+                    if str(seed_image_url or "").strip() == current_image_urls.get(card_id, ""):
+                        reused_ids.add(card_id)
+                    else:
+                        image_mismatch_ids.add(card_id)
 
             reused_cards = [card for card in cards if str(card["id"]) in reused_ids]
             insert_card_metadata(connection, reused_cards)
@@ -1443,7 +1484,19 @@ def copy_seed_embeddings(output_db: Path, seed_db: Path, cards: list[dict[str, A
                     """,
                     [*chunk, MODEL_NAME, EXPECTED_DIM],
                 )
+                connection.execute(
+                    f"""
+                    INSERT INTO embedding_sources (card_id, model_name, image_url)
+                    SELECT card_id, model_name, image_url
+                    FROM seed.embedding_sources
+                    WHERE card_id IN ({placeholders})
+                      AND model_name = ?;
+                    """,
+                    [*chunk, MODEL_NAME],
+                )
             connection.commit()
+            if image_mismatch_ids:
+                print(f"skipped seed reuse for {len(image_mismatch_ids)} cards with changed image URLs")
             print(f"reused {len(reused_ids)} cards × {VARIANT_K} variants from seed db")
             return reused_ids
         finally:
@@ -1478,8 +1531,10 @@ def insert_new_embeddings(
     with sqlite3.connect(output_db) as connection:
         init_db(connection)
         embedding_rows: list[tuple[str, str, int, str, int, bytes]] = []
+        source_rows: list[tuple[str, str, str]] = []
         for record in records:
             card_id: str = record.card["id"]
+            source_image_url = str(record.card.get("image_url") or "").strip()
             try:
                 base_image = base_pil_for_card(record.image_path)
             except Exception as exc:
@@ -1508,6 +1563,7 @@ def insert_new_embeddings(
                         np.asarray(vector, dtype="<f4").tobytes(),
                     )
                 )
+            source_rows.append((card_id, MODEL_NAME, source_image_url))
         insert_card_metadata(connection, [record.card for record in records])
         connection.executemany(
             """
@@ -1516,6 +1572,15 @@ def insert_new_embeddings(
             ON CONFLICT(card_id, model_name, variant_idx) DO NOTHING;
             """,
             embedding_rows,
+        )
+        connection.executemany(
+            """
+            INSERT INTO embedding_sources (card_id, model_name, image_url)
+            VALUES (?, ?, ?)
+            ON CONFLICT(card_id, model_name) DO UPDATE SET
+              image_url = excluded.image_url;
+            """,
+            source_rows,
         )
         connection.commit()
     inserted_cards = len(records)
