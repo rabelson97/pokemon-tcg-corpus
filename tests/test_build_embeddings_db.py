@@ -169,6 +169,27 @@ class InsertEmbeddingsTests(unittest.TestCase):
                 ).fetchone()[0]
                 self.assertEqual("https://assets.tcgdex.net/en/base/base1/1/high.webp", source_url)
 
+                fts_row = connection.execute(
+                    """
+                    SELECT id, locale, name, set_name, set_id, card_number, rarity
+                    FROM cards_fts
+                    WHERE cards_fts MATCH ?;
+                    """,
+                    ("alak*",),
+                ).fetchone()
+                self.assertEqual(
+                    (
+                        "pokemon:en:base1:1",
+                        "en",
+                        "Alakazam",
+                        "Base Set",
+                        "base1",
+                        "1",
+                        "Rare Holo",
+                    ),
+                    fts_row,
+                )
+
                 tags = sorted(
                     str(value)
                     for (value,) in connection.execute(
@@ -258,6 +279,37 @@ class InsertEmbeddingsTests(unittest.TestCase):
                 [(idx, tag, build_embeddings_db.EXPECTED_DIM) for idx, tag in enumerate(build_embeddings_db.VARIANT_TAGS)],
                 rows,
             )
+
+    def test_validate_embeddings_db_requires_cards_fts(self) -> None:
+        card = self._make_card("pokemon:en:base1:4", name="Pikachu")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_db = Path(tmp_dir) / "embeddings.db"
+            record = build_embeddings_db.DownloadedCard(card=card, image_path=Path(tmp_dir) / "unused.img")
+
+            with (
+                mock.patch.object(
+                    build_embeddings_db,
+                    "load_onnx_session",
+                    return_value=(self._patched_session(), "input", build_embeddings_db.EXPECTED_DIM, 0.0),
+                ),
+                mock.patch.object(
+                    build_embeddings_db,
+                    "base_pil_for_card",
+                    return_value=Image.new("RGB", (224, 224), color=(127, 127, 127)),
+                ),
+            ):
+                build_embeddings_db.insert_new_embeddings(
+                    output_db,
+                    [record],
+                    model_path=Path("unused.onnx"),
+                )
+
+            with sqlite3.connect(output_db) as connection:
+                connection.execute("DROP TABLE cards_fts;")
+
+            with self.assertRaisesRegex(RuntimeError, "cards_fts table is missing"):
+                build_embeddings_db.validate_embeddings_db(output_db, min_row_count=1)
 
     def test_rebuild_int8_embeddings_recreates_table_without_inference(self) -> None:
         card = self._make_card("pokemon:en:base1:4", name="Venusaur")

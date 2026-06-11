@@ -42,7 +42,7 @@ from pokemontcgio_api import api_get_json as pio_api_get_json, resolve_api_key a
 VARIANT_TAGS: tuple[str, ...] = ("clean", "blur_lo", "jpeg_lo", "glare_mild")
 VARIANT_K = len(VARIANT_TAGS)
 
-DB_USER_VERSION = 8
+DB_USER_VERSION = 9
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 SCAN_EXCLUDED_SERIES_IDS = {"tcgp"}
@@ -446,12 +446,45 @@ def init_db(connection: sqlite3.Connection) -> None:
         );
         """
     )
+    create_cards_fts_table(connection)
     create_int8_table(connection)
     card_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cards);").fetchall()}
     if "image_url_low" not in card_columns:
         connection.execute("ALTER TABLE cards ADD COLUMN image_url_low TEXT;")
     if "types" not in card_columns:
         connection.execute("ALTER TABLE cards ADD COLUMN types TEXT;")
+
+
+def create_cards_fts_table(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE VIRTUAL TABLE IF NOT EXISTS cards_fts USING fts5(
+          id UNINDEXED,
+          locale UNINDEXED,
+          name,
+          set_name,
+          set_id,
+          card_number,
+          rarity,
+          tokenize = 'unicode61 remove_diacritics 2',
+          prefix = '2 3 4'
+        );
+        """
+    )
+
+
+def rebuild_cards_fts(connection: sqlite3.Connection) -> int:
+    create_cards_fts_table(connection)
+    connection.execute("DELETE FROM cards_fts;")
+    connection.execute(
+        """
+        INSERT INTO cards_fts (id, locale, name, set_name, set_id, card_number, rarity)
+        SELECT id, locale, name, set_name, set_id, card_number, rarity
+        FROM cards
+        ORDER BY id;
+        """
+    )
+    return int(connection.execute("SELECT COUNT(*) FROM cards_fts;").fetchone()[0])
 
 
 def create_int8_table(connection: sqlite3.Connection) -> None:
@@ -710,6 +743,40 @@ def validate_embeddings_db(
         )
         if blank_image_url_count > 0:
             raise RuntimeError(f"Found {blank_image_url_count} cards without a public image_url")
+
+        fts_table_present = bool(
+            connection.execute(
+                """
+                SELECT 1
+                FROM sqlite_master
+                WHERE type = 'table' AND name = 'cards_fts'
+                LIMIT 1;
+                """
+            ).fetchone()
+        )
+        if not fts_table_present:
+            raise RuntimeError("cards_fts table is missing")
+
+        fts_columns = {
+            str(row[1])
+            for row in connection.execute("PRAGMA table_info(cards_fts);").fetchall()
+        }
+        expected_fts_columns = {"id", "locale", "name", "set_name", "set_id", "card_number", "rarity"}
+        if not expected_fts_columns.issubset(fts_columns):
+            raise RuntimeError(f"cards_fts is missing required columns: {sorted(expected_fts_columns - fts_columns)}")
+
+        fts_count = int(connection.execute("SELECT COUNT(*) FROM cards_fts;").fetchone()[0])
+        if fts_count != card_count:
+            raise RuntimeError(f"cards_fts count {fts_count} != cards count {card_count}")
+
+        connection.execute(
+            """
+            SELECT id
+            FROM cards_fts
+            WHERE cards_fts MATCH 'pikachu*'
+            LIMIT 1;
+            """
+        ).fetchall()
 
     diagnostics = sample_embedding_diagnostics(db_path)
     sample_count = int(diagnostics["sample_count"])
@@ -1582,6 +1649,7 @@ def insert_new_embeddings(
             """,
             source_rows,
         )
+        rebuild_cards_fts(connection)
         connection.commit()
     inserted_cards = len(records)
     inserted_vectors = len(embedding_rows)
@@ -1752,6 +1820,10 @@ def build_embeddings_db(
         model_path=model_path,
     )
 
+    with sqlite3.connect(output_db) as connection:
+        fts_row_count = rebuild_cards_fts(connection)
+        connection.commit()
+
     counts = validate_embeddings_db(output_db, min_row_count=min_row_count)
     with sqlite3.connect(output_db) as connection:
         model_groups = inspect_model_contract(connection)
@@ -1795,6 +1867,7 @@ def build_embeddings_db(
             "duration_seconds": round(time.perf_counter() - started, 3),
             "cards_count": counts[0],
             "embeddings_count": counts[1],
+            "cards_fts_count": fts_row_count,
             "variants_per_card": VARIANT_K,
             "variant_tags": list(VARIANT_TAGS),
             "user_version": DB_USER_VERSION,

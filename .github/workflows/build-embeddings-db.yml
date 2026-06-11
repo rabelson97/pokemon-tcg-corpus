@@ -136,7 +136,7 @@ jobs:
         run: |
           variant_k=4
           test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "8"
+          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "9"
           cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards') WHERE name = 'image_url_low';")" = "1"
@@ -144,7 +144,16 @@ jobs:
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('embeddings') WHERE name = 'variant_idx';")" = "1"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('embeddings') WHERE name = 'variant_tag';")" = "1"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('embedding_sources') WHERE name = 'image_url';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'id';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'locale';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'name';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'set_name';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'set_id';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'card_number';")" = "1"
+          test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards_fts') WHERE name = 'rarity';")" = "1"
           test "$cards_count" -ge 10000
+          test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards_fts;')" = "$cards_count"
+          sqlite3 embeddings.db "SELECT COUNT(*) FROM cards_fts WHERE cards_fts MATCH 'pikachu*';"
           test "$embeddings_count" = "$((cards_count * variant_k))"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embedding_sources;')" = "$cards_count"
           test "$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM card_equivalents;')" = "$cards_count"

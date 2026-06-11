@@ -60,8 +60,24 @@ Tables:
 - `embeddings`
   - `card_id`
   - `model_name`
+  - `variant_idx`
+  - `variant_tag`
   - `dim`
   - `vector_blob`
+- `embeddings_int8`
+  - `card_id`
+  - `variant_idx`
+  - `variant_tag`
+  - `dim`
+  - `vector_int8`
+- `cards_fts`
+  - `id`
+  - `locale`
+  - `name`
+  - `set_name`
+  - `set_id`
+  - `card_number`
+  - `rarity`
 - `card_equivalents`
   - `card_id`
   - `equivalence_key`
@@ -73,7 +89,9 @@ Tables:
 
 Current embedding contract:
 
-- one normalized float32 vector per scan-eligible card
+- four normalized float32 variant vectors per scan-eligible card
+- one int8 vector per card variant
+- one FTS5 row per card for local name and metadata search
 - embedding dimension: `256`
 - model name: written by the embeddings builder
 - canonical id format: `pokemon:en:{set_id}:{local_id}`
