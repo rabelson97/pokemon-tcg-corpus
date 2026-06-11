@@ -121,10 +121,12 @@ jobs:
           echo "prices_count=$prices_count"
 
       - name: Upload build summary artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: prices-build-summary
           path: prices-build-summary.json
+          if-no-files-found: ignore
 
       - name: Resolve publish mode
         run: |

@@ -951,6 +951,22 @@ class PkmnggPriceSourceTests(unittest.TestCase):
 
         self.assertEqual([("xy", "double-crisis")], paths)
 
+    def test_candidate_pkmngg_set_paths_keeps_set_name_slug_for_ambiguous_set_id(self) -> None:
+        card = {
+            "id": "pokemon:en:swsh10.5:100",
+            "locale": "en",
+            "set_id": "swsh10.5",
+            "set_name": "Crown Zenith",
+            "name": "Rayquaza V",
+            "card_number": "100",
+            "pricing": {},
+        }
+
+        paths = build_prices_db.candidate_pkmngg_set_paths(card)
+
+        self.assertIn(("sword-shield", "pokemon-go"), paths)
+        self.assertIn(("sword-shield", "crown-zenith"), paths)
+
     def test_extract_pkmngg_usd_price_skips_non_market_variants(self) -> None:
         card_data = {
             "variantMap": {

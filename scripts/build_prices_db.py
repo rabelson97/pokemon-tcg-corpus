@@ -348,12 +348,18 @@ def candidate_pkmngg_set_paths(
 
     set_id = str(card.get("set_id") or "").strip()
     explicit_paths = normalize_pkmngg_mapping(EXPLICIT_SET_MAPPINGS.get(set_id))
-    if sitemap_paths is None:
-        return dedupe_pkmngg_paths(explicit_paths)
-
     set_slug = slugify_pkmngg_set_name(str(card.get("set_name") or ""))
+    explicit_series = [series for series, _slug in explicit_paths]
+    explicit_set_name_paths = [
+        (series, set_slug)
+        for series in explicit_series
+        if set_slug
+    ]
+    if sitemap_paths is None:
+        return dedupe_pkmngg_paths(explicit_paths + explicit_set_name_paths)
+
     inferred_paths = [(series, slug) for series, slug in sitemap_paths if slug == set_slug]
-    return dedupe_pkmngg_paths(explicit_paths + inferred_paths)
+    return dedupe_pkmngg_paths(explicit_paths + explicit_set_name_paths + inferred_paths)
 
 
 def fetch_pkmngg_set_cards(series: str, slug: str) -> list[dict[str, Any]]:
