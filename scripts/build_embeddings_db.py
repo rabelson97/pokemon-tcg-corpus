@@ -42,7 +42,7 @@ from pokemontcgio_api import api_get_json as pio_api_get_json, resolve_api_key a
 VARIANT_TAGS: tuple[str, ...] = ("clean", "blur_lo", "jpeg_lo", "glare_mild")
 VARIANT_K = len(VARIANT_TAGS)
 
-DB_USER_VERSION = 9
+DB_USER_VERSION = 10
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 SCAN_EXCLUDED_SERIES_IDS = {"tcgp"}
@@ -458,16 +458,18 @@ def init_db(connection: sqlite3.Connection) -> None:
 def create_cards_fts_table(connection: sqlite3.Connection) -> None:
     connection.execute(
         """
-        CREATE VIRTUAL TABLE IF NOT EXISTS cards_fts USING fts5(
-          id UNINDEXED,
-          locale UNINDEXED,
+        CREATE VIRTUAL TABLE IF NOT EXISTS cards_fts USING fts4(
+          id,
+          locale,
           name,
           set_name,
           set_id,
           card_number,
           rarity,
-          tokenize = 'unicode61 remove_diacritics 2',
-          prefix = '2 3 4'
+          notindexed=id,
+          notindexed=locale,
+          tokenize=unicode61,
+          prefix='2,3,4'
         );
         """
     )

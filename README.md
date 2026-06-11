@@ -91,7 +91,7 @@ Current embedding contract:
 
 - four normalized float32 variant vectors per scan-eligible card
 - one int8 vector per card variant
-- one FTS5 row per card for local name and metadata search
+- one FTS row per card for local name and metadata search
 - embedding dimension: `256`
 - model name: written by the embeddings builder
 - canonical id format: `pokemon:en:{set_id}:{local_id}`

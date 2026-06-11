@@ -136,7 +136,7 @@ jobs:
         run: |
           variant_k=4
           test "$(sqlite3 embeddings.db 'PRAGMA integrity_check;')" = "ok"
-          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "9"
+          test "$(sqlite3 embeddings.db 'PRAGMA user_version;')" = "10"
           cards_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM cards;')"
           embeddings_count="$(sqlite3 embeddings.db 'SELECT COUNT(*) FROM embeddings;')"
           test "$(sqlite3 embeddings.db "SELECT COUNT(*) FROM pragma_table_info('cards') WHERE name = 'image_url_low';")" = "1"
