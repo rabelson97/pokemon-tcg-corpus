@@ -70,7 +70,10 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "2021swsh": ["mcd21"],
     "2022swsh": ["mcd22"],
     "cel25": ["cel25c"],
+    "bog": ["bp"],
 }
+
+UNPADDED_SET_PREFIXES = {"base", "bw", "col", "dp", "ex", "hgss", "pl", "pop", "ru", "si", "sm", "swsh", "xy"}
 
 
 def _pio_set_id_to_ours(pio_set_id: str) -> str:
@@ -108,6 +111,60 @@ def _pio_set_id_to_ours(pio_set_id: str) -> str:
     return result
 
 
+def canonical_set_token(set_id: str) -> str:
+    clean_value = set_id.strip().lower()
+    reverse_aliases: dict[str, str] = {}
+    for our_id, aliases in POKEMONTCGIO_SET_ID_ALIASES.items():
+        for alias in aliases:
+            reverse_aliases[alias] = our_id
+    clean_value = compact_unpadded_set_token(clean_value)
+    clean_value = reverse_aliases.get(clean_value, clean_value)
+    return compact_unpadded_set_token(clean_value)
+
+
+def compact_unpadded_set_token(set_id: str) -> str:
+    match = re.fullmatch(r"([a-z]+)0+([1-9][0-9]*)(.*)", set_id)
+    if match and match.group(1) in UNPADDED_SET_PREFIXES:
+        suffix = match.group(3)
+        return f"{match.group(1)}{int(match.group(2))}{suffix}"
+    return set_id
+
+
+def card_identity_key(card: dict[str, Any]) -> str:
+    locale = str(card.get("locale") or "").strip().lower()
+    set_token = canonical_set_token(str(card.get("set_id") or ""))
+    number_token = compact_numeric_token(str(card.get("card_number") or "")).upper()
+    return f"{locale}|{set_token}|{number_token}"
+
+
+def card_preference_score(card: dict[str, Any]) -> tuple[int, int, int, str]:
+    upstream_source = str(card.get("upstream_source") or "").strip().lower()
+    set_id = str(card.get("set_id") or "").strip().lower()
+    return (
+        1 if upstream_source != "seed" else 0,
+        1 if upstream_source in {"tcgdex", ""} else 0,
+        1 if set_id == canonical_set_token(set_id) else 0,
+        str(card.get("id") or ""),
+    )
+
+
+def deduplicate_card_records(cards: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    deduped: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    removed = 0
+    for card in cards:
+        key = card_identity_key(card)
+        existing = deduped.get(key)
+        if existing is None:
+            deduped[key] = card
+            order.append(key)
+            continue
+        removed += 1
+        if card_preference_score(card) > card_preference_score(existing):
+            deduped[key] = card
+    return [deduped[key] for key in order], removed
+
+
 def fetch_supplementary_pokemontcgio_cards(
     existing_cards: list[dict[str, Any]],
     *,
@@ -120,7 +177,7 @@ def fetch_supplementary_pokemontcgio_cards(
 
     existing_ids: set[str] = set()
     for card in existing_cards:
-        existing_ids.add(f"{card['set_id']}|{compact_numeric_token(card['card_number'])}")
+        existing_ids.add(card_identity_key(card))
 
     try:
         sets_payload = pio_api_get_json("/sets", params={"pageSize": "500"}, api_key=clean_key)
@@ -132,22 +189,23 @@ def fetch_supplementary_pokemontcgio_cards(
     pio_sets = [s for s in (sets_payload.get("data") or []) if isinstance(s, dict)]
     print(f"pokemontcgio listed {len(pio_sets)} sets")
 
-    reverse_aliases: dict[str, str] = {}
-    for our_id, aliases in POKEMONTCGIO_SET_ID_ALIASES.items():
-        for alias in aliases:
-            reverse_aliases[alias] = our_id
-
     existing_set_ids = {card["set_id"] for card in existing_cards}
+    existing_set_ids_by_token: dict[str, str] = {}
+    for set_id in sorted(existing_set_ids):
+        existing_set_ids_by_token.setdefault(canonical_set_token(str(set_id)), str(set_id))
 
     def _resolve_our_set_id(pio_set_id_raw: str) -> str | None:
         candidate = _pio_set_id_to_ours(pio_set_id_raw)
+        canonical_candidate = canonical_set_token(candidate)
+        if canonical_candidate in existing_set_ids_by_token:
+            return existing_set_ids_by_token[canonical_candidate]
         if candidate in existing_set_ids:
             return candidate
         import re
         unpadded = re.sub(r'^(sv|swsh|sm|bw|xy|ex|dp|hgss|base)0+(\d)', r'\1\2', candidate)
         if unpadded in existing_set_ids:
             return unpadded
-        return candidate
+        return canonical_candidate
 
     sets_with_gaps: list[dict[str, Any]] = []
     for pio_set in pio_sets:
@@ -217,7 +275,7 @@ def fetch_supplementary_pokemontcgio_cards(
                 pio_number = str(pio_card.get("number") or "").strip()
                 if not pio_number:
                     continue
-                combo = f"{our_set_id}|{compact_numeric_token(pio_number)}"
+                combo = f"en|{canonical_set_token(str(our_set_id))}|{compact_numeric_token(pio_number).upper()}"
                 if combo in existing_ids:
                     continue
 
@@ -770,6 +828,38 @@ def validate_embeddings_db(
         fts_count = int(connection.execute("SELECT COUNT(*) FROM cards_fts;").fetchone()[0])
         if fts_count != card_count:
             raise RuntimeError(f"cards_fts count {fts_count} != cards count {card_count}")
+
+        duplicate_identity_counts: dict[str, list[str]] = {}
+        for row in connection.execute(
+            """
+            SELECT id, locale, set_id, card_number
+            FROM cards
+            ORDER BY id;
+            """
+        ).fetchall():
+            card_id, locale, set_id, card_number = row
+            identity = card_identity_key(
+                {
+                    "locale": locale,
+                    "set_id": set_id,
+                    "card_number": card_number,
+                }
+            )
+            duplicate_identity_counts.setdefault(identity, []).append(str(card_id))
+        duplicate_identities = {
+            identity: card_ids
+            for identity, card_ids in duplicate_identity_counts.items()
+            if len(card_ids) > 1
+        }
+        if duplicate_identities:
+            examples = [
+                f"{identity}: {', '.join(card_ids[:3])}"
+                for identity, card_ids in list(duplicate_identities.items())[:10]
+            ]
+            raise RuntimeError(
+                f"Found {len(duplicate_identities)} duplicate canonical card identities: " +
+                "; ".join(examples)
+            )
 
         connection.execute(
             """
@@ -1690,22 +1780,26 @@ def build_embeddings_db(
         cards, api_key=pokemontcgio_api_key,
     )
     cards.extend(supplementary_cards)
+    cards, remote_deduplicated_cards = deduplicate_card_records(cards)
     remote_card_count = len(cards)
 
     seed_carried_forward_cards = 0
     if seed_db is not None:
         known_card_ids = {str(card["id"]) for card in cards}
+        known_card_identity_keys = {card_identity_key(card) for card in cards}
         for seed_card in load_seed_card_records(seed_db, locales):
-            if str(seed_card["id"]) in known_card_ids:
+            if str(seed_card["id"]) in known_card_ids or card_identity_key(seed_card) in known_card_identity_keys:
                 continue
             cards.append(seed_card)
             known_card_ids.add(str(seed_card["id"]))
+            known_card_identity_keys.add(card_identity_key(seed_card))
             seed_carried_forward_cards += 1
 
     summary["total_remote_cards"] = remote_card_count
     summary["total_candidate_cards"] = len(cards)
     summary["listed_counts"] = listed_counts
     summary["supplementary_pokemontcgio_cards"] = len(supplementary_cards)
+    summary["remote_deduplicated_cards"] = remote_deduplicated_cards
     summary["seed_carried_forward_cards"] = seed_carried_forward_cards
 
     detailed_counts: dict[str, int] = {}

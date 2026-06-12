@@ -570,6 +570,144 @@ class InsertEmbeddingsTests(unittest.TestCase):
         self.assertEqual("pokemontcgio", result[0]["upstream_source"])
         self.assertEqual("https://example.com/sm2-60a.png", result[0]["image_url"])
 
+    def test_fetch_supplementary_resolves_legacy_padded_set_alias_to_existing_set(self) -> None:
+        existing = [
+            {
+                "id": "pokemon:en:pl2:113",
+                "set_id": "pl2",
+                "card_number": "113",
+                "locale": "en",
+                "name": "Flying Pikachu",
+            },
+        ]
+        sets_payload = {
+            "data": [
+                {"id": "pl2", "name": "Rising Rivals", "total": 2, "printedTotal": 2},
+            ],
+        }
+        cards_payload = {
+            "totalCount": 2,
+            "data": [
+                {
+                    "id": "pl2-113",
+                    "number": "113",
+                    "name": "Flying Pikachu",
+                    "set": {"id": "pl2", "name": "Rising Rivals"},
+                    "rarity": "Rare",
+                    "images": {"large": "https://example.com/pl2-113.png"},
+                    "artist": "Toshinao Aoki",
+                    "hp": "40",
+                    "supertype": "Pokémon",
+                    "types": ["Lightning"],
+                },
+                {
+                    "id": "pl2-114",
+                    "number": "114",
+                    "name": "Surfing Pikachu",
+                    "set": {"id": "pl2", "name": "Rising Rivals"},
+                    "rarity": "Rare",
+                    "images": {"large": "https://example.com/pl2-114.png"},
+                    "artist": "Toshinao Aoki",
+                    "hp": "40",
+                    "supertype": "Pokémon",
+                    "types": ["Water"],
+                },
+            ],
+        }
+
+        def fake_api_get_json(path, *, params=None, **kwargs):
+            if "/sets" in path:
+                return sets_payload
+            return cards_payload
+
+        with mock.patch.object(
+            build_embeddings_db,
+            "pio_api_get_json",
+            side_effect=fake_api_get_json,
+        ), mock.patch.object(
+            build_embeddings_db,
+            "pio_resolve_api_key",
+            return_value="fake-key",
+        ):
+            result = build_embeddings_db.fetch_supplementary_pokemontcgio_cards(
+                existing, api_key="fake-key",
+            )
+
+        self.assertEqual(1, len(result))
+        self.assertEqual("pokemon:en:pl2:114", result[0]["id"])
+        self.assertEqual("pl2", result[0]["set_id"])
+
+    def test_deduplicate_card_records_collapses_legacy_set_and_number_padding(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:pl2:113",
+                "locale": "en",
+                "set_id": "pl2",
+                "card_number": "113",
+                "upstream_source": "tcgdex",
+            },
+            {
+                "id": "pokemon:en:pl02:113",
+                "locale": "en",
+                "set_id": "pl02",
+                "card_number": "113",
+                "upstream_source": "pokemontcgio",
+            },
+            {
+                "id": "pokemon:en:sv01:051",
+                "locale": "en",
+                "set_id": "sv01",
+                "card_number": "051",
+                "upstream_source": "tcgdex",
+            },
+            {
+                "id": "pokemon:en:sv01:51",
+                "locale": "en",
+                "set_id": "sv01",
+                "card_number": "51",
+                "upstream_source": "pokemontcgio",
+            },
+            {
+                "id": "pokemon:en:lc:1",
+                "locale": "en",
+                "set_id": "lc",
+                "card_number": "1",
+                "upstream_source": "tcgdex",
+            },
+            {
+                "id": "pokemon:en:base06:1",
+                "locale": "en",
+                "set_id": "base06",
+                "card_number": "1",
+                "upstream_source": "pokemontcgio",
+            },
+            {
+                "id": "pokemon:en:bog:1",
+                "locale": "en",
+                "set_id": "bog",
+                "card_number": "1",
+                "upstream_source": "tcgdex",
+            },
+            {
+                "id": "pokemon:en:bp:1",
+                "locale": "en",
+                "set_id": "bp",
+                "card_number": "1",
+                "upstream_source": "pokemontcgio",
+            },
+        ]
+
+        deduped, removed = build_embeddings_db.deduplicate_card_records(cards)
+
+        self.assertEqual(4, removed)
+        self.assertEqual(
+            ["pokemon:en:pl2:113", "pokemon:en:sv01:051", "pokemon:en:lc:1", "pokemon:en:bog:1"],
+            [card["id"] for card in deduped],
+        )
+        self.assertEqual("swsh1", build_embeddings_db.canonical_set_token("swsh01"))
+        self.assertEqual("sv01", build_embeddings_db.canonical_set_token("sv01"))
+        self.assertEqual("me01", build_embeddings_db.canonical_set_token("me01"))
+
 
 class ImageFallbackTests(unittest.TestCase):
     @staticmethod
