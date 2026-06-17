@@ -1401,7 +1401,7 @@
   },
   "pokemon:en:mep:024": {
     "source": "pkmngg_exact_match",
-    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-024.png?signature=c46bdc0d3e3595cedb6d7ffe028b75644724b9b11bcfc1c04a5737b3c9918c16"
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-024.png?signature=c46bdc0d3e3595cedb6d7ffe028b75644724b9b11bcfc1c04a5737b3c9918c16&cachebust=1"
   },
   "pokemon:en:mep:025": {
     "source": "pkmngg_exact_match",
@@ -1433,7 +1433,7 @@
   },
   "pokemon:en:mep:032": {
     "source": "pkmngg_exact_match",
-    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-032v453.png?signature=c5e2460db8c1c626419ba8dc7613ac80133a2a33e9c68162af394f06d33801ed"
+    "url": "https://assets.pkmn.gg/fit-in/600x836/filters:format(webp)/images/cards/MEP/MEP-032v453.png?signature=c5e2460db8c1c626419ba8dc7613ac80133a2a33e9c68162af394f06d33801ed&cachebust=1"
   },
   "pokemon:en:mep:033": {
     "source": "pkmngg_exact_match",
