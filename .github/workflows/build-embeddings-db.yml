@@ -51,6 +51,11 @@ jobs:
             embeddings-card-images-${{ runner.os }}-en-
             embeddings-card-images-${{ runner.os }}-
 
+      - name: Purge poisoned cache files
+        run: |
+          rm -f "${{ runner.temp }}/card-images/pokemon_en_mep_032.img"
+          rm -f "${{ runner.temp }}/card-images/pokemon_en_mep_024.img"
+
       - name: Restore TCGdex detail cache
         id: tcgdex-detail-cache
         uses: actions/cache/restore@v4
