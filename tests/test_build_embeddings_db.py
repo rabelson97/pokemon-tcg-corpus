@@ -734,6 +734,30 @@ class InsertEmbeddingsTests(unittest.TestCase):
         self.assertEqual("swsh12.5", build_embeddings_db.canonical_set_token("swsh12.5gg"))
         self.assertEqual("cel25", build_embeddings_db.canonical_set_token("cel25cc"))
 
+    def test_deduplicate_card_records_maps_celebrations_classic_numbers(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:cel25:2A",
+                "locale": "en",
+                "set_id": "cel25",
+                "card_number": "2A",
+                "upstream_source": "pokemontcgio",
+            },
+            {
+                "id": "pokemon:en:cel25cc:CC001",
+                "locale": "en",
+                "set_id": "cel25cc",
+                "card_number": "CC001",
+                "upstream_source": "tcgdex",
+            },
+        ]
+
+        deduped, removed = build_embeddings_db.deduplicate_card_records(cards)
+
+        self.assertEqual(1, removed)
+        self.assertEqual(["pokemon:en:cel25:2A"], [card["id"] for card in deduped])
+        self.assertEqual(25, len(build_embeddings_db.SUBSET_CARD_NUMBER_ALIASES["cel25cc"]))
+
 
 class ImageFallbackTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -1025,6 +1049,32 @@ class ImageFallbackTests(unittest.TestCase):
         ), mock.patch(
             "scripts.pokemontcgio_api.search_cards_by_name",
             return_value=[],
+        ):
+            fallback = build_embeddings_db.resolve_fallback_image(
+                card,
+                allow_web_image_fallback=False,
+            )
+
+        self.assertEqual(pkmngg_fallback, fallback)
+
+    def test_pkmngg_fallback_runs_after_pokemontcgio_provider_error(self) -> None:
+        card = self._missing_image_card()
+        pkmngg_fallback = build_embeddings_db.ImageResolution(
+            url="https://assets.pkmn.gg/example/mep-023.webp",
+            source="pkmngg_exact_match",
+        )
+
+        with mock.patch.object(
+            build_embeddings_db,
+            "resolve_pkmngg_image_by_identity",
+            return_value=pkmngg_fallback,
+        ), mock.patch.object(
+            build_embeddings_db,
+            "resolve_pokemontcgio_image_by_identity",
+            side_effect=RuntimeError("provider unavailable"),
+        ), mock.patch(
+            "scripts.pokemontcgio_api.search_cards_by_name",
+            side_effect=RuntimeError("provider unavailable"),
         ):
             fallback = build_embeddings_db.resolve_fallback_image(
                 card,

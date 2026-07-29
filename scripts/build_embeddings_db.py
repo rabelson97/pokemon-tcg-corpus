@@ -83,6 +83,36 @@ SUBSET_SET_ID_ALIASES: dict[str, str] = {
     "swsh12.5gg": "swsh12.5",
 }
 
+SUBSET_CARD_NUMBER_ALIASES: dict[str, dict[str, str]] = {
+    "cel25cc": {
+        "CC1": "2A",
+        "CC2": "4A",
+        "CC3": "15A1",
+        "CC4": "73A",
+        "CC5": "8A",
+        "CC6": "15A2",
+        "CC7": "15A3",
+        "CC8": "24A",
+        "CC9": "20A",
+        "CC10": "66A",
+        "CC11": "9A",
+        "CC12": "86A",
+        "CC13": "88A",
+        "CC14": "93A",
+        "CC15": "17A",
+        "CC16": "15A4",
+        "CC17": "109A",
+        "CC18": "145A",
+        "CC19": "107A",
+        "CC20": "113A",
+        "CC21": "114A",
+        "CC22": "54A",
+        "CC23": "97A",
+        "CC24": "76A",
+        "CC25": "60A",
+    },
+}
+
 UNPADDED_SET_PREFIXES = {"base", "bw", "col", "dp", "ex", "hgss", "pl", "pop", "ru", "si", "sm", "swsh", "xy"}
 PKMNGG_IMAGE_CANDIDATE_CACHE: dict[str, list[dict[str, Any]]] = {}
 
@@ -144,8 +174,10 @@ def compact_unpadded_set_token(set_id: str) -> str:
 
 def card_identity_key(card: dict[str, Any]) -> str:
     locale = str(card.get("locale") or "").strip().lower()
-    set_token = canonical_set_token(str(card.get("set_id") or ""))
+    raw_set_id = str(card.get("set_id") or "").strip().lower()
+    set_token = canonical_set_token(raw_set_id)
     number_token = compact_numeric_token(str(card.get("card_number") or "")).upper()
+    number_token = SUBSET_CARD_NUMBER_ALIASES.get(raw_set_id, {}).get(number_token, number_token)
     return f"{locale}|{set_token}|{number_token}"
 
 
@@ -1210,7 +1242,11 @@ def resolve_pkmngg_image_by_identity(card: dict[str, Any]) -> ImageResolution | 
 
 
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
-    identity_match = resolve_pokemontcgio_image_by_identity(card)
+    try:
+        identity_match = resolve_pokemontcgio_image_by_identity(card)
+    except Exception as error:
+        print(f"  PokemonTCG.io identity fallback failed: {type(error).__name__}: {error}")
+        identity_match = None
     if identity_match:
         return identity_match
 
@@ -1231,7 +1267,11 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
     if search_cards_by_name is not None:
         # Try query pokemontcg.io
         card_number = str(card.get("card_number") or "").strip().lstrip("0")
-        candidates = search_cards_by_name(name, number=card_number)
+        try:
+            candidates = search_cards_by_name(name, number=card_number)
+        except Exception as error:
+            print(f"  PokemonTCG.io name fallback failed: {type(error).__name__}: {error}")
+            candidates = []
         if not candidates:
             print(f"  Fallback: No matches found for name '{name}' and number '{card_number}'")
 
