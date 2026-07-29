@@ -708,8 +708,39 @@ class InsertEmbeddingsTests(unittest.TestCase):
         self.assertEqual("sv01", build_embeddings_db.canonical_set_token("sv01"))
         self.assertEqual("me01", build_embeddings_db.canonical_set_token("me01"))
 
+    def test_deduplicate_card_records_collapses_gallery_subsets_into_parent_sets(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:swsh11:TG01",
+                "locale": "en",
+                "set_id": "swsh11",
+                "card_number": "TG01",
+                "upstream_source": "pokemontcgio",
+            },
+            {
+                "id": "pokemon:en:swsh11.5tg:TG01",
+                "locale": "en",
+                "set_id": "swsh11.5tg",
+                "card_number": "TG01",
+                "upstream_source": "tcgdex",
+            },
+        ]
+
+        deduped, removed = build_embeddings_db.deduplicate_card_records(cards)
+
+        self.assertEqual(1, removed)
+        self.assertEqual(["pokemon:en:swsh11:TG01"], [card["id"] for card in deduped])
+        self.assertEqual("swsh11", build_embeddings_db.canonical_set_token("swsh11.5tg"))
+        self.assertEqual("swsh12.5", build_embeddings_db.canonical_set_token("swsh12.5gg"))
+        self.assertEqual("cel25", build_embeddings_db.canonical_set_token("cel25cc"))
+
 
 class ImageFallbackTests(unittest.TestCase):
+    def setUp(self) -> None:
+        patcher = mock.patch.object(build_embeddings_db, "resolve_pkmngg_image_by_identity", return_value=None)
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
     @staticmethod
     def _missing_image_card() -> dict[str, object]:
         return {
@@ -975,6 +1006,32 @@ class ImageFallbackTests(unittest.TestCase):
         self.assertIsNotNone(fallback)
         self.assertEqual("https://images.pokemontcg.io/sm35/10_hires.png", fallback.url)
         self.assertEqual("pokemontcgio_set_number_name", fallback.source)
+
+    def test_pkmngg_fallback_is_used_for_exact_mapped_promos(self) -> None:
+        card = self._missing_image_card()
+        pkmngg_fallback = build_embeddings_db.ImageResolution(
+            url="https://assets.pkmn.gg/example/mep-023.webp",
+            source="pkmngg_exact_match",
+        )
+
+        with mock.patch.object(
+            build_embeddings_db,
+            "resolve_pkmngg_image_by_identity",
+            return_value=pkmngg_fallback,
+        ), mock.patch.object(
+            build_embeddings_db,
+            "resolve_pokemontcgio_image_by_identity",
+            return_value=None,
+        ), mock.patch(
+            "scripts.pokemontcgio_api.search_cards_by_name",
+            return_value=[],
+        ):
+            fallback = build_embeddings_db.resolve_fallback_image(
+                card,
+                allow_web_image_fallback=False,
+            )
+
+        self.assertEqual(pkmngg_fallback, fallback)
 
 
 

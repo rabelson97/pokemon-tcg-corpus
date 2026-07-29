@@ -73,7 +73,18 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "bog": ["bp"],
 }
 
+SUBSET_SET_ID_ALIASES: dict[str, str] = {
+    "cel25cc": "cel25",
+    "swsh4.5sv": "swsh4.5",
+    "swsh9.5tg": "swsh9",
+    "swsh10.5tg": "swsh10",
+    "swsh11.5tg": "swsh11",
+    "swsh12.5tg": "swsh12",
+    "swsh12.5gg": "swsh12.5",
+}
+
 UNPADDED_SET_PREFIXES = {"base", "bw", "col", "dp", "ex", "hgss", "pl", "pop", "ru", "si", "sm", "swsh", "xy"}
+PKMNGG_IMAGE_CANDIDATE_CACHE: dict[str, list[dict[str, Any]]] = {}
 
 
 def _pio_set_id_to_ours(pio_set_id: str) -> str:
@@ -119,6 +130,7 @@ def canonical_set_token(set_id: str) -> str:
             reverse_aliases[alias] = our_id
     clean_value = compact_unpadded_set_token(clean_value)
     clean_value = reverse_aliases.get(clean_value, clean_value)
+    clean_value = SUBSET_SET_ID_ALIASES.get(clean_value, clean_value)
     return compact_unpadded_set_token(clean_value)
 
 
@@ -142,8 +154,8 @@ def card_preference_score(card: dict[str, Any]) -> tuple[int, int, int, str]:
     set_id = str(card.get("set_id") or "").strip().lower()
     return (
         1 if upstream_source != "seed" else 0,
-        1 if upstream_source in {"tcgdex", ""} else 0,
         1 if set_id == canonical_set_token(set_id) else 0,
+        1 if upstream_source in {"tcgdex", ""} else 0,
         str(card.get("id") or ""),
     )
 
@@ -1181,6 +1193,22 @@ def resolve_pokemontcgio_image_by_identity(card: dict[str, Any]) -> ImageResolut
     return None
 
 
+def resolve_pkmngg_image_by_identity(card: dict[str, Any]) -> ImageResolution | None:
+    try:
+        from scripts.resolve_missing_images import resolve_card_image
+    except ImportError:
+        try:
+            from resolve_missing_images import resolve_card_image
+        except ImportError:
+            return None
+
+    image_url, source = resolve_card_image(card, PKMNGG_IMAGE_CANDIDATE_CACHE)
+    public_url = public_image_url_or_none(image_url)
+    if not public_url:
+        return None
+    return ImageResolution(url=public_url, source=source)
+
+
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
     identity_match = resolve_pokemontcgio_image_by_identity(card)
     if identity_match:
@@ -1237,6 +1265,12 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
 
         if candidates:
             print(f"  Fallback: Matches found but none passed artist/HP alignment check.")
+
+    pkmngg_match = resolve_pkmngg_image_by_identity(card)
+    if pkmngg_match is not None:
+        print(f"  Fallback SUCCESS! Mapped {card['id']} through exact pkmn.gg set/name/number matching")
+        return pkmngg_match
+
     if allow_web_image_fallback:
         try:
             from scripts.web_image_search import resolve_web_image_fallback

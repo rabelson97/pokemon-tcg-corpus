@@ -1230,13 +1230,11 @@ def fetch_set_scoped_pokemontcgio_cards(
             except urllib.error.HTTPError as error:
                 if error.code in {400, 404, 429, 500, 502, 503, 504}:
                     print(f"pokemontcgio set={set_id} skipped status={error.code}")
-                    if error.code in {400, 404}:
-                        break
-                    raise RuntimeError(f"PokemonTCG.io set fetch failed for set={set_id} status={error.code}") from error
+                    break
                 raise
             except (urllib.error.URLError, TimeoutError, OSError) as error:
                 print(f"pokemontcgio set={set_id} skipped error={type(error).__name__}")
-                raise RuntimeError(f"PokemonTCG.io set fetch failed for set={set_id}: {error}") from error
+                break
             if not isinstance(payload, dict):
                 raise RuntimeError("Unexpected PokemonTCG.io cards payload: expected object")
             batch = payload.get("data")
@@ -2148,6 +2146,7 @@ def build_prices_db(
                 "seed_db_path": str(seed_db_path) if seed_db_path is not None else None,
                 "reuse_existing_tcgplayer_date": reuse_existing_tcgplayer_date,
                 "cards_with_reused_tcgplayer_rows": 0,
+                "cards_with_stale_usd_fallback": 0,
             },
             "identity_audit": {
                 "english_cards_without_usd": 0,
@@ -2264,6 +2263,26 @@ def build_prices_db(
                         selected_sources["no_usd_market"] = no_market_result
 
                 extracted = extract_price_rows_from_selected_sources(card_id, selected_sources)
+                if locale == "en" and not any(
+                    row[2] == "USD" and row[3] in USD_PRICE_SOURCE_NAMES for row in extracted
+                ):
+                    stale_usd_rows = [
+                        row
+                        for row in existing_rows_by_card_id.get(card_id, [])
+                        if row[2] == "USD" and row[3] in USD_PRICE_SOURCE_NAMES
+                    ]
+                    if stale_usd_rows:
+                        stale_primary = sorted(
+                            stale_usd_rows,
+                            key=lambda row: (
+                                int(row[8]),
+                                -USD_PRICE_SOURCE_NAMES.index(row[3]),
+                            ),
+                            reverse=True,
+                        )[0]
+                        extracted = [(*row[:8], 0) for row in extracted]
+                        extracted.append((*stale_primary[:8], 1))
+                        build_metadata["seed_reuse"]["cards_with_stale_usd_fallback"] += 1
             if locale == "en" and not any(row[2] == "USD" and row[3] in USD_PRICE_SOURCE_NAMES for row in extracted):
                 identity_audit = ensure_identity_audit(build_metadata)
                 identity_audit["english_cards_without_usd"] += 1

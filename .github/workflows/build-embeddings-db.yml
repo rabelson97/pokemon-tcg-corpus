@@ -19,7 +19,7 @@ on:
         type: boolean
         default: true
   schedule:
-    - cron: "23 10 1,15 * *"
+    - cron: "23 10 * * *"
 
 concurrency:
   group: build-embeddings-db
@@ -98,7 +98,7 @@ jobs:
           echo "Resolved embeddings release: $resolved_version"
 
       - name: Download existing embeddings release
-        if: ${{ inputs.reuse_existing_embeddings != false }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.reuse_existing_embeddings }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -224,7 +224,7 @@ jobs:
           embeddings = int(summary.get("embeddings_count", 0))
           skipped = int(summary.get("skipped_cards", 0))
           allow_missing = str(summary.get("allow_missing_images", "false")).lower() == "true"
-          publish_release = cards > 0 and embeddings > 0 and skipped == 0 and not allow_missing
+          publish_release = inserted > 0 and cards > 0 and embeddings > 0 and skipped == 0 and not allow_missing
 
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
               env_file.write(f"INSERTED_EMBEDDINGS={inserted}\n")
