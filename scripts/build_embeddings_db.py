@@ -185,8 +185,8 @@ def card_preference_score(card: dict[str, Any]) -> tuple[int, int, int, str]:
     upstream_source = str(card.get("upstream_source") or "").strip().lower()
     set_id = str(card.get("set_id") or "").strip().lower()
     return (
-        1 if upstream_source != "seed" else 0,
         1 if set_id == canonical_set_token(set_id) else 0,
+        1 if upstream_source != "seed" else 0,
         1 if upstream_source in {"tcgdex", ""} else 0,
         str(card.get("id") or ""),
     )
@@ -1858,16 +1858,25 @@ def build_embeddings_db(
     remote_card_count = len(cards)
 
     seed_carried_forward_cards = 0
+    seed_merge_deduplicated_cards = 0
+    seed_preferred_alias_cards = 0
     if seed_db is not None:
-        known_card_ids = {str(card["id"]) for card in cards}
-        known_card_identity_keys = {card_identity_key(card) for card in cards}
-        for seed_card in load_seed_card_records(seed_db, locales):
-            if str(seed_card["id"]) in known_card_ids or card_identity_key(seed_card) in known_card_identity_keys:
-                continue
-            cards.append(seed_card)
-            known_card_ids.add(str(seed_card["id"]))
-            known_card_identity_keys.add(card_identity_key(seed_card))
-            seed_carried_forward_cards += 1
+        remote_card_ids = {str(card["id"]) for card in cards}
+        remote_identity_keys = {card_identity_key(card) for card in cards}
+        seed_cards = load_seed_card_records(seed_db, locales)
+        seed_carried_forward_cards = sum(
+            1
+            for seed_card in seed_cards
+            if str(seed_card["id"]) not in remote_card_ids
+            and card_identity_key(seed_card) not in remote_identity_keys
+        )
+        cards, seed_merge_deduplicated_cards = deduplicate_card_records([*cards, *seed_cards])
+        seed_preferred_alias_cards = sum(
+            1
+            for card in cards
+            if str(card.get("upstream_source") or "").strip().lower() == "seed"
+            and card_identity_key(card) in remote_identity_keys
+        )
 
     summary["total_remote_cards"] = remote_card_count
     summary["total_candidate_cards"] = len(cards)
@@ -1875,6 +1884,8 @@ def build_embeddings_db(
     summary["supplementary_pokemontcgio_cards"] = len(supplementary_cards)
     summary["remote_deduplicated_cards"] = remote_deduplicated_cards
     summary["seed_carried_forward_cards"] = seed_carried_forward_cards
+    summary["seed_merge_deduplicated_cards"] = seed_merge_deduplicated_cards
+    summary["seed_preferred_alias_cards"] = seed_preferred_alias_cards
 
     detailed_counts: dict[str, int] = {}
     for card in cards:

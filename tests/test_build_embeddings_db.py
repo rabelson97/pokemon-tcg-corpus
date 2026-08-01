@@ -758,6 +758,47 @@ class InsertEmbeddingsTests(unittest.TestCase):
         self.assertEqual(["pokemon:en:cel25:2A"], [card["id"] for card in deduped])
         self.assertEqual(25, len(build_embeddings_db.SUBSET_CARD_NUMBER_ALIASES["cel25cc"]))
 
+    def test_deduplicate_card_records_prefers_canonical_seed_over_live_subset_alias(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:cel25cc:CC001",
+                "locale": "en",
+                "set_id": "cel25cc",
+                "card_number": "CC001",
+                "upstream_source": "tcgdex",
+            },
+            {
+                "id": "pokemon:en:cel25:2A",
+                "locale": "en",
+                "set_id": "cel25",
+                "card_number": "2A",
+                "upstream_source": "seed",
+            },
+            {
+                "id": "pokemon:en:sv01:001",
+                "locale": "en",
+                "set_id": "sv01",
+                "card_number": "001",
+                "upstream_source": "tcgdex",
+            },
+            {
+                "id": "pokemon:en:sv01:001",
+                "locale": "en",
+                "set_id": "sv01",
+                "card_number": "001",
+                "upstream_source": "seed",
+            },
+        ]
+
+        deduped, removed = build_embeddings_db.deduplicate_card_records(cards)
+
+        self.assertEqual(2, removed)
+        self.assertEqual(
+            ["pokemon:en:cel25:2A", "pokemon:en:sv01:001"],
+            [card["id"] for card in deduped],
+        )
+        self.assertEqual(["seed", "tcgdex"], [card["upstream_source"] for card in deduped])
+
 
 class ImageFallbackTests(unittest.TestCase):
     def setUp(self) -> None:
