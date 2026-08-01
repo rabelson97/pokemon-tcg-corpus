@@ -34,6 +34,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # Curated, explicit set mappings for missing cards on pkmn.gg
 EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "mep": ("mega-evolution", "me-black-star-promos"),
+    "miscp": ("other", "miscellaneous"),
     "smp": ("sun-moon", "sm-black-star-promos"),
     "svp": ("scarlet-violet", "scarlet-violet-black-star-promos"),
     "cel25": ("sword-shield", "celebrations"),

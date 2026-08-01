@@ -73,7 +73,48 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "bog": ["bp"],
 }
 
+SUBSET_SET_ID_ALIASES: dict[str, str] = {
+    "cel25cc": "cel25",
+    "swsh4.5sv": "swsh4.5",
+    "swsh9.5tg": "swsh9",
+    "swsh10.5tg": "swsh10",
+    "swsh11.5tg": "swsh11",
+    "swsh12.5tg": "swsh12",
+    "swsh12.5gg": "swsh12.5",
+}
+
+SUBSET_CARD_NUMBER_ALIASES: dict[str, dict[str, str]] = {
+    "cel25cc": {
+        "CC1": "2A",
+        "CC2": "4A",
+        "CC3": "15A1",
+        "CC4": "73A",
+        "CC5": "8A",
+        "CC6": "15A2",
+        "CC7": "15A3",
+        "CC8": "24A",
+        "CC9": "20A",
+        "CC10": "66A",
+        "CC11": "9A",
+        "CC12": "86A",
+        "CC13": "88A",
+        "CC14": "93A",
+        "CC15": "17A",
+        "CC16": "15A4",
+        "CC17": "109A",
+        "CC18": "145A",
+        "CC19": "107A",
+        "CC20": "113A",
+        "CC21": "114A",
+        "CC22": "54A",
+        "CC23": "97A",
+        "CC24": "76A",
+        "CC25": "60A",
+    },
+}
+
 UNPADDED_SET_PREFIXES = {"base", "bw", "col", "dp", "ex", "hgss", "pl", "pop", "ru", "si", "sm", "swsh", "xy"}
+PKMNGG_IMAGE_CANDIDATE_CACHE: dict[str, list[dict[str, Any]]] = {}
 
 
 def _pio_set_id_to_ours(pio_set_id: str) -> str:
@@ -119,6 +160,7 @@ def canonical_set_token(set_id: str) -> str:
             reverse_aliases[alias] = our_id
     clean_value = compact_unpadded_set_token(clean_value)
     clean_value = reverse_aliases.get(clean_value, clean_value)
+    clean_value = SUBSET_SET_ID_ALIASES.get(clean_value, clean_value)
     return compact_unpadded_set_token(clean_value)
 
 
@@ -132,8 +174,10 @@ def compact_unpadded_set_token(set_id: str) -> str:
 
 def card_identity_key(card: dict[str, Any]) -> str:
     locale = str(card.get("locale") or "").strip().lower()
-    set_token = canonical_set_token(str(card.get("set_id") or ""))
+    raw_set_id = str(card.get("set_id") or "").strip().lower()
+    set_token = canonical_set_token(raw_set_id)
     number_token = compact_numeric_token(str(card.get("card_number") or "")).upper()
+    number_token = SUBSET_CARD_NUMBER_ALIASES.get(raw_set_id, {}).get(number_token, number_token)
     return f"{locale}|{set_token}|{number_token}"
 
 
@@ -141,9 +185,9 @@ def card_preference_score(card: dict[str, Any]) -> tuple[int, int, int, str]:
     upstream_source = str(card.get("upstream_source") or "").strip().lower()
     set_id = str(card.get("set_id") or "").strip().lower()
     return (
+        1 if set_id == canonical_set_token(set_id) else 0,
         1 if upstream_source != "seed" else 0,
         1 if upstream_source in {"tcgdex", ""} else 0,
-        1 if set_id == canonical_set_token(set_id) else 0,
         str(card.get("id") or ""),
     )
 
@@ -1181,8 +1225,28 @@ def resolve_pokemontcgio_image_by_identity(card: dict[str, Any]) -> ImageResolut
     return None
 
 
+def resolve_pkmngg_image_by_identity(card: dict[str, Any]) -> ImageResolution | None:
+    try:
+        from scripts.resolve_missing_images import resolve_card_image
+    except ImportError:
+        try:
+            from resolve_missing_images import resolve_card_image
+        except ImportError:
+            return None
+
+    image_url, source = resolve_card_image(card, PKMNGG_IMAGE_CANDIDATE_CACHE)
+    public_url = public_image_url_or_none(image_url)
+    if not public_url:
+        return None
+    return ImageResolution(url=public_url, source=source)
+
+
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
-    identity_match = resolve_pokemontcgio_image_by_identity(card)
+    try:
+        identity_match = resolve_pokemontcgio_image_by_identity(card)
+    except Exception as error:
+        print(f"  PokemonTCG.io identity fallback failed: {type(error).__name__}: {error}")
+        identity_match = None
     if identity_match:
         return identity_match
 
@@ -1203,7 +1267,11 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
     if search_cards_by_name is not None:
         # Try query pokemontcg.io
         card_number = str(card.get("card_number") or "").strip().lstrip("0")
-        candidates = search_cards_by_name(name, number=card_number)
+        try:
+            candidates = search_cards_by_name(name, number=card_number)
+        except Exception as error:
+            print(f"  PokemonTCG.io name fallback failed: {type(error).__name__}: {error}")
+            candidates = []
         if not candidates:
             print(f"  Fallback: No matches found for name '{name}' and number '{card_number}'")
 
@@ -1237,6 +1305,12 @@ def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bo
 
         if candidates:
             print(f"  Fallback: Matches found but none passed artist/HP alignment check.")
+
+    pkmngg_match = resolve_pkmngg_image_by_identity(card)
+    if pkmngg_match is not None:
+        print(f"  Fallback SUCCESS! Mapped {card['id']} through exact pkmn.gg set/name/number matching")
+        return pkmngg_match
+
     if allow_web_image_fallback:
         try:
             from scripts.web_image_search import resolve_web_image_fallback
@@ -1784,16 +1858,25 @@ def build_embeddings_db(
     remote_card_count = len(cards)
 
     seed_carried_forward_cards = 0
+    seed_merge_deduplicated_cards = 0
+    seed_preferred_alias_cards = 0
     if seed_db is not None:
-        known_card_ids = {str(card["id"]) for card in cards}
-        known_card_identity_keys = {card_identity_key(card) for card in cards}
-        for seed_card in load_seed_card_records(seed_db, locales):
-            if str(seed_card["id"]) in known_card_ids or card_identity_key(seed_card) in known_card_identity_keys:
-                continue
-            cards.append(seed_card)
-            known_card_ids.add(str(seed_card["id"]))
-            known_card_identity_keys.add(card_identity_key(seed_card))
-            seed_carried_forward_cards += 1
+        remote_card_ids = {str(card["id"]) for card in cards}
+        remote_identity_keys = {card_identity_key(card) for card in cards}
+        seed_cards = load_seed_card_records(seed_db, locales)
+        seed_carried_forward_cards = sum(
+            1
+            for seed_card in seed_cards
+            if str(seed_card["id"]) not in remote_card_ids
+            and card_identity_key(seed_card) not in remote_identity_keys
+        )
+        cards, seed_merge_deduplicated_cards = deduplicate_card_records([*cards, *seed_cards])
+        seed_preferred_alias_cards = sum(
+            1
+            for card in cards
+            if str(card.get("upstream_source") or "").strip().lower() == "seed"
+            and card_identity_key(card) in remote_identity_keys
+        )
 
     summary["total_remote_cards"] = remote_card_count
     summary["total_candidate_cards"] = len(cards)
@@ -1801,6 +1884,8 @@ def build_embeddings_db(
     summary["supplementary_pokemontcgio_cards"] = len(supplementary_cards)
     summary["remote_deduplicated_cards"] = remote_deduplicated_cards
     summary["seed_carried_forward_cards"] = seed_carried_forward_cards
+    summary["seed_merge_deduplicated_cards"] = seed_merge_deduplicated_cards
+    summary["seed_preferred_alias_cards"] = seed_preferred_alias_cards
 
     detailed_counts: dict[str, int] = {}
     for card in cards:

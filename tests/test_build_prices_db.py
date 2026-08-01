@@ -56,12 +56,13 @@ class BuildPricesDbTests(unittest.TestCase):
 
         self.assertEqual([], cards)
 
-    def test_fetch_set_scoped_pokemontcgio_cards_fails_on_transient_provider_errors(self) -> None:
+    def test_fetch_set_scoped_pokemontcgio_cards_skips_transient_provider_errors(self) -> None:
         english_cards = [{"set_id": "sv01", "card_number": "001"}]
 
         with mock.patch.object(build_prices_db, "pokemontcgio_api_get_json", side_effect=TimeoutError("timed out")):
-            with self.assertRaises(RuntimeError):
-                build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
+            cards = build_prices_db.fetch_set_scoped_pokemontcgio_cards(english_cards)
+
+        self.assertEqual([], cards)
 
     def test_extract_price_rows_supports_pokemontcgio_tcgplayer_shape(self) -> None:
         rows = build_prices_db.extract_price_rows_from_selected_sources(
@@ -762,6 +763,95 @@ class BuildPricesDbTests(unittest.TestCase):
                 rows,
             )
 
+    def test_build_prices_db_uses_stale_seed_usd_when_live_providers_fail(self) -> None:
+        cards = [
+            {
+                "id": "pokemon:en:sv01:001",
+                "locale": "en",
+                "upstream_id": "sv01-001",
+                "set_id": "sv01",
+                "set_name": "Scarlet & Violet",
+                "card_number": "001",
+                "pricing": {
+                    "cardmarket": {
+                        "updated": "2026-07-29T00:00:00.000Z",
+                        "unit": "EUR",
+                        "low": 0.5,
+                        "trend": 0.75,
+                    }
+                },
+            }
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            seed_db = Path(tmp_dir) / "seed.db"
+            with sqlite3.connect(seed_db) as connection:
+                connection.execute("PRAGMA user_version=2;")
+                connection.execute(
+                    """
+                    CREATE TABLE prices (
+                      card_id TEXT NOT NULL,
+                      market_code TEXT NOT NULL,
+                      currency_code TEXT NOT NULL,
+                      source_name TEXT NOT NULL,
+                      low_price REAL,
+                      market_price REAL,
+                      high_price REAL,
+                      updated_at TEXT,
+                      is_primary INTEGER NOT NULL DEFAULT 0,
+                      PRIMARY KEY (card_id, source_name)
+                    );
+                    """
+                )
+                connection.execute(
+                    """
+                    INSERT INTO prices (
+                      card_id, market_code, currency_code, source_name, low_price, market_price, high_price, updated_at, is_primary
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    ("pokemon:en:sv01:001", "US", "USD", "tcgplayer", 1.0, 2.0, 3.0, "2026/07/04", 1),
+                )
+                connection.commit()
+
+            output_path = Path(tmp_dir) / "prices.db"
+            with mock.patch.object(
+                build_prices_db,
+                "fetch_all_card_records",
+                return_value=(cards, {"en": 1}),
+            ), mock.patch.object(
+                build_prices_db,
+                "fetch_set_scoped_pokemontcgio_cards",
+                return_value=[],
+            ), mock.patch.object(
+                build_prices_db,
+                "build_poketrace_set_slugs",
+                return_value={},
+            ), mock.patch.object(
+                build_prices_db,
+                "fetch_pkmngg_sitemap_set_paths",
+                return_value=[],
+            ):
+                summary = build_prices_db.build_prices_db(
+                    output_path,
+                    locales=["en"],
+                    limit=None,
+                    min_row_count=0,
+                    max_fallback_cards=0,
+                    seed_db_path=seed_db,
+                    require_full_usd_coverage=True,
+                )
+
+            self.assertEqual(1, summary["seed_reuse"]["cards_with_stale_usd_fallback"])
+            with sqlite3.connect(output_path) as connection:
+                rows = connection.execute(
+                    "SELECT source_name, currency_code, market_price, updated_at, is_primary FROM prices ORDER BY source_name"
+                ).fetchall()
+            self.assertEqual(
+                [
+                    ("tcgplayer", "USD", 2.0, "2026/07/04", 1),
+                ],
+                rows,
+            )
+
     def test_load_poketrace_set_mapping_overrides_reads_repo_cache(self) -> None:
         mapping = build_prices_db.load_poketrace_set_mapping_overrides()
         self.assertEqual("twilight-masquerade", mapping["sv06"])
@@ -932,6 +1022,21 @@ class PkmnggPriceSourceTests(unittest.TestCase):
 
         self.assertIn(("sword-shield", "celebrations"), paths)
         self.assertIn(("sword-shield", "celebrations-classic-collection"), paths)
+
+    def test_candidate_pkmngg_set_paths_include_miscellaneous_promos(self) -> None:
+        card = {
+            "id": "pokemon:en:miscp:001",
+            "locale": "en",
+            "set_id": "miscp",
+            "set_name": "Miscellaneous Promos",
+            "name": "Ancient Mew",
+            "card_number": "001",
+            "pricing": {},
+        }
+
+        paths = build_prices_db.candidate_pkmngg_set_paths(card)
+
+        self.assertEqual(("other", "miscellaneous"), paths[0])
 
     def test_candidate_pkmngg_set_paths_infers_exact_sitemap_slug(self) -> None:
         card = {

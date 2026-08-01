@@ -98,9 +98,12 @@ jobs:
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
           PYTHONUNBUFFERED: "1"
         run: |
-          extra_args=""
+          extra_args=()
+          if [ -f existing-release/prices.db ]; then
+            extra_args+=(--seed-db existing-release/prices.db)
+          fi
           if [ "${REUSE_EXISTING_SAME_DAY}" = "true" ] && [ -f existing-release/prices.db ] && [ -n "${REUSE_EXISTING_TCGPLAYER_DATE}" ]; then
-            extra_args="--seed-db existing-release/prices.db --reuse-existing-tcgplayer-date ${REUSE_EXISTING_TCGPLAYER_DATE}"
+            extra_args+=(--reuse-existing-tcgplayer-date "${REUSE_EXISTING_TCGPLAYER_DATE}")
           fi
           python scripts/build_prices_db.py \
             --output prices.db \
@@ -109,7 +112,7 @@ jobs:
             --min-row-count 10000 \
             --card-universe-db existing-release/embeddings.db \
             --require-full-usd-coverage \
-            ${extra_args}
+            "${extra_args[@]}"
 
       - name: Validate prices database
         run: |
