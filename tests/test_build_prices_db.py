@@ -1023,6 +1023,21 @@ class PkmnggPriceSourceTests(unittest.TestCase):
         self.assertIn(("sword-shield", "celebrations"), paths)
         self.assertIn(("sword-shield", "celebrations-classic-collection"), paths)
 
+    def test_candidate_pkmngg_set_paths_include_miscellaneous_promos(self) -> None:
+        card = {
+            "id": "pokemon:en:miscp:001",
+            "locale": "en",
+            "set_id": "miscp",
+            "set_name": "Miscellaneous Promos",
+            "name": "Ancient Mew",
+            "card_number": "001",
+            "pricing": {},
+        }
+
+        paths = build_prices_db.candidate_pkmngg_set_paths(card)
+
+        self.assertEqual(("other", "miscellaneous"), paths[0])
+
     def test_candidate_pkmngg_set_paths_infers_exact_sitemap_slug(self) -> None:
         card = {
             "id": "pokemon:en:dc1:1",

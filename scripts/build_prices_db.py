@@ -122,6 +122,7 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "me03": ("mega-evolution", "perfect-order"),
     "me04": ("mega-evolution", "chaos-rising"),
     "mep": ("mega-evolution", "me-black-star-promos"),
+    "miscp": ("other", "miscellaneous"),
     "xyp": ("xy", "xy-black-star-promos"),
     "dpp": ("diamond-pearl", "dp-black-star-promos"),
     "np": ("np", "nintendo-black-star-promos"),
