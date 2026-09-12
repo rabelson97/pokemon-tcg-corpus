@@ -9,7 +9,7 @@ on:
         required: false
         type: string
       allow_missing_images:
-        description: "Debug only: allow partial builds. Partial builds never publish a release."
+        description: "Defer newly discovered cards that do not have verified image art yet."
         required: false
         type: boolean
         default: false
@@ -111,7 +111,9 @@ jobs:
       - name: Build embeddings database
         env:
           POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
-          ALLOW_MISSING_IMAGES: ${{ inputs.allow_missing_images }}
+          # Scheduled builds defer unresolved new cards so incomplete upstream
+          # metadata cannot block otherwise valid set releases.
+          ALLOW_MISSING_IMAGES: ${{ github.event_name == 'schedule' || inputs.allow_missing_images }}
         run: |
           cmd=(
             python scripts/build_embeddings_db.py
@@ -214,6 +216,7 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import sqlite3
 
           with open("embeddings-build-summary.json", encoding="utf-8") as handle:
               summary = json.load(handle)
@@ -224,11 +227,39 @@ jobs:
           embeddings = int(summary.get("embeddings_count", 0))
           skipped = int(summary.get("skipped_cards", 0))
           allow_missing = str(summary.get("allow_missing_images", "false")).lower() == "true"
-          publish_release = inserted > 0 and cards > 0 and embeddings > 0 and skipped == 0 and not allow_missing
+
+          seed_cards = 0
+          missing_seed_cards = 0
+          seed_path = "existing-release/embeddings.db"
+          if os.path.exists(seed_path):
+              with sqlite3.connect("embeddings.db") as connection:
+                  connection.execute("ATTACH DATABASE ? AS seed", (seed_path,))
+                  seed_cards = int(connection.execute("SELECT COUNT(*) FROM seed.cards").fetchone()[0])
+                  missing_seed_cards = int(
+                      connection.execute(
+                          """
+                          SELECT COUNT(*)
+                          FROM seed.cards AS previous
+                          LEFT JOIN main.cards AS current ON current.id = previous.id
+                          WHERE current.id IS NULL
+                          """
+                      ).fetchone()[0]
+                  )
+
+          seed_retained = missing_seed_cards == 0
+          missing_policy_ok = skipped == 0 or allow_missing
+          publish_release = (
+              inserted > 0
+              and cards > 0
+              and embeddings > 0
+              and missing_policy_ok
+              and seed_retained
+          )
 
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
               env_file.write(f"INSERTED_EMBEDDINGS={inserted}\n")
               env_file.write(f"REUSED_SEED_CARDS={reused}\n")
+              env_file.write(f"MISSING_SEED_CARDS={missing_seed_cards}\n")
               env_file.write(f"PUBLISH_RELEASE={'true' if publish_release else 'false'}\n")
 
           print(
@@ -238,6 +269,8 @@ jobs:
               f"embeddings_count={embeddings} "
               f"skipped_cards={skipped} "
               f"allow_missing_images={str(allow_missing).lower()} "
+              f"seed_cards={seed_cards} "
+              f"missing_seed_cards={missing_seed_cards} "
               f"publish_release={str(publish_release).lower()}"
           )
           PY

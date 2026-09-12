@@ -1368,8 +1368,11 @@ def build_missing_images_report(
             entry["detail"] = skipped.detail
         entries.append(entry)
     return {
-        "status": "blocked_missing_scan_images",
-        "message": "No embeddings release was published. Seed or resolve these real card images, then rerun the workflow.",
+        "status": "missing_scan_images",
+        "message": (
+            "These cards do not have verified image art. Strict builds stop; "
+            "tolerant builds defer them until a later run."
+        ),
         "missing_count": len(skipped_cards),
         "skipped_by_locale": skipped_by_locale,
         "skipped_reasons": skipped_reasons,
@@ -1378,7 +1381,7 @@ def build_missing_images_report(
         "recovery_steps": [
             "For each entry, add a verified real card image to the image cache using expected_cache_file naming or add a verified HTTPS fallback URL to image-fallbacks.json.",
             "Do not add placeholder/card-back images for scan-eligible cards; embeddings must be generated from real card art.",
-            "Rerun Build Embeddings DB. The app keeps using the previous embeddings-latest release until a complete build succeeds.",
+            "Rerun Build Embeddings DB. Deferred cards are added automatically once verified image art becomes available.",
         ],
         "cards": entries,
     }
@@ -1962,7 +1965,7 @@ def build_embeddings_db(
         download_workers=download_workers,
         allow_web_image_fallback=allow_web_image_fallback,
     )
-    if skipped_cards and not allow_missing_images:
+    if skipped_cards:
         skipped_by_locale, skipped_reasons = skipped_cards_by_locale_and_reason(skipped_cards)
         missing_report = build_missing_images_report(
             skipped_cards,
@@ -1971,6 +1974,7 @@ def build_embeddings_db(
             excluded_cards=excluded_cards,
         )
         write_json_file(missing_images_json, missing_report)
+    if skipped_cards and not allow_missing_images:
         summary.update(
             {
                 "status": "blocked_missing_scan_images",
@@ -2042,6 +2046,7 @@ def build_embeddings_db(
 
     summary.update(
         {
+            "status": "completed_with_deferred_cards" if skipped_cards else "completed",
             "download_seconds": round(download_seconds, 3),
             "model_load_seconds": round(model_load_seconds, 3),
             "inference_and_sqlite_seconds": round(inference_seconds, 3),

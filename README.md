@@ -18,7 +18,10 @@ Current release scope is English cards only.
 The corpus is built from public card metadata and public card image URLs. Every
 scan-eligible card in the embeddings database must have a verified public HTTPS
 image URL before the database is published. Cards without usable image art are
-blocked rather than filled with placeholder images.
+deferred rather than filled with placeholder images. Scheduled builds can still
+publish other newly available cards, but only after verifying that every card in
+the previous release remains present. Deferred cards are retried on every run and
+are added automatically when verified art becomes available.
 
 The prices database is built against the card universe from the current
 `embeddings-latest` release. Every English card in that universe must have a
