@@ -1556,6 +1556,17 @@ def preflight_image_urls(
 
     for card in cards:
         card_id = str(card["id"])
+        exact_override = resolve_dextcg_image_by_identity(card)
+        if exact_override is not None:
+            card["image_url"] = exact_override.url
+            card["image_url_low"] = None
+            image_sources[card_id] = exact_override.source
+            fallback_manifest[card_id] = {
+                "url": exact_override.url,
+                "source": exact_override.source,
+            }
+            continue
+
         image_url = public_image_url_or_none(card.get("image_url"))
         card["image_url"] = image_url
         card["image_url_low"] = public_image_url_or_none(card.get("image_url_low"))
@@ -2059,8 +2070,8 @@ def build_embeddings_db(
 
     image_source_counts: dict[str, int] = {}
     image_source_examples: list[dict[str, str]] = []
-    all_image_sources = dict(preflight_image_sources)
-    all_image_sources.update(image_sources)
+    all_image_sources = dict(image_sources)
+    all_image_sources.update(preflight_image_sources)
     for card_id, source in sorted(all_image_sources.items()):
         image_source_counts[source] = image_source_counts.get(source, 0) + 1
         if len(image_source_examples) < 20:

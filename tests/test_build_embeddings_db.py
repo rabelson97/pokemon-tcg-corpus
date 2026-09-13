@@ -858,6 +858,33 @@ class ImageFallbackTests(unittest.TestCase):
         self.assertIsNotNone(fallback)
         self.assertEqual("https://static.dextcg.com/cards/tk4a%2F20.png", fallback.url)
 
+    def test_preflight_exact_override_replaces_stale_seed_image(self) -> None:
+        card = self._missing_image_card()
+        card.update(
+            {
+                "id": "pokemon:en:tk-hs-r:19",
+                "set_id": "tk-hs-r",
+                "card_number": "19",
+                "image_url": "https://images.pokemontcg.io/sv4pt5/19_hires.png",
+                "image_url_low": "https://images.pokemontcg.io/sv4pt5/19.png",
+            }
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            skipped, sources = build_embeddings_db.preflight_image_urls(
+                [card],
+                Path(tmp_dir),
+                allow_web_image_fallback=False,
+            )
+
+        self.assertEqual([], skipped)
+        self.assertEqual("https://static.dextcg.com/cards/tk4b%2F19.png", card["image_url"])
+        self.assertIsNone(card["image_url_low"])
+        self.assertEqual(
+            {"pokemon:en:tk-hs-r:19": "dextcg_exact_set_number"},
+            sources,
+        )
+
     def test_web_fallback_resolution_is_cached_with_source_url(self) -> None:
         card = self._missing_image_card()
         fallback = build_embeddings_db.ImageResolution(
