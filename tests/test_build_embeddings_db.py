@@ -829,6 +829,35 @@ class ImageFallbackTests(unittest.TestCase):
     def _write_probe_image(_url: str, destination: Path) -> None:
         Image.new("RGB", (480, 672), color=(180, 40, 40)).save(destination, format="PNG")
 
+    def test_dextcg_fallback_maps_hs_trainer_kit_by_exact_set_and_number(self) -> None:
+        card = self._missing_image_card()
+        card.update({"set_id": "tk-hs-r", "card_number": "030"})
+
+        fallback = build_embeddings_db.resolve_dextcg_image_by_identity(card)
+
+        self.assertIsNotNone(fallback)
+        self.assertEqual("https://static.dextcg.com/cards/tk4b%2F30.png", fallback.url)
+        self.assertEqual("dextcg_exact_set_number", fallback.source)
+
+    def test_dextcg_fallback_rejects_unknown_sets_and_invalid_numbers(self) -> None:
+        card = self._missing_image_card()
+        card.update({"set_id": "tk-hs-r", "card_number": "31"})
+        self.assertIsNone(build_embeddings_db.resolve_dextcg_image_by_identity(card))
+
+        card.update({"set_id": "unknown", "card_number": "1"})
+        self.assertIsNone(build_embeddings_db.resolve_dextcg_image_by_identity(card))
+
+    def test_hs_trainer_kit_uses_exact_fallback_before_heuristic_providers(self) -> None:
+        card = self._missing_image_card()
+        card.update({"set_id": "tk-hs-g", "card_number": "20"})
+
+        with mock.patch.object(build_embeddings_db, "resolve_pokemontcgio_image_by_identity") as heuristic:
+            fallback = build_embeddings_db.resolve_fallback_image(card, allow_web_image_fallback=False)
+
+        heuristic.assert_not_called()
+        self.assertIsNotNone(fallback)
+        self.assertEqual("https://static.dextcg.com/cards/tk4a%2F20.png", fallback.url)
+
     def test_web_fallback_resolution_is_cached_with_source_url(self) -> None:
         card = self._missing_image_card()
         fallback = build_embeddings_db.ImageResolution(

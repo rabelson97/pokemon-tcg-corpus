@@ -73,6 +73,11 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "bog": ["bp"],
 }
 
+DEXTCG_SET_ID_ALIASES: dict[str, str] = {
+    "tk-hs-g": "tk4a",
+    "tk-hs-r": "tk4b",
+}
+
 SUBSET_SET_ID_ALIASES: dict[str, str] = {
     "cel25cc": "cel25",
     "swsh4.5sv": "swsh4.5",
@@ -1241,7 +1246,28 @@ def resolve_pkmngg_image_by_identity(card: dict[str, Any]) -> ImageResolution | 
     return ImageResolution(url=public_url, source=source)
 
 
+def resolve_dextcg_image_by_identity(card: dict[str, Any]) -> ImageResolution | None:
+    set_id = str(card.get("set_id") or "").strip().lower()
+    provider_set_id = DEXTCG_SET_ID_ALIASES.get(set_id)
+    card_number = str(card.get("card_number") or "").strip()
+    if provider_set_id is None or not card_number.isdigit():
+        return None
+
+    number = int(card_number)
+    if not 1 <= number <= 30:
+        return None
+
+    return ImageResolution(
+        url=f"https://static.dextcg.com/cards/{provider_set_id}%2F{number}.png",
+        source="dextcg_exact_set_number",
+    )
+
+
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
+    dextcg_match = resolve_dextcg_image_by_identity(card)
+    if dextcg_match is not None:
+        return dextcg_match
+
     try:
         identity_match = resolve_pokemontcgio_image_by_identity(card)
     except Exception as error:
