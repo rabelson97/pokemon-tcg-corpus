@@ -3392,12 +3392,12 @@
     "url": "https://images.pokemontcg.io/tk2a/9_hires.png"
   },
   "pokemon:en:tk-hs-g:20": {
-    "source": "pokemontcgio_scratch",
-    "url": "https://images.pokemontcg.io/xy7/20_hires.png"
+    "source": "dextcg_exact_set_number",
+    "url": "https://static.dextcg.com/cards/tk4a%2F20.png"
   },
   "pokemon:en:tk-hs-r:19": {
-    "source": "pokemontcgio_scratch",
-    "url": "https://images.pokemontcg.io/sv4pt5/19_hires.png"
+    "source": "dextcg_exact_set_number",
+    "url": "https://static.dextcg.com/cards/tk4b%2F19.png"
   },
   "pokemon:en:tk-sm-l:1": {
     "source": "pokemontcgio_name_artist_hp",

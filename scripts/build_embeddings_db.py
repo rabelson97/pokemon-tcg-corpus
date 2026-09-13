@@ -73,13 +73,18 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "bog": ["bp"],
 }
 
+DEXTCG_SET_ID_ALIASES: dict[str, str] = {
+    "tk-hs-g": "tk4a",
+    "tk-hs-r": "tk4b",
+}
+
 SUBSET_SET_ID_ALIASES: dict[str, str] = {
     "cel25cc": "cel25",
     "swsh4.5sv": "swsh4.5",
-    "swsh9.5tg": "swsh9",
-    "swsh10.5tg": "swsh10",
-    "swsh11.5tg": "swsh11",
-    "swsh12.5tg": "swsh12",
+    "swsh9tg": "swsh9",
+    "swsh10tg": "swsh10",
+    "swsh11tg": "swsh11",
+    "swsh12tg": "swsh12",
     "swsh12.5gg": "swsh12.5",
 }
 
@@ -1241,7 +1246,28 @@ def resolve_pkmngg_image_by_identity(card: dict[str, Any]) -> ImageResolution | 
     return ImageResolution(url=public_url, source=source)
 
 
+def resolve_dextcg_image_by_identity(card: dict[str, Any]) -> ImageResolution | None:
+    set_id = str(card.get("set_id") or "").strip().lower()
+    provider_set_id = DEXTCG_SET_ID_ALIASES.get(set_id)
+    card_number = str(card.get("card_number") or "").strip()
+    if provider_set_id is None or not card_number.isdigit():
+        return None
+
+    number = int(card_number)
+    if not 1 <= number <= 30:
+        return None
+
+    return ImageResolution(
+        url=f"https://static.dextcg.com/cards/{provider_set_id}%2F{number}.png",
+        source="dextcg_exact_set_number",
+    )
+
+
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
+    dextcg_match = resolve_dextcg_image_by_identity(card)
+    if dextcg_match is not None:
+        return dextcg_match
+
     try:
         identity_match = resolve_pokemontcgio_image_by_identity(card)
     except Exception as error:
@@ -1530,6 +1556,17 @@ def preflight_image_urls(
 
     for card in cards:
         card_id = str(card["id"])
+        exact_override = resolve_dextcg_image_by_identity(card)
+        if exact_override is not None:
+            card["image_url"] = exact_override.url
+            card["image_url_low"] = None
+            image_sources[card_id] = exact_override.source
+            fallback_manifest[card_id] = {
+                "url": exact_override.url,
+                "source": exact_override.source,
+            }
+            continue
+
         image_url = public_image_url_or_none(card.get("image_url"))
         card["image_url"] = image_url
         card["image_url_low"] = public_image_url_or_none(card.get("image_url_low"))
@@ -2033,8 +2070,8 @@ def build_embeddings_db(
 
     image_source_counts: dict[str, int] = {}
     image_source_examples: list[dict[str, str]] = []
-    all_image_sources = dict(preflight_image_sources)
-    all_image_sources.update(image_sources)
+    all_image_sources = dict(image_sources)
+    all_image_sources.update(preflight_image_sources)
     for card_id, source in sorted(all_image_sources.items()):
         image_source_counts[source] = image_source_counts.get(source, 0) + 1
         if len(image_source_examples) < 20:

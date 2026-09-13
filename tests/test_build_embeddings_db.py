@@ -718,9 +718,9 @@ class InsertEmbeddingsTests(unittest.TestCase):
                 "upstream_source": "pokemontcgio",
             },
             {
-                "id": "pokemon:en:swsh11.5tg:TG01",
+                "id": "pokemon:en:swsh11tg:TG01",
                 "locale": "en",
-                "set_id": "swsh11.5tg",
+                "set_id": "swsh11tg",
                 "card_number": "TG01",
                 "upstream_source": "tcgdex",
             },
@@ -730,7 +730,7 @@ class InsertEmbeddingsTests(unittest.TestCase):
 
         self.assertEqual(1, removed)
         self.assertEqual(["pokemon:en:swsh11:TG01"], [card["id"] for card in deduped])
-        self.assertEqual("swsh11", build_embeddings_db.canonical_set_token("swsh11.5tg"))
+        self.assertEqual("swsh11", build_embeddings_db.canonical_set_token("swsh11tg"))
         self.assertEqual("swsh12.5", build_embeddings_db.canonical_set_token("swsh12.5gg"))
         self.assertEqual("cel25", build_embeddings_db.canonical_set_token("cel25cc"))
 
@@ -828,6 +828,62 @@ class ImageFallbackTests(unittest.TestCase):
     @staticmethod
     def _write_probe_image(_url: str, destination: Path) -> None:
         Image.new("RGB", (480, 672), color=(180, 40, 40)).save(destination, format="PNG")
+
+    def test_dextcg_fallback_maps_hs_trainer_kit_by_exact_set_and_number(self) -> None:
+        card = self._missing_image_card()
+        card.update({"set_id": "tk-hs-r", "card_number": "030"})
+
+        fallback = build_embeddings_db.resolve_dextcg_image_by_identity(card)
+
+        self.assertIsNotNone(fallback)
+        self.assertEqual("https://static.dextcg.com/cards/tk4b%2F30.png", fallback.url)
+        self.assertEqual("dextcg_exact_set_number", fallback.source)
+
+    def test_dextcg_fallback_rejects_unknown_sets_and_invalid_numbers(self) -> None:
+        card = self._missing_image_card()
+        card.update({"set_id": "tk-hs-r", "card_number": "31"})
+        self.assertIsNone(build_embeddings_db.resolve_dextcg_image_by_identity(card))
+
+        card.update({"set_id": "unknown", "card_number": "1"})
+        self.assertIsNone(build_embeddings_db.resolve_dextcg_image_by_identity(card))
+
+    def test_hs_trainer_kit_uses_exact_fallback_before_heuristic_providers(self) -> None:
+        card = self._missing_image_card()
+        card.update({"set_id": "tk-hs-g", "card_number": "20"})
+
+        with mock.patch.object(build_embeddings_db, "resolve_pokemontcgio_image_by_identity") as heuristic:
+            fallback = build_embeddings_db.resolve_fallback_image(card, allow_web_image_fallback=False)
+
+        heuristic.assert_not_called()
+        self.assertIsNotNone(fallback)
+        self.assertEqual("https://static.dextcg.com/cards/tk4a%2F20.png", fallback.url)
+
+    def test_preflight_exact_override_replaces_stale_seed_image(self) -> None:
+        card = self._missing_image_card()
+        card.update(
+            {
+                "id": "pokemon:en:tk-hs-r:19",
+                "set_id": "tk-hs-r",
+                "card_number": "19",
+                "image_url": "https://images.pokemontcg.io/sv4pt5/19_hires.png",
+                "image_url_low": "https://images.pokemontcg.io/sv4pt5/19.png",
+            }
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            skipped, sources = build_embeddings_db.preflight_image_urls(
+                [card],
+                Path(tmp_dir),
+                allow_web_image_fallback=False,
+            )
+
+        self.assertEqual([], skipped)
+        self.assertEqual("https://static.dextcg.com/cards/tk4b%2F19.png", card["image_url"])
+        self.assertIsNone(card["image_url_low"])
+        self.assertEqual(
+            {"pokemon:en:tk-hs-r:19": "dextcg_exact_set_number"},
+            sources,
+        )
 
     def test_web_fallback_resolution_is_cached_with_source_url(self) -> None:
         card = self._missing_image_card()
