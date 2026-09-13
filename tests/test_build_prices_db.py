@@ -506,6 +506,34 @@ class BuildPricesDbTests(unittest.TestCase):
         self.assertIn(mock.call("zsv10pt5-157"), fetch_mock.mock_calls)
         self.assertEqual(1, search_mock.call_count)
 
+    def test_fetch_targeted_pokemontcgio_cards_continues_after_provider_500(self) -> None:
+        card = {
+            "upstream_id": "sv10.5b-157",
+            "set_id": "sv10.5b",
+            "card_number": "157",
+        }
+        provider_card = {"id": "zsv10pt5-157", "set": {"id": "zsv10pt5"}, "number": "157"}
+        provider_error = urllib.error.HTTPError(
+            "https://api.pokemontcg.io/v2/cards/example",
+            500,
+            "Internal Server Error",
+            None,
+            None,
+        )
+
+        with mock.patch.object(
+            build_prices_db,
+            "fetch_card_by_id",
+            side_effect=provider_error,
+        ), mock.patch.object(
+            build_prices_db,
+            "search_card_by_set_and_number",
+            side_effect=lambda set_id, number: provider_card if (set_id, number) == ("zsv10pt5", "157") else None,
+        ):
+            fetched = build_prices_db.fetch_targeted_pokemontcgio_cards([card])
+
+        self.assertEqual([provider_card], fetched)
+
     def test_fallback_budget_zero_skips_all_english_fallback_attempts(self) -> None:
         summary = {
             "transport_counts": {},

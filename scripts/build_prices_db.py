@@ -1170,6 +1170,28 @@ def record_identity_gap_sample(
 
 
 def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def fetch_by_id_or_none(card_id: str) -> dict[str, Any] | None:
+        try:
+            return fetch_card_by_id(card_id)
+        except urllib.error.HTTPError as error:
+            if error.code not in {400, 404, 429, 500, 502, 503, 504}:
+                raise
+            print(f"pokemontcgio card={card_id} skipped status={error.code}")
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            print(f"pokemontcgio card={card_id} skipped error={type(error).__name__}")
+        return None
+
+    def search_by_identity_or_none(set_id: str, number: str) -> dict[str, Any] | None:
+        try:
+            return search_card_by_set_and_number(set_id, number)
+        except urllib.error.HTTPError as error:
+            if error.code not in {400, 404, 429, 500, 502, 503, 504}:
+                raise
+            print(f"pokemontcgio search={set_id}-{number} skipped status={error.code}")
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            print(f"pokemontcgio search={set_id}-{number} skipped error={type(error).__name__}")
+        return None
+
     fetched: list[dict[str, Any]] = []
     seen_upstream_ids: set[str] = set()
     for card in english_cards:
@@ -1177,15 +1199,15 @@ def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> li
         if not upstream_id or upstream_id in seen_upstream_ids:
             continue
         seen_upstream_ids.add(upstream_id)
-        matched = fetch_card_by_id(upstream_id)
+        matched = fetch_by_id_or_none(upstream_id)
         if matched is None:
             for candidate_set_id, candidate_number in candidate_pokemontcgio_match_keys(
                 str(card.get("set_id") or "").strip(),
                 str(card.get("card_number") or "").strip(),
             ):
-                matched = fetch_card_by_id(f"{candidate_set_id}-{candidate_number}")
+                matched = fetch_by_id_or_none(f"{candidate_set_id}-{candidate_number}")
                 if matched is None:
-                    matched = search_card_by_set_and_number(candidate_set_id, candidate_number)
+                    matched = search_by_identity_or_none(candidate_set_id, candidate_number)
                 if matched is not None:
                     break
         if matched is not None:
