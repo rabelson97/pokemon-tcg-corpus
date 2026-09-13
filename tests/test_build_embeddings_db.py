@@ -718,9 +718,9 @@ class InsertEmbeddingsTests(unittest.TestCase):
                 "upstream_source": "pokemontcgio",
             },
             {
-                "id": "pokemon:en:swsh11.5tg:TG01",
+                "id": "pokemon:en:swsh11tg:TG01",
                 "locale": "en",
-                "set_id": "swsh11.5tg",
+                "set_id": "swsh11tg",
                 "card_number": "TG01",
                 "upstream_source": "tcgdex",
             },
@@ -730,7 +730,7 @@ class InsertEmbeddingsTests(unittest.TestCase):
 
         self.assertEqual(1, removed)
         self.assertEqual(["pokemon:en:swsh11:TG01"], [card["id"] for card in deduped])
-        self.assertEqual("swsh11", build_embeddings_db.canonical_set_token("swsh11.5tg"))
+        self.assertEqual("swsh11", build_embeddings_db.canonical_set_token("swsh11tg"))
         self.assertEqual("swsh12.5", build_embeddings_db.canonical_set_token("swsh12.5gg"))
         self.assertEqual("cel25", build_embeddings_db.canonical_set_token("cel25cc"))
 

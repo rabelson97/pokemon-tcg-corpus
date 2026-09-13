@@ -81,10 +81,10 @@ DEXTCG_SET_ID_ALIASES: dict[str, str] = {
 SUBSET_SET_ID_ALIASES: dict[str, str] = {
     "cel25cc": "cel25",
     "swsh4.5sv": "swsh4.5",
-    "swsh9.5tg": "swsh9",
-    "swsh10.5tg": "swsh10",
-    "swsh11.5tg": "swsh11",
-    "swsh12.5tg": "swsh12",
+    "swsh9tg": "swsh9",
+    "swsh10tg": "swsh10",
+    "swsh11tg": "swsh11",
+    "swsh12tg": "swsh12",
     "swsh12.5gg": "swsh12.5",
 }
 
