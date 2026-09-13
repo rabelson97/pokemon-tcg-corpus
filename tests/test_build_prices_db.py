@@ -521,10 +521,19 @@ class BuildPricesDbTests(unittest.TestCase):
             None,
         )
 
+        fetch_attempts = 0
+
+        def fail_once_then_miss(_card_id: str) -> dict | None:
+            nonlocal fetch_attempts
+            fetch_attempts += 1
+            if fetch_attempts == 1:
+                raise provider_error
+            return None
+
         with mock.patch.object(
             build_prices_db,
             "fetch_card_by_id",
-            side_effect=provider_error,
+            side_effect=fail_once_then_miss,
         ), mock.patch.object(
             build_prices_db,
             "search_card_by_set_and_number",
@@ -533,6 +542,34 @@ class BuildPricesDbTests(unittest.TestCase):
             fetched = build_prices_db.fetch_targeted_pokemontcgio_cards([card])
 
         self.assertEqual([provider_card], fetched)
+
+    def test_fetch_targeted_pokemontcgio_cards_opens_circuit_after_repeated_500s(self) -> None:
+        cards = [
+            {"upstream_id": f"missing-{number}", "set_id": "missing", "card_number": str(number)}
+            for number in range(1, 10)
+        ]
+        provider_error = urllib.error.HTTPError(
+            "https://api.pokemontcg.io/v2/cards/example",
+            500,
+            "Internal Server Error",
+            None,
+            None,
+        )
+
+        with mock.patch.object(
+            build_prices_db,
+            "fetch_card_by_id",
+            side_effect=provider_error,
+        ) as fetch_mock, mock.patch.object(
+            build_prices_db,
+            "search_card_by_set_and_number",
+            side_effect=provider_error,
+        ) as search_mock:
+            fetched = build_prices_db.fetch_targeted_pokemontcgio_cards(cards)
+
+        self.assertEqual([], fetched)
+        self.assertEqual(2, fetch_mock.call_count)
+        self.assertEqual(1, search_mock.call_count)
 
     def test_fallback_budget_zero_skips_all_english_fallback_attempts(self) -> None:
         summary = {

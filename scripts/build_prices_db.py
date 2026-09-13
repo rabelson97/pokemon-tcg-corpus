@@ -1170,26 +1170,51 @@ def record_identity_gap_sample(
 
 
 def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    consecutive_service_failures = 0
+    circuit_open = False
+
+    def record_service_failure(label: str, error: BaseException) -> None:
+        nonlocal consecutive_service_failures, circuit_open
+        consecutive_service_failures += 1
+        print(f"pokemontcgio {label} skipped error={type(error).__name__}")
+        if consecutive_service_failures >= 3:
+            circuit_open = True
+            print("pokemontcgio targeted lookup circuit opened after 3 consecutive service failures")
+
     def fetch_by_id_or_none(card_id: str) -> dict[str, Any] | None:
+        nonlocal consecutive_service_failures
+        if circuit_open:
+            return None
         try:
-            return fetch_card_by_id(card_id)
+            result = fetch_card_by_id(card_id)
+            consecutive_service_failures = 0
+            return result
         except urllib.error.HTTPError as error:
             if error.code not in {400, 404, 429, 500, 502, 503, 504}:
                 raise
             print(f"pokemontcgio card={card_id} skipped status={error.code}")
+            if error.code in {429, 500, 502, 503, 504}:
+                record_service_failure(f"card={card_id}", error)
         except (urllib.error.URLError, TimeoutError, OSError) as error:
-            print(f"pokemontcgio card={card_id} skipped error={type(error).__name__}")
+            record_service_failure(f"card={card_id}", error)
         return None
 
     def search_by_identity_or_none(set_id: str, number: str) -> dict[str, Any] | None:
+        nonlocal consecutive_service_failures
+        if circuit_open:
+            return None
         try:
-            return search_card_by_set_and_number(set_id, number)
+            result = search_card_by_set_and_number(set_id, number)
+            consecutive_service_failures = 0
+            return result
         except urllib.error.HTTPError as error:
             if error.code not in {400, 404, 429, 500, 502, 503, 504}:
                 raise
             print(f"pokemontcgio search={set_id}-{number} skipped status={error.code}")
+            if error.code in {429, 500, 502, 503, 504}:
+                record_service_failure(f"search={set_id}-{number}", error)
         except (urllib.error.URLError, TimeoutError, OSError) as error:
-            print(f"pokemontcgio search={set_id}-{number} skipped error={type(error).__name__}")
+            record_service_failure(f"search={set_id}-{number}", error)
         return None
 
     fetched: list[dict[str, Any]] = []
