@@ -1918,6 +1918,37 @@ class Celebrations30thPricingTests(unittest.TestCase):
         self.assertIsNotNone(matched_genesect)
         self.assertEqual("Genesect-EX", matched_genesect["name"])
 
+    def test_match_card_in_candidates_uses_card_number_aliases_for_30th_c(self) -> None:
+        local_card = {
+            "id": "pokemon:en:30th-c:004",
+            "set_id": "30th-c",
+            "card_number": "004",
+            "name": "Genesect-EX",
+        }
+        candidates = [
+            {
+                "id": "pkmngg-1",
+                "name": "Genesect-EX",
+                "number": "11",
+            }
+        ]
+        match, reason = build_prices_db.match_card_in_candidates(local_card, candidates)
+        self.assertIsNotNone(match)
+        self.assertEqual("relaxed_number_match", reason)
+        self.assertEqual("pkmngg-1", match["id"])
+
+    def test_explicit_set_mappings_contains_30th_and_30th_c(self) -> None:
+        self.assertIn("30th", build_prices_db.EXPLICIT_SET_MAPPINGS)
+        self.assertEqual(
+            ("mega-evolution", "30th-celebration"),
+            build_prices_db.EXPLICIT_SET_MAPPINGS["30th"],
+        )
+        self.assertIn("30th-c", build_prices_db.EXPLICIT_SET_MAPPINGS)
+        self.assertEqual(
+            ("mega-evolution", "30th-anniversary-classic-collection"),
+            build_prices_db.EXPLICIT_SET_MAPPINGS["30th-c"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

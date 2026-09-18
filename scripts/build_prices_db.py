@@ -188,6 +188,8 @@ EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "2022swsh": ("other", "mcdonalds-collection-2022"),
     "2023sv": ("other", "mcdonalds-collection-2023"),
     "2024sv": ("other", "mcdonalds-collection-2025"),
+    "30th": ("mega-evolution", "30th-celebration"),
+    "30th-c": ("mega-evolution", "30th-anniversary-classic-collection"),
     "col1": ("heartgold-soulsilver", "call-of-legends"),
     "col01": ("heartgold-soulsilver", "call-of-legends"),
     "hsp": ("heartgold-soulsilver", "hgss-black-star-promos"),
@@ -718,8 +720,17 @@ def dedupe_pkmngg_variants(variants: list[tuple[str, dict[str, Any]]]) -> list[t
 
 def match_card_in_candidates(local_card: dict[str, Any], candidates: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, str]:
     local_name = str(local_card["name"])
-    loc_exact_numbers = exact_number_values(local_card["card_number"])
-    loc_relaxed_numbers = relaxed_local_number_values(local_card["card_number"])
+    set_id = str(local_card.get("set_id") or "").strip()
+    clean_number = str(local_card.get("card_number") or "").strip()
+    loc_exact_numbers = exact_number_values(clean_number)
+    loc_relaxed_numbers = relaxed_local_number_values(clean_number)
+
+    aliased_number = POKEMONTCGIO_CARD_NUMBER_ALIASES.get(set_id, {}).get(clean_number)
+    if not aliased_number:
+        aliased_number = POKEMONTCGIO_CARD_NUMBER_ALIASES.get(set_id, {}).get(compact_numeric_token(clean_number))
+    if aliased_number:
+        loc_exact_numbers |= exact_number_values(aliased_number)
+        loc_relaxed_numbers |= relaxed_local_number_values(aliased_number)
 
     name_matches = [
         cand
@@ -1337,18 +1348,22 @@ def fetch_targeted_pokemontcgio_cards(english_cards: list[dict[str, Any]]) -> li
 def fetch_set_scoped_pokemontcgio_cards(
     english_cards: list[dict[str, Any]],
     *,
-    page_size: int = 50,
+    page_size: int = 250,
     timeout: int = 30,
     retries: int = 5,
 ) -> list[dict[str, Any]]:
+    def _pio_set_ids(card: dict[str, Any]) -> list[str]:
+        raw_set_id = str(card.get("set_id") or "").strip()
+        raw_num = str(card.get("card_number") or "").strip()
+        if raw_set_id in POKEMONTCGIO_SET_ID_ALIASES:
+            return POKEMONTCGIO_SET_ID_ALIASES[raw_set_id]
+        return alias_set_ids_for_pokemontcgio(raw_set_id, raw_num)
+
     set_ids = sorted(
         {
             candidate_set_id
             for card in english_cards
-            for candidate_set_id in alias_set_ids_for_pokemontcgio(
-                str(card.get("set_id") or "").strip(),
-                str(card.get("card_number") or "").strip(),
-            )
+            for candidate_set_id in _pio_set_ids(card)
             if candidate_set_id
         }
     )
