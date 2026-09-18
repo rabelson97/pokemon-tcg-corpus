@@ -816,6 +816,74 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "2021swsh": ["mcd21"],
     "2022swsh": ["mcd22"],
     "cel25": ["cel25c"],
+    "bog": ["bp"],
+    "30th": ["me55"],
+    "30th-c": ["me55c"],
+}
+
+POKEMONTCGIO_CARD_NUMBER_ALIASES: dict[str, dict[str, str]] = {
+    "30th-c": {
+        "001": "4",
+        "1": "4",
+        "002": "5",
+        "2": "5",
+        "003": "11",
+        "3": "11",
+        "004": "11g",
+        "4": "11g",
+        "005": "18",
+        "5": "18",
+        "006": "19",
+        "6": "19",
+        "007": "25",
+        "7": "25",
+        "008": "33",
+        "8": "33",
+        "009": "41",
+        "9": "41",
+        "010": "43",
+        "10": "43",
+        "011": "47",
+        "11": "47",
+        "012": "50",
+        "12": "50",
+        "013": "57",
+        "13": "57",
+        "014": "58",
+        "14": "58",
+        "015": "69",
+        "15": "69",
+        "016": "85",
+        "16": "85",
+        "017": "89",
+        "17": "89",
+        "018": "94",
+        "18": "94",
+        "019": "99",
+        "19": "99",
+        "020": "100",
+        "20": "100",
+        "021": "101",
+        "21": "101",
+        "022": "106p",
+        "22": "106p",
+        "023": "106m",
+        "23": "106m",
+        "024": "106",
+        "24": "106",
+        "025": "108",
+        "25": "108",
+        "026": "114",
+        "26": "114",
+        "027": "123",
+        "27": "123",
+        "028": "138",
+        "28": "138",
+        "029": "149",
+        "29": "149",
+        "030": "203",
+        "30": "203",
+    },
 }
 
 
@@ -921,17 +989,36 @@ def build_pokemontcgio_index(cards: list[dict[str, Any]]) -> dict[tuple[str, str
             continue
         set_id = str(set_info.get("id") or "").strip()
         number = str(card.get("number") or "").strip()
+        card_id = str(card.get("id") or "").strip()
         if not set_id or not number:
             continue
-        key = (set_id, number)
-        existing = index.get(key)
-        if existing is None:
-            index[key] = card
-            continue
-        existing_tcgplayer, _ = normalize_tcgplayer_payload(existing.get("tcgplayer") or {})
-        current_tcgplayer, _ = normalize_tcgplayer_payload(card.get("tcgplayer") or {})
-        if existing_tcgplayer is None and current_tcgplayer is not None:
-            index[key] = card
+
+        id_suffix = ""
+        prefix = f"{set_id}-"
+        if card_id.lower().startswith(prefix.lower()):
+            id_suffix = card_id[len(prefix):].strip()
+
+        keys_to_index: list[tuple[tuple[str, str], bool]] = []
+        if id_suffix:
+            keys_to_index.append(((set_id, id_suffix), True))
+        keys_to_index.append(((set_id, number), id_suffix.lower() == number.lower()))
+
+        for key, is_exact in keys_to_index:
+            existing = index.get(key)
+            if existing is None:
+                index[key] = card
+                continue
+            existing_id = str(existing.get("id") or "").strip()
+            existing_is_exact = existing_id.lower() == f"{set_id}-{key[1]}".lower()
+            if is_exact and not existing_is_exact:
+                index[key] = card
+                continue
+            if not is_exact and existing_is_exact:
+                continue
+            existing_tcgplayer, _ = normalize_tcgplayer_payload(existing.get("tcgplayer") or {})
+            current_tcgplayer, _ = normalize_tcgplayer_payload(card.get("tcgplayer") or {})
+            if existing_tcgplayer is None and current_tcgplayer is not None:
+                index[key] = card
     return index
 
 
@@ -1037,8 +1124,15 @@ def alias_set_ids_for_pokemontcgio(set_id: str, card_number: str) -> list[str]:
 
 
 def candidate_pokemontcgio_match_keys(set_id: str, card_number: str) -> list[tuple[str, str]]:
+    clean_set_id = set_id.strip()
     clean_number = card_number.strip()
-    number_candidates = dedupe_strings([clean_number, compact_numeric_token(clean_number)])
+    number_candidates = [clean_number, compact_numeric_token(clean_number)]
+    aliased_number = POKEMONTCGIO_CARD_NUMBER_ALIASES.get(clean_set_id, {}).get(clean_number)
+    if not aliased_number:
+        aliased_number = POKEMONTCGIO_CARD_NUMBER_ALIASES.get(clean_set_id, {}).get(compact_numeric_token(clean_number))
+    if aliased_number:
+        number_candidates.insert(0, aliased_number)
+    number_candidates = dedupe_strings(number_candidates)
     return [
         (candidate_set_id, candidate_number)
         for candidate_set_id in alias_set_ids_for_pokemontcgio(set_id, card_number)

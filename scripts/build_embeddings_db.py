@@ -71,6 +71,8 @@ POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "2022swsh": ["mcd22"],
     "cel25": ["cel25c"],
     "bog": ["bp"],
+    "30th": ["me55"],
+    "30th-c": ["me55c"],
 }
 
 DEXTCG_SET_ID_ALIASES: dict[str, str] = {

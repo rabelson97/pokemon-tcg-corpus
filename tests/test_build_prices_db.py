@@ -1866,5 +1866,59 @@ class PoketraceApiTests(unittest.TestCase):
         self.assertEqual("base-set", mapping["base1"])
 
 
+class Celebrations30thPricingTests(unittest.TestCase):
+    def test_set_id_aliases(self) -> None:
+        aliases_30th = build_prices_db.alias_set_ids_for_pokemontcgio("30th", "1")
+        self.assertIn("me55", aliases_30th)
+        aliases_30th_c = build_prices_db.alias_set_ids_for_pokemontcgio("30th-c", "1")
+        self.assertIn("me55c", aliases_30th_c)
+
+    def test_provider_set_mapping_overrides(self) -> None:
+        overrides = build_prices_db.load_poketrace_set_mapping_overrides()
+        self.assertEqual("30th-celebration", overrides.get("30th"))
+        self.assertEqual("30th-celebration-classic-collection", overrides.get("30th-c"))
+
+    def test_candidate_match_keys_for_30th_classic(self) -> None:
+        keys_001 = build_prices_db.candidate_pokemontcgio_match_keys("30th-c", "001")
+        self.assertIn(("me55c", "4"), keys_001)
+
+        keys_004 = build_prices_db.candidate_pokemontcgio_match_keys("30th-c", "004")
+        self.assertIn(("me55c", "11g"), keys_004)
+
+        keys_022 = build_prices_db.candidate_pokemontcgio_match_keys("30th-c", "022")
+        self.assertIn(("me55c", "106p"), keys_022)
+
+    def test_build_pokemontcgio_index_handles_suffix_without_collision(self) -> None:
+        cards = [
+            {
+                "id": "me55c-11",
+                "name": "Metagross",
+                "number": "11",
+                "set": {"id": "me55c"},
+                "tcgplayer": {"prices": {"holofoil": {"market": 1.5}}},
+            },
+            {
+                "id": "me55c-11g",
+                "name": "Genesect-EX",
+                "number": "11",
+                "set": {"id": "me55c"},
+                "tcgplayer": {"prices": {"holofoil": {"market": 3.0}}},
+            },
+        ]
+        index = build_prices_db.build_pokemontcgio_index(cards)
+        matched_metagross, _, _ = build_prices_db.find_pokemontcgio_card_match(
+            index, set_id="30th-c", card_number="003"
+        )
+        self.assertIsNotNone(matched_metagross)
+        self.assertEqual("Metagross", matched_metagross["name"])
+
+        matched_genesect, _, _ = build_prices_db.find_pokemontcgio_card_match(
+            index, set_id="30th-c", card_number="004"
+        )
+        self.assertIsNotNone(matched_genesect)
+        self.assertEqual("Genesect-EX", matched_genesect["name"])
+
+
 if __name__ == "__main__":
     unittest.main()
+

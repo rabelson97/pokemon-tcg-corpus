@@ -829,6 +829,21 @@ class ImageFallbackTests(unittest.TestCase):
     def _write_probe_image(_url: str, destination: Path) -> None:
         Image.new("RGB", (480, 672), color=(180, 40, 40)).save(destination, format="PNG")
 
+    def test_celebrations_30th_canonical_set_tokens(self) -> None:
+        self.assertEqual("30th", build_embeddings_db.canonical_set_token("30th"))
+        self.assertEqual("30th", build_embeddings_db.canonical_set_token("me55"))
+        self.assertEqual("30th-c", build_embeddings_db.canonical_set_token("30th-c"))
+        self.assertEqual("30th-c", build_embeddings_db.canonical_set_token("me55c"))
+
+    def test_30th_classic_fallback_manifest_coverage(self) -> None:
+        manifest = build_embeddings_db.load_fallback_manifest(ROOT)
+        for i in range(1, 31):
+            cid = f"pokemon:en:30th-c:{i:03d}"
+            self.assertIn(cid, manifest, f"Missing fallback for {cid}")
+            entry = manifest[cid]
+            self.assertTrue(entry["url"].startswith("https://images.scrydex.com/pokemon/me55c-"))
+            self.assertEqual("pokemontcgio_me55c", entry["source"])
+
     def test_dextcg_fallback_maps_hs_trainer_kit_by_exact_set_and_number(self) -> None:
         card = self._missing_image_card()
         card.update({"set_id": "tk-hs-r", "card_number": "030"})
