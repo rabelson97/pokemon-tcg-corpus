@@ -94,6 +94,9 @@ PRICECHARTING_FALLBACK_SLUGS = {
 NO_USD_MARKET_CARD_REASONS = {
     "pokemon:en:bwp:BW78": "English BW78 Raichu promo was catalogued but not publicly released; free USD market sources report no sales/price.",
     "pokemon:en:dpp:DP54": "DP54 Beginning Door has no reachable free USD market price; public USD sources report no sales/price.",
+    "pokemon:en:30th:B": "English 30th Anniversary Mew (Blue) has no reachable free USD market price; public USD sources report no sales/price.",
+    "pokemon:en:30th:G": "English 30th Anniversary Mew (Green) has no reachable free USD market price; public USD sources report no sales/price.",
+    "pokemon:en:30th:R": "English 30th Anniversary Mew (Red) has limited market circulation; public USD sources report no consistent sales/price.",
 }
 PKMNGG_VARIANT_PREFERENCE = (
     "normal",

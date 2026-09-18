@@ -1949,6 +1949,32 @@ class Celebrations30thPricingTests(unittest.TestCase):
             build_prices_db.EXPLICIT_SET_MAPPINGS["30th-c"],
         )
 
+    def test_try_no_usd_market_fallback_for_30th_mew_promos(self) -> None:
+        for card_id, card_num in (("pokemon:en:30th:B", "B"), ("pokemon:en:30th:G", "G")):
+            card = {
+                "id": card_id,
+                "set_id": "30th",
+                "set_name": "30th Celebration",
+                "name": "Mew",
+                "card_number": card_num,
+            }
+            summary = {
+                "fallback_providers": {"no_usd_market_rows": 0},
+                "transport_counts": {},
+            }
+            result = build_prices_db.try_no_usd_market_fallback(
+                card,
+                updated_at="2026/09/18 12:00:00",
+                summary=summary,
+            )
+            self.assertIsNotNone(result)
+            self.assertEqual("no_usd_market", result["source_name"])
+            rows = build_prices_db.extract_price_rows_from_selected_sources(card_id, {"no_usd_market": result})
+            self.assertEqual(1, len(rows))
+            self.assertEqual("USD", rows[0][2])
+            self.assertEqual("no_usd_market", rows[0][3])
+            self.assertIsNone(rows[0][5])
+
 
 if __name__ == "__main__":
     unittest.main()
