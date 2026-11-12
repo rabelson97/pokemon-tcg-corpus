@@ -31,6 +31,10 @@ DEFAULT_DB_PATH = REPO_ROOT / "build" / "current-release" / "embeddings.db"
 FALLBACKS_PATH = REPO_ROOT / "image-fallbacks.json"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
+EXACT_SET_MAPPINGS = {
+    "me06": ("mega-evolution", "delta-reign"),
+}
+
 # Curated, explicit set mappings for missing cards on pkmn.gg
 EXPLICIT_SET_MAPPINGS: dict[str, Any] = {
     "mep": ("mega-evolution", "me-black-star-promos"),
@@ -147,7 +151,9 @@ def validate_image_url(item: tuple[str, str, str]) -> tuple[str, str, str, bool]
         return card_id, url, source, False
 
 
-def match_card_in_candidates(local_card: dict[str, Any], candidates: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, str]:
+def match_card_in_candidates(
+    local_card: dict[str, Any], candidates: list[dict[str, Any]], *, exact_only: bool = False
+) -> tuple[dict[str, Any] | None, str]:
     loc_name_norm = normalize_name(local_card["name"])
     loc_num_norm = normalize_number(local_card["card_number"])
     
@@ -166,6 +172,9 @@ def match_card_in_candidates(local_card: dict[str, Any], candidates: list[dict[s
             
     if len(matches) == 1:
         return matches[0], "exact_match"
+
+    if exact_only:
+        return None, "ambiguous_match" if matches else "no_match"
         
     if len(matches) > 1:
         # Resolve common energy/trainer duplicates safely
@@ -195,6 +204,14 @@ def resolve_card_image(local_card: dict[str, Any], cache_candidates: dict[str, l
     set_id = local_card["set_id"]
     card_name = local_card["name"]
     card_number = local_card["card_number"]
+
+    if set_id in EXACT_SET_MAPPINGS:
+        series, slug = EXACT_SET_MAPPINGS[set_id]
+        cache_key = f"{series}/{slug}"
+        if cache_key not in cache_candidates:
+            cache_candidates[cache_key] = fetch_pkmngg_set_cards(series, slug)
+        match, reason = match_card_in_candidates(local_card, cache_candidates[cache_key], exact_only=True)
+        return (match.get("largeImageUrl") if match else None), f"pkmngg_{reason}"
     
     # 1. Try pkmn.gg NEXT_DATA payload FIRST (highly optimized set fetch)
     if set_id in EXPLICIT_SET_MAPPINGS:

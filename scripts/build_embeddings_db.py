@@ -34,6 +34,7 @@ from embedder_contract import (
 )
 from tcgdex_api import download_binary, fetch_all_card_records, parse_locales, sanitize_card_id, set_detail_cache_path
 from pokemontcgio_api import api_get_json as pio_api_get_json, resolve_api_key as pio_resolve_api_key
+from resolve_missing_images import EXACT_SET_MAPPINGS
 
 # Variants are generated at DB build time so the index has K vectors per card,
 # capturing the kinds of degradation real screen captures introduce. Augments are
@@ -46,6 +47,8 @@ DB_USER_VERSION = 10
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "card_embedder.onnx"
 MODEL_NAME = "cardhawk:card_embedder.onnx"
 SCAN_EXCLUDED_SERIES_IDS = {"tcgp"}
+# TCGdex lists this Japanese-only SMP2 025/024 promo as an English card.
+SCAN_EXCLUDED_CARD_IDS = {"pokemon:en:det1:25"}
 
 POKEMONTCGIO_SET_ID_ALIASES: dict[str, list[str]] = {
     "sm3.5": ["sm35"],
@@ -434,7 +437,7 @@ def has_cached_image(image_path: Path) -> bool:
 
 def is_scan_eligible(card: dict[str, Any]) -> bool:
     series_id = str(card.get("set_series_id") or "").strip().lower()
-    return series_id not in SCAN_EXCLUDED_SERIES_IDS
+    return series_id not in SCAN_EXCLUDED_SERIES_IDS and card.get("id") not in SCAN_EXCLUDED_CARD_IDS
 
 
 def base_pil_for_card(image_path: Path) -> Image.Image:
@@ -1266,6 +1269,9 @@ def resolve_dextcg_image_by_identity(card: dict[str, Any]) -> ImageResolution | 
 
 
 def resolve_fallback_image(card: dict[str, Any], *, allow_web_image_fallback: bool) -> ImageResolution | None:
+    if card.get("set_id") in EXACT_SET_MAPPINGS:
+        return resolve_pkmngg_image_by_identity(card)
+
     dextcg_match = resolve_dextcg_image_by_identity(card)
     if dextcg_match is not None:
         return dextcg_match
@@ -1403,6 +1409,7 @@ def build_missing_images_report(
         "skipped_reasons": skipped_reasons,
         "excluded_non_scan_cards": len(excluded_cards),
         "excluded_series_ids": sorted(SCAN_EXCLUDED_SERIES_IDS),
+        "excluded_card_ids": sorted(SCAN_EXCLUDED_CARD_IDS),
         "recovery_steps": [
             "For each entry, add a verified real card image to the image cache using expected_cache_file naming or add a verified HTTPS fallback URL to image-fallbacks.json.",
             "Do not add placeholder/card-back images for scan-eligible cards; embeddings must be generated from real card art.",

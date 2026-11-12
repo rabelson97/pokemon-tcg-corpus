@@ -18,6 +18,25 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 import build_embeddings_db  # noqa: E402
 import tcgdex_api  # noqa: E402
+from resolve_missing_images import resolve_card_image  # noqa: E402
+
+
+def test_delta_reign_fallback_requires_exact_collector_number():
+    card = {"set_id": "me06", "card_number": "084", "name": "Mega Rayquaza ex"}
+    url = "https://example.com/me06-084.webp"
+    candidates = [
+        {"name": card["name"], "number": "138", "largeImageUrl": "https://example.com/me06-138.webp"},
+        {"name": card["name"], "number": "84", "largeImageUrl": url},
+    ]
+    key = "mega-evolution/delta-reign"
+    assert resolve_card_image(card, {key: candidates}) == (url, "pkmngg_exact_match")
+    assert resolve_card_image(card, {key: candidates[:1]}) == (None, "pkmngg_no_match")
+    assert resolve_card_image(card, {key: candidates + candidates[1:]}) == (None, "pkmngg_ambiguous_match")
+
+
+def test_excludes_only_the_mislabeled_english_promo():
+    assert not build_embeddings_db.is_scan_eligible({"id": "pokemon:en:det1:25", "set_series_id": "sm"})
+    assert build_embeddings_db.is_scan_eligible({"id": "pokemon:en:det1:18", "set_series_id": "sm"})
 
 
 class NormalizeCardImageUrlsTests(unittest.TestCase):
