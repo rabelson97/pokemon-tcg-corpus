@@ -39,6 +39,18 @@ def test_excludes_only_the_mislabeled_english_promo():
     assert build_embeddings_db.is_scan_eligible({"id": "pokemon:en:det1:18", "set_series_id": "sm"})
 
 
+def test_mega_energy_image_matches_printed_number_despite_basic_name_alias():
+    card = {"set_id": "mee", "card_number": "009", "name": "Basic Grass Energy"}
+    url = "https://example.com/mee-009.webp"
+    candidates = [
+        {"name": "Basic Grass Energy", "number": "1", "largeImageUrl": "https://example.com/mee-001.webp"},
+        {"name": "Grass Energy", "number": "9", "largeImageUrl": url},
+    ]
+    key = "mega-evolution/mega-evolution-energy"
+    assert resolve_card_image(card, {key: candidates}) == (url, "pkmngg_exact_match")
+    assert resolve_card_image(card, {key: candidates[:1]}) == (None, "pkmngg_no_match")
+
+
 class NormalizeCardImageUrlsTests(unittest.TestCase):
     def test_prefers_tcgdex_asset_root_and_derives_low_variant(self) -> None:
         image_url, image_url_low = tcgdex_api.normalize_card_image_urls(

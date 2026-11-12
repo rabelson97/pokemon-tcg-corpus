@@ -33,6 +33,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 EXACT_SET_MAPPINGS = {
     "me06": ("mega-evolution", "delta-reign"),
+    "mee": ("mega-evolution", "mega-evolution-energy"),
 }
 
 # Curated, explicit set mappings for missing cards on pkmn.gg
@@ -156,10 +157,15 @@ def match_card_in_candidates(
 ) -> tuple[dict[str, Any] | None, str]:
     loc_name_norm = normalize_name(local_card["name"])
     loc_num_norm = normalize_number(local_card["card_number"])
+    energy_name_alias = local_card.get("set_id") == "mee"
+    if energy_name_alias:
+        loc_name_norm = loc_name_norm.removeprefix("basic")
     
     matches = []
     for cand in candidates:
         cand_name_norm = normalize_name(cand.get("name") or "")
+        if energy_name_alias:
+            cand_name_norm = cand_name_norm.removeprefix("basic")
         cand_num_norm = normalize_number(cand.get("number") or "")
         cand_num_disp_norm = normalize_number(cand.get("numberDisplay") or "")
         
